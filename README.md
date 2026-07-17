@@ -1,71 +1,86 @@
 # Smart-Band
 
-Sistema de pulseiras inteligentes para eventos, com consumo de vidas ou
-creditos em atracoes, operacao local sem internet e sincronizacao assincrona
-com a EasySmart Platform.
+Sistema local-first de pulseiras inteligentes para consumo de vidas, créditos e
+acessos em atrações de eventos.
 
-## Fontes da verdade
+## Experiência do MVP
 
-- Vault EasySmart: contexto, decisoes, arquitetura e planejamento.
-- Este repositorio: codigo, contratos, migrations, testes e artefatos versionados.
-- Ambientes de laboratorio: checkouts reproduziveis, nunca fontes canonicas.
+1. A pessoa mantém o botão da pulseira pressionado.
+2. A pulseira exibe um código curto e anuncia uma solicitação efêmera por BLE.
+3. Gateways próximos reportam a mesma solicitação ao servidor local.
+4. O servidor autentica, deduplica e publica o código em uma fila global.
+5. O operador da atração seleciona o código verbalizado pela pessoa.
+6. A pulseira mostra a atração e o custo e exige confirmação consciente.
+7. O servidor grava o débito uma única vez e libera a atração.
 
-O laboratorio atual fica em `/home/rodrigo/projects/products/smart-band`, mas o
-servidor local definitivo sera outro computador. Nenhum componente pode
-depender do hostname, IP, caminho ou estado exclusivo desse laboratorio.
+A confirmação na pulseira é simultaneamente uma regra de segurança e parte da
+experiência: a pessoa possui poder real de decisão sobre a ação.
 
 ## Arquitetura
 
 ```text
-pulseira <-- IR --> gateway <-- LAN --> edge local
-                                        |
-                                        `-- MQTT/WSS --> cloud EasySmart
+pulseiras -- BLE --> gateways -- LAN --> appliance local
+    ^                    |                    |
+    `------ GATT --------'             API + PostgreSQL
+                                        fila + frontend
 ```
 
-O edge local autoriza e grava cada transacao. A cloud recebe as transacoes de
-forma assincrona e nao e necessaria para liberar uma atracao.
+- A appliance local é a autoridade transacional.
+- Internet e EasySmart Platform não são necessárias para operar.
+- Serviços externos são opcionais para licença, atualização, suporte e backup.
+- O gateway da atração pode ser diferente do gateway usado como ponte de rádio.
 
-## Camadas
+## Camadas do repositório
 
 ```text
 apps/
-  edge-api/             autoridade transacional local
-  cloud-api/            consolidacao e operacao remota
-  operator-web/         interface operacional offline-first
+  edge-api/                 domínio, fila, ledger e coordenação
+  operator-web/             operação local e modo kiosk
 services/
-  edge-sync/            outbox e reconciliacao edge-cloud
+  gateway-coordinator/      sightings, claims e sessões de rádio
 contracts/
-  openapi/              contratos HTTP
-  events/               envelopes e eventos de sincronizacao
-  proximity/            protocolo logico pulseira-gateway
+  openapi/                  contratos HTTP/WebSocket
+  events/                   eventos internos versionados
+  proximity/                advertising, GATT e confirmação
 simulators/
-  band/                 simulador de pulseira
-  gateway/              simulador de gateway
+  band/                     pulseira simulada
+  gateway/                  gateways e TFTs simulados
 deploy/
-  edge/                 instalacao portavel do servidor local
-  cloud/                integracao isolada com EasySmart Platform
+  appliance/                instalação local reproduzível
 firmware/
-  gateway/              reservado para a etapa 11
-  band/                 reservado para a etapa 12
+  band/                     etapa final: firmware da pulseira
+  gateway/                  etapa final: firmware do gateway
 hardware/
-  gateway/              eletronica e testes do gateway
-  band/                 eletronica, energia e mecanica da pulseira
+  band/                     energia, display e mecânica
+  gateway/                  TFT, rádio e acionamento
 tests/
-  e2e/                  cenarios integrados e de falha
+  e2e/                      cenários integrados e de falha
 docs/
-  architecture/         limites e fluxos do sistema
-  decisions/            ADRs proximos ao codigo
-  operations/           runbooks e procedimentos reproduziveis
+  architecture/             visão do sistema e fluxos
+  decisions/                ADRs
+  operations/               runbooks
 ```
 
-Leia [docs/architecture/layers.md](docs/architecture/layers.md) e
-[docs/architecture/transaction-flow.md](docs/architecture/transaction-flow.md).
+## Fontes da verdade
+
+- Vault EasySmart: decisões, contexto, arquitetura e planejamento.
+- Este repositório: código, contratos, migrations, testes, firmware e deploy.
+- Servidor i5: laboratório reproduzível, nunca fonte canônica.
+
+## Leitura inicial
+
+1. [AGENTS.md](AGENTS.md)
+2. [docs/architecture/layers.md](docs/architecture/layers.md)
+3. [docs/architecture/interaction-queue.md](docs/architecture/interaction-queue.md)
+4. [docs/architecture/transaction-flow.md](docs/architecture/transaction-flow.md)
+5. [contracts/proximity/README.md](contracts/proximity/README.md)
+6. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 
-Descoberta e especificacao. Hardware e firmware ESP32 ficam por ultimo; o
-software sera validado primeiro com simuladores.
+Fase de especificação. Contratos, simuladores, backend e testes precedem
+hardware e firmware ESP32.
 
-## Licenca
+## Licença
 
-Nenhuma licenca foi definida ainda.
+Nenhuma licença foi definida ainda.

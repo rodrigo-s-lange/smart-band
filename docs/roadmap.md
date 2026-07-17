@@ -1,17 +1,17 @@
 # Roadmap
 
-1. Especificacao do dominio
-2. Protocolo transacional
-3. Arquitetura edge e cloud
-4. Modelo de dados e contratos
+1. Domínio e invariantes
+2. Contrato BLE e máquina de estados
+3. Fila global e coordenação de gateways
+4. Modelo PostgreSQL e migrations
 5. Backend local
-6. Servico cloud
-7. Simuladores de pulseira e gateway
-8. Frontend operacional
-9. Validacao integrada e de falhas
-10. Infraestrutura piloto em outro computador
-11. Hardware e firmware do gateway ESP32
-12. Hardware e firmware da pulseira ESP32
+6. Simuladores de pulseira, gateway e TFT
+7. Frontend operacional e modo kiosk
+8. Segurança, concorrência, backup e restore
+9. Appliance piloto
+10. Hardware e firmware do gateway
+11. Hardware e firmware da pulseira
+12. Piloto operacional
 
-Hardware inicia somente depois que debito unico, operacao offline e
-sincronizacao forem comprovados com simuladores.
+Hardware começa somente depois de confirmação, idempotência, concorrência,
+replay e recuperação estarem validados com simuladores.

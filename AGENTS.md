@@ -1,10 +1,116 @@
-# Orientacoes para agentes
+# AGENTS.md
 
-- Preserve a separacao entre edge, cloud, frontend, sync, contratos e dispositivos.
-- O edge local e a autoridade transacional; a cloud nao autoriza consumo em tempo real.
-- Toda operacao de debito precisa ser atomica e idempotente.
-- Nenhuma dependencia do laboratorio i5 pode entrar no produto.
-- Segredos, tokens, senhas e arquivos `.env` reais nunca entram no repositorio.
-- Contratos devem ser definidos antes das implementacoes que os consomem.
-- Simuladores precedem hardware e firmware ESP32.
-- Mudancas arquiteturais relevantes devem ser registradas tambem no vault.
+Orientações obrigatórias para LLMs e agentes que trabalhem no Smart-Band.
+
+## Missão do produto
+
+Construir um sistema local-first de pulseiras para eventos. A pessoa solicita
+uma interação por BLE, o operador escolhe o código correto em uma fila global e
+a pessoa confirma a atração e o custo na própria pulseira antes do débito.
+
+## Fontes da verdade
+
+- Vault: decisões, contexto, arquitetura, plano e operação.
+- GitHub `rodrigo-s-lange/smart-band`: código e artefatos executáveis.
+- `/home/rodrigo/projects/products/smart-band`: laboratório atual.
+
+O laboratório pode ser descartado. Nenhuma mudança durável pode existir apenas
+nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
+
+## Leitura obrigatória antes de alterar código
+
+1. `README.md`
+2. `docs/architecture/layers.md`
+3. `docs/architecture/interaction-queue.md`
+4. `docs/architecture/transaction-flow.md`
+5. `contracts/proximity/README.md`
+6. `docs/decisions/0001-local-first-appliance.md`
+7. `docs/decisions/0002-ble-global-queue-band-confirmation.md`
+8. `docs/roadmap.md`
+
+## Decisões vigentes
+
+- IR não faz parte da arquitetura.
+- BLE advertising é usado para descoberta.
+- GATT é usado para desafio, confirmação e resultado.
+- O código visual seleciona uma solicitação; não autoriza débito sozinho.
+- A pessoa confirma atração e custo na pulseira.
+- PostgreSQL local é autoridade de saldo e ledger.
+- Pulseira e gateway não debitam saldo isoladamente.
+- A fila de solicitações pertence ao servidor local.
+- O gateway operador pode ser diferente do gateway de rádio.
+- A EasySmart Platform não está no caminho operacional.
+- Serviços externos são opcionais e não recebem dados pessoais por padrão.
+- Hardware e firmware ESP32 vêm depois de contratos, simuladores e backend.
+
+## Invariantes
+
+- Um `transaction_id` causa no máximo um débito.
+- Saldo e ledger mudam na mesma transação de banco.
+- Uma `interaction_request` possui no máximo um claim ativo.
+- Seleção usa `interaction_id`, nunca posição visual na fila.
+- Código visual duplicado nunca resolve uma pulseira automaticamente.
+- Advertising inválido não entra na fila.
+- Identificadores permanentes não aparecem no advertising.
+- Chaves de pulseira não são armazenadas em gateways.
+- Timeout ou rejeição na pulseira não alteram saldo.
+- `operator_gateway_id`, `radio_gateway_id` e `attraction_id` são registrados separadamente.
+- O sistema precisa funcionar sem internet.
+
+## Fronteiras de responsabilidade
+
+- `apps/edge-api`: domínio, persistência, autenticação, fila, ledger e API.
+- `apps/operator-web`: UX local; não contém regra de saldo.
+- `services/gateway-coordinator`: coordenação de sightings e rádio; não contém ledger.
+- `contracts`: fronteiras versionadas antes das implementações consumidoras.
+- `simulators`: primeira implementação funcional do protocolo.
+- `deploy/appliance`: instalação reproduzível e sem dependência do i5.
+- `firmware` e `hardware`: somente após o gate definido no roadmap.
+
+## Ordem de implementação
+
+1. Especificação e contratos.
+2. Modelo de dados e migrations.
+3. Backend local.
+4. Simuladores de pulseira e gateway.
+5. Frontend e fila global.
+6. Testes de segurança, concorrência e recuperação.
+7. Appliance piloto.
+8. Gateway físico.
+9. Pulseira física.
+
+## Segurança
+
+- Nunca commitar segredos, chaves, tokens, dumps ou `.env` reais.
+- Usar chave exclusiva por pulseira.
+- Proteger comparações de MAC contra timing leaks.
+- Preferir tags autenticadoras de pelo menos 64 bits no MVP.
+- Tratar replay, relay, tracking, clonagem, rollback e fila falsa nos testes.
+- Prever Secure Boot, Flash Encryption e proteção de debug para produção.
+- Dados pessoais permanecem locais por padrão.
+- Backup externo precisa ser criptografado e autorizado pelo cliente.
+
+## Regras de trabalho
+
+- Não introduzir EasySmart Platform, cloud obrigatória, IR ou saldo autoritativo em device sem nova decisão formal.
+- Não implementar um transporte antes de versionar o contrato correspondente.
+- Não misturar telemetria técnica com ledger de negócio.
+- Não acoplar domínio a ESP-IDF, framework web ou transporte de rede.
+- Não depender de hostname, IP, volume ou caminho exclusivo do laboratório.
+- Preservar migrations up/down e idempotência de seeds.
+- Preferir testes determinísticos com relógio e gerador aleatório injetáveis.
+- Documentar decisões com ADR quando houver mudança de fronteira ou invariante.
+
+## Validação mínima por mudança
+
+- formatadores e linters da linguagem
+- testes unitários afetados
+- testes de contrato afetados
+- testes concorrentes quando tocar fila, claim, saldo ou ledger
+- testes de replay/idempotência quando tocar protocolo ou transação
+- atualização da documentação correspondente
+
+## Definição de pronto
+
+Uma etapa só está pronta quando código, testes, contrato, observabilidade e
+procedimento operacional relevante estão coerentes. Compilar não é suficiente.

@@ -2,45 +2,30 @@
 
 ## Pulseira
 
-Responsavel por identidade fisica, interface do participante, contador do
-protocolo e exibicao de estado. Pode manter uma copia visual do saldo, mas nao
-e a autoridade financeira ou transacional.
+Cria a solicitação efêmera, exibe o código, confirma atração e custo e produz
+provas autenticadas. Não mantém saldo autoritativo.
 
 ## Gateway
 
-Terminal de uma atracao. Conduz a comunicacao de proximidade, identifica a
-atracao, solicita a transacao ao edge e apresenta o resultado. Nao debita saldo
-isoladamente.
+Escaneia BLE, reporta sightings, exibe a fila no TFT e transporta a sessão GATT.
+Pode atuar como gateway operador, gateway de rádio ou ambos.
 
-## Edge local
+## Appliance local
 
-Autoridade durante o evento. Mantem ledger, saldo, associacoes, regras,
-auditoria e outbox. Deve operar sem internet e falhar de forma segura quando a
-autoridade local estiver indisponivel.
+Mantém fila global, identidade, regras, ledger, saldo, aplicação e banco. É a
+única autoridade transacional e funciona sem internet.
 
-## Sincronizacao
+## Serviços externos opcionais
 
-Publica a outbox para a cloud com retry e confirmacao. A entrega e pelo menos
-uma vez, portanto o consumidor cloud deve ser idempotente.
-
-## Cloud EasySmart
-
-Consolida instalacoes, eventos e transacoes, fornece operacao remota e
-observabilidade. Usa infraestrutura compartilhada da EasySmart Platform com
-database, topicos, ACLs, segredos e dashboards isolados para `smartband`.
-
-## Frontend
-
-Opera participantes, sessoes, pulseiras, creditos, atracoes e gateways. A parte
-local deve continuar disponivel sem internet.
+Licença, atualização, suporte, monitoramento técnico e backup autorizado. Não
+fazem parte do caminho crítico nem recebem dados pessoais por padrão.
 
 ## Contratos
 
-OpenAPI, schemas de eventos e protocolo logico de proximidade sao fronteiras
-versionadas. Implementacoes nao devem depender de estruturas internas de outra
-camada.
+OpenAPI, eventos e protocolo BLE são fronteiras versionadas. Domínio não depende
+de ESP-IDF, framework web ou transporte específico.
 
-## Deploy
+## Implantação
 
-O i5 e laboratorio. O deploy edge deve funcionar em outro host Linux a partir
-do repositorio e da configuracao externa do ambiente.
+O i5 é laboratório. A appliance comercial precisa ser instalável em outro host
+Linux sem mudanças de código ou estado oculto.

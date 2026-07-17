@@ -1,13 +1,15 @@
 # Operator Web
 
-Interface para operacao local e remota.
+Interface local executada em modo kiosk na appliance e acessível aos operadores
+autorizados na LAN.
 
-Responsabilidades:
+## Responsabilidades
 
-- participantes, sessoes e pulseiras
-- carga, saldo, estorno e historico
-- atracoes, gateways e regras
-- estado local, conectividade cloud e fila de sincronizacao
-- relatorios operacionais
+- participantes, sessões, pulseiras, vidas e créditos
+- atrações, gateways e operadores
+- fila global de solicitações e estados em tempo real
+- histórico, estornos e auditoria autorizada
+- status da appliance, gateways e backups
 
-A interface edge deve continuar utilizavel sem internet.
+O frontend não decide saldo, claim ou autorização; sempre usa os contratos da
+Edge API.

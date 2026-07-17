@@ -1,4 +1,12 @@
-# Band hardware
+# Hardware da pulseira
 
-Reservado para MCU, bateria, protecao, carregamento, OLED, botao/touch, IR, PCB,
-caixa e ensaios de autonomia da pulseira.
+Escopo futuro:
+
+- ESP32-C3, C6 ou S3
+- OLED I2C 0,91 polegada, 128×32
+- botão de interação
+- bateria Li-Po, proteção e carregamento
+- antena BLE, USB-JTAG, PCB e caixa
+- medições reais de consumo e autonomia
+
+Não incluir transceptor IR.

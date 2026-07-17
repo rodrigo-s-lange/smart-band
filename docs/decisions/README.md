@@ -1,4 +1,7 @@
 # Architecture Decision Records
 
-ADRs tecnicos proximos ao codigo vivem aqui. Decisoes de contexto amplo tambem
-devem ser registradas no vault e referenciadas pelo ADR correspondente.
+- [0001 — Appliance local-first](0001-local-first-appliance.md)
+- [0002 — BLE, fila global e confirmação](0002-ble-global-queue-band-confirmation.md)
+
+Mudanças de fronteira, autoridade, segurança ou experiência transacional exigem
+novo ADR e atualização correspondente no vault.
