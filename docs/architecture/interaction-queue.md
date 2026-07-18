@@ -21,12 +21,16 @@ discovered
 queued
 claimed
 awaiting_band_confirmation
+confirmed_pending_validation
 authorized
 completed
 ```
 
-Saídas: `expired`, `rejected`, `confirmation_timeout`, `actuation_failed` e
-`cancelled`.
+Saídas: `expired`, `denied`, `confirmation_timeout`, `actuation_failed` e
+`cancelled`. `denied` é a validação de saldo/regras do servidor após a
+confirmação da pessoa — não um gesto da pulseira (ADR 0003). Máquina de
+estados completa e verificada em
+[domain-model.md](domain-model.md).
 
 ## Regras
 

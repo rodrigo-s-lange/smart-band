@@ -17,15 +17,19 @@ Após pressão longa, a pulseira cria:
 
 ```text
 protocol_version
-interaction_id
 session_nonce
-ephemeral_id
-auth_tag
+tag                 # AES-CMAC(band_key, session_nonce ‖ display_code ‖ expires_at_local ‖ transaction_counter), autentica e resolve identidade (ADR 0003, ADR 0004)
 display_code
-expires_at_local
+expires_at_local    # offset relativo, 60s (ADR 0004)
 ```
 
-O advertising precisa caber no formato legado suportado pelos gateways do MVP.
+`interaction_id` não é gerado nem anunciado pela pulseira — o servidor
+atribui um `interaction_id` na primeira vez que resolve um `session_nonce`
+novo (ver "Descoberta"). `ephemeral_id` e `auth_tag` foram unificados no
+campo `tag` único para caber no orçamento de bytes do advertising legado
+(ADR 0004). Layout binário exato (offsets, tamanhos) em
+[binary-format.md](binary-format.md).
+
 O código visual usa Crockford Base32, agrupado como `M7K-3PX`.
 
 ## Descoberta
@@ -39,7 +43,12 @@ rssi
 received_at
 ```
 
-O servidor autentica, resolve a pulseira e deduplica por `interaction_id`.
+O servidor resolve a identidade da pulseira testando as chaves das
+pulseiras ativas na sessão do evento contra o `session_nonce` recebido, até
+reproduzir o `tag` informado (ver ADR 0003). Na primeira vez que resolve um
+`session_nonce` novo, o servidor atribui um `interaction_id` e cria a
+`interaction_request`; sightings seguintes são correlacionados pelo próprio
+`session_nonce` bruto, sem precisar de um ID pré-anunciado (ADR 0004).
 
 ## Seleção e claim
 
@@ -59,11 +68,21 @@ interaction_id
 attraction_id
 operator_gateway_id
 amount
-expires_at
 server_auth_tag
 ```
 
-A pulseira exibe atração e custo. Clique curto confirma; timeout cancela.
+Não há campo `expires_at` no desafio: a janela de confirmação é a constante
+fixa de 10s do protocolo (ADR 0003), conhecida de antemão pela pulseira —
+transmiti-la a cada desafio seria redundante e daria a um gateway malicioso
+uma forma de tentar manipular a janela. A pulseira inicia seu próprio
+temporizador de 10s ao receber o desafio.
+
+A pulseira exibe atração e custo. Clique curto confirma; não existe gesto
+explícito de rejeição — 10s sem clique é o único caminho de recusa, e reinicia
+o processo (a interação não é reaproveitada; ver ADR 0003). Um comando
+`Cancel` distinto (gateway → pulseira, ver
+[binary-format.md](binary-format.md)) permite ao operador cancelar mesmo
+depois do desafio ter sido enviado.
 
 Resposta autenticada candidata:
 
@@ -80,16 +99,22 @@ O `band_auth_tag` autentica todos os campos relevantes do desafio e da decisão.
 
 ## Resultado
 
-Após commit do ledger, o servidor envia:
+O débito ocorre no commit do ledger, mas o servidor só envia o resultado à
+pulseira depois que o acionamento da atração é confirmado — automático ou
+por override manual do operador (ver ADR 0003). A pulseira permanece em
+`confirming` até então, sem timeout de protocolo nessa espera:
 
 ```text
 transaction_id
-result
+result              # 0=negado por saldo, 1=negado por regra, 2=concluído
 remaining_balance
 result_auth_tag
 ```
 
-A pulseira só atualiza o saldo visual depois de validar o resultado.
+A pulseira só atualiza o saldo visual depois de validar o resultado. Não
+existe valor de `result` para `actuation_failed`: enquanto não resolvido
+(override manual ou estorno), nenhum resultado é escrito — a pulseira
+permanece aguardando.
 
 ## Estados
 
@@ -99,18 +124,52 @@ advertising_request
 queued
 awaiting_confirmation
 confirming
+denied
 completed
-rejected
 timeout
 ```
 
+Não há estado de pulseira disparado por gesto de rejeição (não existe esse
+gesto, ADR 0003). `denied` é enviado pelo servidor quando saldo ou regras
+não permitem a transação — descoberto só depois que a pessoa confirma
+(`transaction-flow.md`, passo 12) — e chega imediatamente, sem esperar
+acionamento, porque nada foi debitado. O resultado de **sucesso**
+(`completed`) é o único que espera a confirmação do acionamento; a pulseira
+nunca fica sabendo de uma falha intermediária de acionamento (ver ADR 0003 e
+`docs/architecture/domain-model.md`).
+
+## Parâmetros congelados
+
+Todos os parâmetros abaixo foram fechados em
+[ADR 0003](../../docs/decisions/0003-ble-protocol-parameters.md) e
+[ADR 0004](../../docs/decisions/0004-advertising-payload-and-transport.md):
+
+- formato binário fixo, little-endian
+- AES-128-CMAC truncada para 64 bits em todos os payloads autenticados
+- contador de replay persistido na NVS a cada incremento
+- timeouts fixos no protocolo (janela de confirmação: 10s)
+- sem gesto explícito de rejeição; ausência de clique = timeout
+- cancelamento do operador a qualquer momento, via novo comando GATT
+- débito antes do acionamento; falha de acionamento resolvida por override
+  manual do operador, nunca por reversão automática
+- aviso de baixa conectividade ("aproxime-se") é heurística local da pulseira
+- até 3 tentativas de retry do lease, uma por `challenge_nonce`
+- colisão de `display_code` resolvida por retenção de publicação no servidor
+- resolução de identidade: `tag = AES-CMAC(band_key, ...)`, busca por chave entre pulseiras ativas na sessão
+- payload de advertising unificado em 22 bytes; `interaction_id` atribuído pelo servidor, não anunciado
+- expiração da fase de descoberta: 60s (offset relativo, distinto dos 10s de confirmação)
+- transporte de tempo real da fila: Server-Sent Events
+
+- características e UUIDs GATT: definidos em
+  [binary-format.md](binary-format.md)
+
 ## Parâmetros ainda não congelados
 
-- formato binário e endianness
-- algoritmo e tamanho final das tags
-- características e UUIDs GATT
-- intervalos e timeouts
-- persistência do contador
-- gesto explícito de rejeição
+- identidade individual de operador (mantido `operator_gateway_id` por ora)
+- store-and-forward do ack de acionamento no firmware do gateway (Etapa 10)
 
-Esses parâmetros exigem ADR e vetores de teste antes da implementação física.
+Layout binário completo (offsets, tamanhos, UUIDs) em
+[binary-format.md](binary-format.md). Vetores de teste em
+[test-vectors.md](test-vectors.md). Detalhamento completo das decisões e da
+motivação nas ADRs [0003](../../docs/decisions/0003-ble-protocol-parameters.md)
+e [0004](../../docs/decisions/0004-advertising-payload-and-transport.md).
