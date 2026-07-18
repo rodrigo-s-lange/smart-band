@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Smart-Band Edge API
-  version: "1.1.0"
+  version: "1.2.0"
   description: >
     API HTTP da appliance local (apps/edge-api). Autoridade transacional
     única do sistema — ver AGENTS.md e docs/decisions/0001-local-first-appliance.md.
@@ -23,7 +23,7 @@ paths:
   /health:
     get:
       operationId: getHealth
-      summary: Status da appliance (banco, disco, backup mais recente)
+      summary: Status da appliance (processo, banco e backup mais recente)
       security: []
       responses:
         "200":
@@ -32,6 +32,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /ready:
+    get:
+      operationId: getReadiness
+      summary: Prontidão do processo, PostgreSQL e configuração da appliance
+      security: []
+      responses:
+        "200":
+          description: Processo pronto para receber tráfego operacional
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyStatus"
+        "503":
+          description: Banco indisponível ou appliance ainda não configurada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /appliance:
+    get:
+      operationId: getApplianceContext
+      summary: Escopo single-tenant/single-site e evento ativo
+      responses:
+        "200":
+          description: Contexto operacional local
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplianceContext"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /sightings:
     post:
@@ -477,9 +510,55 @@ components:
           type: string
           enum: [ok, unreachable]
         last_backup_at:
-          type: string
+          type: [string, "null"]
           format: date-time
           description: null se nunca houve backup
+
+    ReadyStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ready
+
+    ApplianceContext:
+      type: object
+      required:
+        - tenant_id
+        - tenant_code
+        - tenant_name
+        - site_id
+        - site_code
+        - site_name
+        - timezone
+        - appliance_name
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        tenant_code:
+          type: string
+        tenant_name:
+          type: string
+        site_id:
+          type: string
+          format: uuid
+        site_code:
+          type: string
+        site_name:
+          type: string
+        timezone:
+          type: string
+        appliance_name:
+          type: string
+        event_id:
+          type: string
+          format: uuid
+        event_code:
+          type: string
+        event_name:
+          type: string
 
     SightingReport:
       type: object

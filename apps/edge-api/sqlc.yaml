@@ -1,0 +1,26 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: internal/postgres/migrations
+    queries: internal/postgres/queries
+    gen:
+      go:
+        package: db
+        out: internal/postgres/generated
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        emit_interface: true
+        emit_pointers_for_null_types: true
+        emit_sql_as_comment: true
+        overrides:
+          - db_type: uuid
+            nullable: false
+            go_type:
+              import: github.com/google/uuid
+              type: UUID
+          - db_type: uuid
+            nullable: true
+            go_type:
+              import: github.com/google/uuid
+              type: UUID
+              pointer: true

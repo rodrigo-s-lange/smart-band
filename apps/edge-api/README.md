@@ -39,3 +39,22 @@ O schema oferece duas operações transacionais estreitas:
   reserva em um único débito somente para ack `succeeded`.
 
 Validação local e de CI: [tools/database/README.md](../../tools/database/README.md).
+
+## Execução
+
+```bash
+export DATABASE_URL='postgresql://user:password@postgres:5432/smartband?sslmode=disable'
+go run ./cmd/edge-api
+```
+
+Configuração adicional e valores padrão ficam em [.env.example](.env.example).
+O serviço expõe health/readiness públicos e exige bearer token de gateway ou
+cookie `sb_session` nos endpoints operacionais de leitura.
+
+```bash
+go test -race ./...
+go vet ./...
+go build ./cmd/edge-api
+```
+
+Arquitetura da fatia: [ADR 0007](../../docs/decisions/0007-edge-api-foundation.md).

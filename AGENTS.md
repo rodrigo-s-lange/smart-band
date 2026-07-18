@@ -32,7 +32,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 11. `docs/decisions/0004-advertising-payload-and-transport.md`
 12. `docs/decisions/0005-protocol-correction-and-transaction-safety.md`
 13. `docs/decisions/0006-single-tenant-single-site-appliance.md`
-14. `docs/roadmap.md`
+14. `docs/decisions/0007-edge-api-foundation.md`
+15. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -122,6 +123,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - executar `python tools/database/validate.py` contra PostgreSQL real quando
   tocar migrations, constraints, reservas, comandos ou ledger
 - formatadores e linters da linguagem
+- em `apps/edge-api`: `go test -race ./...`, `go vet ./...` e `go build ./cmd/edge-api`
+- regenerar `sqlc` e confirmar que o resultado versionado não divergiu
 - testes unitários afetados
 - testes de contrato afetados
 - testes concorrentes quando tocar fila, claim, saldo ou ledger
