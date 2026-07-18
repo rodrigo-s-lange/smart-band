@@ -18,6 +18,20 @@ implícita do CMAC e não integra o payload no fio.
 `XXX-XXX`. Os dois bits superiores do `uint32` são reservados e precisam ser
 zero; valores fora de `0..2^30-1` são inválidos.
 
+A conversão para o display usa o alfabeto
+`0123456789ABCDEFGHJKMNPQRSTVWXYZ`. O primeiro símbolo recebe os cinco bits
+mais significativos do valor de 30 bits e o sexto recebe os cinco menos
+significativos:
+
+```text
+symbol[i] = alphabet[(display_code >> (5 * (5 - i))) & 0x1f], i = 0..5
+text      = symbol[0..2] || "-" || symbol[3..5]
+```
+
+Little-endian vale apenas para os quatro bytes no fio; não inverte a ordem dos
+símbolos. Exemplo normativo: `display_code = 0x12345678`, serializado como
+`78 56 34 12`, é exibido como `938-NKR`.
+
 ```text
 tag_input = 0x01 || protocol_version || session_nonce ||
             display_code_LE || request_ttl_seconds

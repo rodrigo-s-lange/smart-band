@@ -171,18 +171,19 @@ def main() -> int:
         print(f"database fixture prepared: {len(migrations)} migrations")
         return 0
 
-    if migrations[-1].name.startswith("00009_"):
+    if migrations[-1].name.startswith("00010_"):
         reset(psql)
-        apply_up(psql, migrations[:-4])
+        apply_up(psql, migrations[:-5])
         psql.run(read_test("upgrade_stage4_fixture.sql"))
-        apply_up(psql, [migrations[-4]])
+        apply_up(psql, [migrations[-5]])
         psql.run(read_test("upgrade_stage4_assertions.sql"))
-        apply_up(psql, [migrations[-3]])
+        apply_up(psql, [migrations[-4]])
         psql.run(read_test("upgrade_stage5_assertions.sql"))
-        apply_up(psql, [migrations[-2]])
+        apply_up(psql, [migrations[-3]])
         psql.run(read_test("upgrade_stage6_assertions.sql"))
-        apply_up(psql, [migrations[-1]])
+        apply_up(psql, [migrations[-2]])
         psql.run(read_test("upgrade_stage7_assertions.sql"))
+        apply_up(psql, [migrations[-1]])
 
     reset(psql)
     apply_up(psql, migrations)
@@ -202,6 +203,11 @@ def main() -> int:
     reset(psql)
     apply_up(psql, migrations)
     psql.run(read_test("fixture.sql"))
+    psql.run(read_test("actuation_failed_band_lock_assertions.sql"))
+
+    reset(psql)
+    apply_up(psql, migrations)
+    psql.run(read_test("fixture.sql"))
     run_cancel_dispatch_race(psql)
 
     if args.docker_container:
@@ -217,7 +223,10 @@ def main() -> int:
     if remaining != "0":
         raise RuntimeError(f"rollback left {remaining} public tables")
 
-    checks = "invariants, concurrency, ambiguous ack, cancel/dispatch race and rollback"
+    checks = (
+        "invariants, concurrency, ambiguous ack, actuation-failed band lock, "
+        "cancel/dispatch race and rollback"
+    )
     if args.docker_container:
         checks += ", including database restart"
     print(f"database validation passed: {len(migrations)} migrations; {checks}")

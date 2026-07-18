@@ -21,6 +21,11 @@ transaction.actuation_override
 gateway.status_changed
 ```
 
+`attraction.actuation_failed` representa somente prova explícita de
+`not_executed`. Ack ambíguo, ausência de ack e resultado contraditório não são
+falhas comprovadas: publicam `transaction.reconciliation_required` com o motivo
+correspondente e mantêm a reserva presa até resolução auditada.
+
 `transaction.completed` é o único evento automático que informa débito:
 contém `ledger_entry_id` e `actuation_command_id`. Reserva não é ledger.
 Eventos de resolução/override carregam o gateway cadastrado, ação e motivo.

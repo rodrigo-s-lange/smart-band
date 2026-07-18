@@ -11,7 +11,9 @@
       "expected_full_cmac_hex": "5317788fcfee63d0c9ffd21bdc8bf0f7",
       "expected_tag_hex": "5317788fcfee63d0",
       "wire_payload_hex": "0101020304050607085317788fcfee63d0785634123c",
-      "wire_length_bytes": 22
+      "wire_length_bytes": 22,
+      "display_code_raw_uint32": 305419896,
+      "display_code_text": "938-NKR"
     },
     {
       "name": "challenge",

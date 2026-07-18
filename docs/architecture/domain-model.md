@@ -109,7 +109,7 @@ discovered/queued/queued_ambiguous --expires_at--> expired
 
 queued --claim CAS--> claimed
 claimed --desafio GATT enviado--> awaiting_band_confirmation
-claimed --lease expira, tentativa < 3--> queued
+claimed --falha/timeout de rádio, tentativa < 3; troca rádio e nonce--> claimed
 claimed --3 tentativas esgotadas--> expired
 
 awaiting_band_confirmation --Decision válido--> confirmed_pending_validation
@@ -131,6 +131,13 @@ reconciliation_required --não entrega comprovada; reserva liberada--> cancelled
 Não existe auto-retry de acionamento físico. Retry reutiliza o resultado se o
 `actuation_command_id` já for conhecido; um novo ID só é criado por resolução
 auditada depois de falha explicitamente negativa.
+
+O retry automático acima existe somente antes do Challenge GATT ser entregue.
+Ele preserva o mesmo claim, `transaction_id`, atração e gateway operador,
+incrementa `attempt_count`, escolhe novamente `radio_gateway_id`, gera um novo
+`challenge_nonce` e renova o lease. A interação não retorna a `queued` e não
+passa por um segundo claim CAS; assim, outro gateway operador não pode tomar a
+seleção enquanto o servidor tenta outra ponte de rádio.
 
 Cancelamento é aceito até `credit_reserved`, antes do despacho do comando. Em
 `actuation_pending`, somente ack `not_executed` ou reconciliação identificada
