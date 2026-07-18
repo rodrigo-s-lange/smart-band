@@ -1,13 +1,19 @@
 package postgres
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/application"
+	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/proximity"
+	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/security"
 )
 
 func TestStoreAgainstPostgreSQL(t *testing.T) {
@@ -69,4 +75,166 @@ func TestStoreAgainstPostgreSQL(t *testing.T) {
 	if err != nil || len(bands) != 2 {
 		t.Fatalf("bands=%+v err=%v", bands, err)
 	}
+}
+
+func TestAuthenticatedSightingDeduplicatesAndPublishes(t *testing.T) {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("DATABASE_URL is not set")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	pool, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	repository := New(pool)
+	box, err := security.NewBandKeyBox(bytes.Repeat([]byte{0x42}, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	bandID := "66666666-6666-6666-6666-666666666661"
+	bandKey := []byte{0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c}
+	envelope, err := box.Encrypt(bandID, bandKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE bands SET encrypted_key = $1 WHERE band_id = $2`, envelope, bandID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE interaction_requests SET state = 'completed' WHERE band_id = $1`, bandID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `DELETE FROM outbox_events`); err != nil {
+		t.Fatal(err)
+	}
+	service := application.NewService(repository, box)
+	payload := advertisingPayload(t, bandKey, [8]byte{9, 10, 11, 12, 13, 14, 15, 16}, 0x12345678)
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	report := application.SightingReport{
+		GatewayID: 1, RSSI: -52, GatewayObservedAt: now.Add(-20 * time.Millisecond),
+		ReceivedAt: now, RawPayload: payload,
+	}
+	actor := application.Actor{
+		Kind: "gateway", InternalID: "77777777-7777-7777-7777-777777777771", ProtocolID: 1,
+	}
+	first, err := service.ReportSighting(ctx, actor, report)
+	if err != nil || !first.Resolved || first.InteractionID == nil {
+		t.Fatalf("first=%+v err=%v", first, err)
+	}
+	report.ReceivedAt = now.Add(5 * time.Second)
+	second, err := service.ReportSighting(ctx, actor, report)
+	if err != nil || second.InteractionID == nil || *second.InteractionID != *first.InteractionID {
+		t.Fatalf("second=%+v err=%v", second, err)
+	}
+	var interactions, sightings int
+	var firstAuthenticated, expiresAt time.Time
+	if err := pool.QueryRow(ctx, `
+        SELECT count(*), min(first_authenticated_at), min(expires_at)
+          FROM interaction_requests
+         WHERE band_id = $1 AND session_nonce = $2`, bandID, payload[1:9]).Scan(
+		&interactions, &firstAuthenticated, &expiresAt); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `
+        SELECT count(*) FROM interaction_sightings s
+        JOIN interaction_requests i USING (interaction_id)
+        WHERE i.band_id = $1 AND i.session_nonce = $2`, bandID, payload[1:9]).Scan(&sightings); err != nil {
+		t.Fatal(err)
+	}
+	if interactions != 1 || sightings != 2 || !expiresAt.Equal(firstAuthenticated.Add(60*time.Second)) {
+		t.Fatalf("interactions=%d sightings=%d first=%s expires=%s", interactions, sightings, firstAuthenticated, expiresAt)
+	}
+	events, err := repository.EventsAfter(ctx, 0, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 2 || events[0].EventType != "interaction.discovered" || events[1].EventType != "interaction.queued" {
+		t.Fatalf("events=%+v", events)
+	}
+
+	tampered := append([]byte(nil), payload...)
+	tampered[9] ^= 0xff
+	report.RawPayload = tampered
+	invalid, err := service.ReportSighting(ctx, actor, report)
+	if err != nil || invalid.Resolved {
+		t.Fatalf("tampered=%+v err=%v", invalid, err)
+	}
+	if err := pool.QueryRow(ctx, `
+        SELECT count(*) FROM interaction_sightings s
+        JOIN interaction_requests i USING (interaction_id)
+        WHERE i.band_id = $1 AND i.session_nonce = $2`, bandID, payload[1:9]).Scan(&sightings); err != nil {
+		t.Fatal(err)
+	}
+	if sightings != 2 {
+		t.Fatalf("invalid advertising created a sighting: count=%d", sightings)
+	}
+
+	secondBandID := "66666666-6666-6666-6666-666666666662"
+	secondKey := bytes.Repeat([]byte{0x5a}, 16)
+	secondEnvelope, err := box.Encrypt(secondBandID, secondKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE bands SET encrypted_key = $1 WHERE band_id = $2`, secondEnvelope, secondBandID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE interaction_requests SET state = 'completed' WHERE band_id = $1`, secondBandID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+        INSERT INTO participants (participant_id, tenant_id, external_reference)
+        VALUES ('44444444-4444-4444-4444-444444444445',
+                '11111111-1111-1111-1111-111111111111', 'fixture-collision');
+        INSERT INTO operational_sessions (
+            session_id, tenant_id, site_id, event_id, participant_id
+        ) VALUES (
+            '99999999-9999-9999-9999-999999999998',
+            '11111111-1111-1111-1111-111111111111',
+            '22222222-2222-2222-2222-222222222222',
+            '33333333-3333-3333-3333-333333333333',
+            '44444444-4444-4444-4444-444444444445'
+        );
+        INSERT INTO band_assignments (tenant_id, session_id, band_id)
+        VALUES (
+            '11111111-1111-1111-1111-111111111111',
+            '99999999-9999-9999-9999-999999999998',
+            '66666666-6666-6666-6666-666666666662'
+        )`); err != nil {
+		t.Fatal(err)
+	}
+	report.RawPayload = advertisingPayload(t, secondKey, [8]byte{33, 34, 35, 36, 37, 38, 39, 40}, 0x12345678)
+	report.ReceivedAt = now.Add(6 * time.Second)
+	collision, err := service.ReportSighting(ctx, actor, report)
+	if err != nil || !collision.Resolved {
+		t.Fatalf("collision=%+v err=%v", collision, err)
+	}
+	var ambiguous int
+	if err := pool.QueryRow(ctx, `
+        SELECT count(*) FROM interaction_requests
+         WHERE display_code = '938-NKR' AND state = 'queued_ambiguous'`).Scan(&ambiguous); err != nil {
+		t.Fatal(err)
+	}
+	if ambiguous != 2 {
+		t.Fatalf("ambiguous interactions=%d", ambiguous)
+	}
+}
+
+func advertisingPayload(t *testing.T, key []byte, nonce [8]byte, displayCode uint32) []byte {
+	t.Helper()
+	payload := make([]byte, proximity.AdvertisingLength)
+	payload[0] = proximity.ProtocolVersion
+	copy(payload[1:9], nonce[:])
+	binary.LittleEndian.PutUint32(payload[17:21], displayCode)
+	payload[21] = proximity.RequestTTLSeconds
+	message := append([]byte{1}, payload[0])
+	message = append(message, payload[1:9]...)
+	message = append(message, payload[17:22]...)
+	tag, err := proximity.AESCMAC(key, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+	copy(payload[9:17], tag[:8])
+	return payload
 }

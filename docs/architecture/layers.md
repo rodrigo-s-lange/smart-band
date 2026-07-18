@@ -33,3 +33,9 @@ de ESP-IDF, framework web ou transporte específico.
 
 O i5 é laboratório. A appliance comercial precisa ser instalável em outro host
 Linux sem mudanças de código ou estado oculto.
+
+No laboratório, o checkout fica em
+`/home/rodrigo/projects/products/smart-band`. Sincronizar esse checkout coloca
+arquivos-fonte no i5; não significa manter containers ou serviços executando.
+Implantação permanente será uma ação explícita e reproduzível de
+`deploy/appliance`.

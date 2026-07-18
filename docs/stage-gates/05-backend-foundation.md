@@ -1,4 +1,4 @@
-# Gate parcial da Etapa 5 — Fundação do backend
+# Gate parcial da Etapa 5 — Backend local
 
 Status: concluído — 2026-07-18
 
@@ -35,7 +35,7 @@ go vet ./...
 go build ./cmd/edge-api
 ```
 
-O workflow `Backend` também prepara as seis migrations em PostgreSQL real,
+O workflow `Backend` também prepara as sete migrations em PostgreSQL real,
 regenera o `sqlc`, compara o resultado versionado e constrói a imagem.
 
 Evidência: workflow verde na PR 3 em
@@ -44,9 +44,21 @@ além dos workflows `Contracts` e `Database`.
 
 ## Ainda necessário para concluir a Etapa 5
 
-- ingestão e autenticação do advertising de 22 bytes
-- criação/deduplicação de sightings e publicação SSE
 - claim CAS e escolha do gateway de rádio
 - validação da Decision GATT
 - reserva, despacho, cancelamento, ack e reconciliação pela camada de aplicação
 - provisioning seguro e login/PIN operacional
+
+## Segunda fatia entregue
+
+- parser do advertising v1 de 22 bytes e AES-128-CMAC validado contra RFC 4493
+  e os vetores versionados do projeto
+- resolução por busca entre pulseiras atribuídas à sessão ativa
+- envelope AES-256-GCM para `band_key`, com KEK externa ao PostgreSQL
+- `POST /v1/sightings` vinculado à identidade autenticada do gateway
+- transação PostgreSQL para criação, deduplicação, colisão e outbox
+- replay como novo sighting sem renovar o TTL original
+- sequência monotônica de outbox e `GET /v1/queue/stream` com
+  `Last-Event-ID`, heartbeat e expiração de descoberta
+
+Detalhes e consequências: [ADR 0008](../decisions/0008-authenticated-sightings-and-sse.md).

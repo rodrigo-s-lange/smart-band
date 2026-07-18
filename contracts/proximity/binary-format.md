@@ -14,6 +14,10 @@ implícita do CMAC e não integra o payload no fio.
 | 17 | `display_code` | uint32 LE | 4 |
 | 21 | `request_ttl_seconds` | uint8 | 1 |
 
+`display_code` usa exatamente seis símbolos Crockford Base32, exibidos como
+`XXX-XXX`. Os dois bits superiores do `uint32` são reservados e precisam ser
+zero; valores fora de `0..2^30-1` são inválidos.
+
 ```text
 tag_input = 0x01 || protocol_version || session_nonce ||
             display_code_LE || request_ttl_seconds
