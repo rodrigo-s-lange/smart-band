@@ -153,6 +153,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL"))
     parser.add_argument("--docker-container")
+    parser.add_argument("--prepare-only", action="store_true")
     args = parser.parse_args()
 
     migrations = sorted(MIGRATIONS.glob("*.sql"))
@@ -162,6 +163,20 @@ def main() -> int:
         migration_parts(migration)
 
     psql = Psql(args.database_url, args.docker_container)
+
+    if args.prepare_only:
+        reset(psql)
+        apply_up(psql, migrations)
+        psql.run(read_test("fixture.sql"))
+        print(f"database fixture prepared: {len(migrations)} migrations")
+        return 0
+
+    if migrations[-1].name.startswith("00006_"):
+        reset(psql)
+        apply_up(psql, migrations[:-1])
+        psql.run(read_test("upgrade_stage4_fixture.sql"))
+        apply_up(psql, migrations[-1:])
+        psql.run(read_test("upgrade_stage4_assertions.sql"))
 
     reset(psql)
     apply_up(psql, migrations)

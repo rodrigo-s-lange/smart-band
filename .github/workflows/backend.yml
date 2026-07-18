@@ -1,0 +1,70 @@
+name: Backend
+
+on:
+  pull_request:
+    paths:
+      - "apps/edge-api/**"
+      - "contracts/openapi/**"
+      - "tests/database/**"
+      - "tools/database/**"
+      - ".github/workflows/backend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/edge-api/**"
+      - "contracts/openapi/**"
+      - "tests/database/**"
+      - "tools/database/**"
+      - ".github/workflows/backend.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.4
+        env:
+          POSTGRES_DB: smartband
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d smartband"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/smartband?sslmode=disable
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: apps/edge-api/go.mod
+          cache-dependency-path: apps/edge-api/go.sum
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Prepare database fixture
+        run: python tools/database/validate.py --prepare-only
+      - name: Verify sqlc output
+        run: |
+          docker run --rm \
+            --volume "${{ github.workspace }}:/src" \
+            --workdir /src/apps/edge-api \
+            sqlc/sqlc:1.31.1 generate
+          git diff --exit-code -- apps/edge-api/internal/postgres/generated
+      - name: Test with race detector
+        working-directory: apps/edge-api
+        run: go test -race ./...
+      - name: Vet
+        working-directory: apps/edge-api
+        run: go vet ./...
+      - name: Build
+        working-directory: apps/edge-api
+        run: go build ./cmd/edge-api
+      - name: Build container image
+        run: docker build --tag smart-band-edge-api:test apps/edge-api

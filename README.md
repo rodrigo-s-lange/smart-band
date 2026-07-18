@@ -82,13 +82,14 @@ docs/
 9. [docs/decisions/0006-single-tenant-single-site-appliance.md](docs/decisions/0006-single-tenant-single-site-appliance.md)
 10. [docs/stage-gates/03-executable-contracts.md](docs/stage-gates/03-executable-contracts.md)
 11. [docs/stage-gates/04-postgresql-model.md](docs/stage-gates/04-postgresql-model.md)
-12. [docs/roadmap.md](docs/roadmap.md)
+12. [docs/stage-gates/05-backend-foundation.md](docs/stage-gates/05-backend-foundation.md)
+13. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 
-Etapas 1–4 concluídas: contratos e modelo PostgreSQL estão protegidos por CI. A
-próxima frente é a Etapa 5, backend local. Hardware e firmware ESP32 permanecem
-no fim.
+Etapas 1–4 concluídas. A primeira fatia da Etapa 5 implementa a fundação do
+backend local; os fluxos transacionais HTTP continuam em construção. Hardware
+e firmware ESP32 permanecem no fim.
 
 Validação local:
 

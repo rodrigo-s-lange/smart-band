@@ -26,14 +26,15 @@ BEGIN
     BEGIN
         INSERT INTO interaction_requests (
             tenant_id, site_id, event_id, band_id, session_nonce, display_code,
-            protocol_version, state, first_authenticated_at, expires_at
+            protocol_version, state, first_authenticated_at, expires_at,
+            protocol_id
         ) VALUES (
             '11111111-1111-1111-1111-111111111111',
             '22222222-2222-2222-2222-222222222222',
             '33333333-3333-3333-3333-333333333333',
             '66666666-6666-6666-6666-666666666661',
             decode('2122232425262728', 'hex'), 'P9N-5RY', 1, 'queued',
-            now(), now() + interval '60 seconds'
+            now(), now() + interval '60 seconds', 103
         );
         RAISE EXCEPTION 'one-active-interaction constraint was not enforced';
     EXCEPTION WHEN unique_violation THEN NULL;
@@ -44,14 +45,15 @@ BEGIN
     BEGIN
         INSERT INTO interaction_requests (
             tenant_id, site_id, event_id, band_id, session_nonce, display_code,
-            protocol_version, state, first_authenticated_at, expires_at
+            protocol_version, state, first_authenticated_at, expires_at,
+            protocol_id
         ) VALUES (
             '11111111-1111-1111-1111-111111111111',
             '22222222-2222-2222-2222-222222222222',
             '33333333-3333-3333-3333-333333333333',
             '66666666-6666-6666-6666-666666666661',
             decode('0102030405060708', 'hex'), 'Q2R-6TZ', 1, 'expired',
-            now(), now() + interval '60 seconds'
+            now(), now() + interval '60 seconds', 104
         );
         RAISE EXCEPTION 'durable band nonce constraint was not enforced';
     EXCEPTION WHEN unique_violation THEN NULL;
