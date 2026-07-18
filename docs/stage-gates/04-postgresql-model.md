@@ -1,6 +1,6 @@
 # Gate da Etapa 4 — Modelo PostgreSQL
 
-Status: candidato validado localmente — 2026-07-18
+Status: concluído — 2026-07-18
 
 ## Escopo entregue
 
@@ -51,12 +51,14 @@ comando, ou o comando permanece pendente com a reserva ativa. Ack ambíguo não
 debita. O cenário de restart persiste reserva e comando, reinicia o PostgreSQL
 e comprova que o ack posterior gera exatamente um débito.
 
-O workflow `Database` repete migrations, invariantes, concorrência e rollback
-em cada PR. O restart completo permanece uma prova adicional do laboratório,
-porque o runner não controla o ciclo de vida do service container.
+O workflow `Database` repetiu migrations, invariantes, concorrência e rollback
+na PR 2 e passou em
+[GitHub Actions](https://github.com/rodrigo-s-lange/smart-band/actions/runs/29639557194).
+O workflow de contratos também passou. O restart completo permanece uma prova
+adicional do laboratório, porque o runner não controla o ciclo de vida do
+service container.
 
-## Critério final
+## Próxima etapa
 
-O gate passa quando o workflow `Database` estiver verde na PR desta etapa. A
-Etapa 5 pode então consumir as funções transacionais e as tabelas por queries
-SQL tipadas, sem deslocar regras de saldo para gateway ou pulseira.
+O gate passou. A Etapa 5 pode consumir as funções transacionais e as tabelas
+por queries SQL tipadas, sem deslocar regras de saldo para gateway ou pulseira.

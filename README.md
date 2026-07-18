@@ -86,9 +86,9 @@ docs/
 
 ## Estado
 
-Etapas 1–3 concluídas. A topologia da appliance foi ratificada e a Etapa 4
-(PostgreSQL e migrations) está em execução. Hardware e firmware ESP32
-permanecem no fim.
+Etapas 1–4 concluídas: contratos e modelo PostgreSQL estão protegidos por CI. A
+próxima frente é a Etapa 5, backend local. Hardware e firmware ESP32 permanecem
+no fim.
 
 Validação local:
 
