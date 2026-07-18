@@ -46,6 +46,16 @@ Falhas de validação, ausência de carteira ou de rádio não deixam claim parc
 `interaction.confirmation_requested` ainda não é emitido nesta operação: esse
 evento pertence ao despacho GATT da próxima fatia.
 
+### Clarificação de retry de rádio — 2026-07-18
+
+Falha ou expiração do lease antes da entrega do Challenge não devolve a
+interação a `queued` e não executa outro claim CAS. O servidor mantém o mesmo
+claim, `transaction_id`, atração e gateway operador; incrementa
+`attempt_count`, seleciona novamente `radio_gateway_id`, gera um novo
+`challenge_nonce` e renova o lease. Somente após três tentativas fracassadas a
+interação expira. Essa regra impede que outro gateway operador tome uma
+interação já selecionada durante o retry automático de rádio.
+
 ## Migração
 
 Sessões de operador criadas por esta decisão foram removidas pela ADR 0010.

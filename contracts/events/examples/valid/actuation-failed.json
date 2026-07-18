@@ -1,0 +1,16 @@
+{
+  "event_id": "10000000-0000-4000-8000-000000000012",
+  "event_type": "attraction.actuation_failed",
+  "version": 1,
+  "occurred_at": "2026-07-18T14:00:00Z",
+  "correlation_id": "20000000-0000-4000-8000-000000000012",
+  "payload": {
+    "transaction_id": "aabbccddeeff0011",
+    "interaction_id": 1,
+    "attraction_id": 7,
+    "operator_gateway_id": 3,
+    "actuation_command_id": "30000000-0000-4000-8000-000000000012",
+    "failure_kind": "not_executed",
+    "failed_at": "2026-07-18T14:00:00Z"
+  }
+}

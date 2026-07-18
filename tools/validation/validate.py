@@ -92,6 +92,14 @@ def decode_hex(value: str, label: str) -> bytes:
         raise AssertionError(f"invalid hex in {label}") from exc
 
 
+def encode_display_code(value: int) -> str:
+    if not 0 <= value < 1 << 30:
+        raise AssertionError("display code uses reserved upper bits")
+    alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+    symbols = [alphabet[(value >> (5 * (5 - index))) & 0x1F] for index in range(6)]
+    return "".join(symbols[:3]) + "-" + "".join(symbols[3:])
+
+
 def validate_cmac_vectors() -> None:
     data = load_json(ROOT / "contracts/proximity/test-vectors.json")
     key = decode_hex(data["band_key_hex"], "band_key_hex")
@@ -117,6 +125,16 @@ def validate_cmac_vectors() -> None:
         seen_domains.add(message[0])
     if seen_domains != {1, 2, 3, 4, 5}:
         raise AssertionError(f"unexpected CMAC domains: {seen_domains}")
+
+    advertising = next(
+        vector for vector in data["vectors"] if vector["name"] == "advertising"
+    )
+    advertising_wire = decode_hex(advertising["wire_payload_hex"], "advertising.wire")
+    display_code_raw = int.from_bytes(advertising_wire[17:21], byteorder="little")
+    if display_code_raw != advertising["display_code_raw_uint32"]:
+        raise AssertionError("advertising display-code integer mismatch")
+    if encode_display_code(display_code_raw) != advertising["display_code_text"]:
+        raise AssertionError("advertising display-code symbol order mismatch")
 
     tamper = data["tampering_cases"][0]
     original = decode_hex(tamper["original_cmac_input_hex"], "tamper.original")
