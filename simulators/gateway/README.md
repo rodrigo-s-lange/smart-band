@@ -1,4 +1,12 @@
-# Gateway simulator
+# Simulador de gateway
 
-Simula atracao, comunicacao com pulseiras e solicitacoes ao edge. Deve injetar
-duplicatas, timeouts, repeticoes e concorrencia antes do gateway fisico.
+Deve permitir múltiplas instâncias e simular:
+
+- sightings repetidos e RSSI variável
+- TFT com fila global
+- seleção concorrente do mesmo código
+- gateway operador diferente do gateway de rádio
+- falha e fallback da sessão GATT
+- acionamento aprovado ou falho
+- persistência de `actuation_command_id`, ack e deduplicação após reinício
+- ack ambíguo sem segundo acionamento automático

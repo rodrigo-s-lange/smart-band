@@ -1,0 +1,730 @@
+openapi: 3.1.0
+info:
+  title: Smart-Band Edge API
+  version: "1.1.0"
+  description: >
+    API HTTP da appliance local (apps/edge-api). Autoridade transacional
+    única do sistema — ver AGENTS.md e docs/decisions/0001-local-first-appliance.md.
+    Endpoints administrativos (bands, participants, attractions, gateways,
+    operators, credits) são representativos: o CRUD completo é preenchido
+    durante a Etapa 5 (backend local), seguindo o mesmo padrão de auth,
+    versionamento e forma de erro já fixado aqui.
+servers:
+  - url: "https://{host}/v1"
+    variables:
+      host:
+        default: appliance.local
+
+security:
+  - gatewayApiKey: []
+  - operatorSession: []
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Status da appliance (banco, disco, backup mais recente)
+      security: []
+      responses:
+        "200":
+          description: Appliance operacional
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /sightings:
+    post:
+      operationId: reportSighting
+      summary: Gateway reporta um payload de advertising observado
+      security:
+        - gatewayApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SightingReport"
+      responses:
+        "200":
+          description: >
+            Payload autenticado e resolvido. `resolved=false` quando o
+            servidor não conseguiu casar nenhuma chave de pulseira ativa
+            contra o session_nonce (payload inválido ou pulseira não
+            provisionada) — não entra na fila (invariante I6).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SightingResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /queue:
+    get:
+      operationId: getQueue
+      summary: Snapshot atual da fila global (mesma visão lógica para todos os TFTs)
+      responses:
+        "200":
+          description: Fila atual, novos códigos no topo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QueueEntry"
+
+  /queue/stream:
+    get:
+      operationId: streamQueue
+      summary: Atualizações da fila em tempo real via Server-Sent Events (ADR 0004)
+      description: >
+        Canal somente servidor → cliente. Cada evento SSE tem `event:` igual
+        ao `event_type` do catálogo em contracts/events/events.schema.json
+        (ex.: interaction.queued, interaction.claimed, interaction.expired)
+        e `data:` com o envelope completo do evento. Mutações (claim,
+        cancelamento) não viajam por este canal — sempre por REST.
+      responses:
+        "200":
+          description: Stream aberto
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /interactions/{interaction_id}/claim:
+    post:
+      operationId: claimInteraction
+      summary: Claim atômico de uma interação (compare-and-swap, I3/I16)
+      security:
+        - operatorSession: []
+      parameters:
+        - $ref: "#/components/parameters/InteractionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimRequest"
+      responses:
+        "200":
+          description: Claim bem-sucedido; transaction_intent criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: >
+            Já existe claim ativo ou o código está ambíguo; a interação não
+            pode avançar.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /interactions/{interaction_id}/cancel:
+    post:
+      operationId: cancelInteraction
+      summary: Cancelamento antes do despacho do comando físico (ADR 0005)
+      security:
+        - operatorSession: []
+      parameters:
+        - $ref: "#/components/parameters/InteractionId"
+      responses:
+        "204":
+          description: >
+            Cancelado; uma reserva ativa é liberada atomicamente.
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Comando físico já despachado ou ledger commitado; exige reconciliação/ajuste
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /transactions/{transaction_id}:
+    get:
+      operationId: getTransaction
+      summary: Status de uma transação
+      security:
+        - operatorSession: []
+        - gatewayApiKey: []
+      parameters:
+        - $ref: "#/components/parameters/TransactionId"
+      responses:
+        "200":
+          description: Estado atual
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /transactions/{transaction_id}/actuation-result:
+    post:
+      operationId: reportActuationResult
+      summary: Gateway reporta o resultado do acionamento automático
+      security:
+        - gatewayApiKey: []
+      parameters:
+        - $ref: "#/components/parameters/TransactionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActuationResult"
+      responses:
+        "200":
+          description: >
+            Resultado idempotente registrado. Em sucesso, consome a reserva,
+            cria o débito e dispara transaction.completed. `not_executed`
+            não debita; timeout/ack ambíguo exige reconciliação (ADR 0005).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Transação não está em `actuation_pending` ou command_id não corresponde
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /transactions/{transaction_id}/actuation-override:
+    post:
+      operationId: overrideActuation
+      summary: Operador identificado resolve falha ou ambiguidade (ADR 0005)
+      security:
+        - operatorSession: []
+      parameters:
+        - $ref: "#/components/parameters/TransactionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActuationOverrideRequest"
+      responses:
+        "200":
+          description: >
+            Resolução registrada com operator_id e operator_gateway_id. Uma
+            confirmação manual comprovada consome a reserva e cria um único
+            débito; liberação da reserva não cria ledger.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Transação não está em `actuation_failed` ou `reconciliation_required`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /ledger/entries:
+    get:
+      operationId: listLedgerEntries
+      summary: Consulta de ledger (auditoria)
+      security:
+        - operatorSession: []
+      parameters:
+        - name: band_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Lançamentos correspondentes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LedgerEntry"
+
+  /ledger/adjustments:
+    post:
+      operationId: createLedgerAdjustment
+      summary: Estorno/ajuste manual — sempre revisado por humano (ADR 0003)
+      security:
+        - operatorSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LedgerAdjustmentRequest"
+      responses:
+        "201":
+          description: Ajuste registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LedgerEntry"
+
+  /bands:
+    get:
+      operationId: listBands
+      summary: Lista pulseiras provisionadas
+      security:
+        - operatorSession: []
+      responses:
+        "200":
+          description: Pulseiras
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Band"
+    post:
+      operationId: provisionBand
+      summary: Provisiona uma pulseira nova (gera band_key exclusiva)
+      security:
+        - operatorSession: []
+      responses:
+        "201":
+          description: Pulseira provisionada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Band"
+
+  /bands/{band_id}/credits:
+    post:
+      operationId: topUpCredits
+      summary: Carga de créditos/vidas na pulseira
+      security:
+        - operatorSession: []
+      parameters:
+        - name: band_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditTopUp"
+      responses:
+        "201":
+          description: Crédito aplicado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LedgerEntry"
+
+  /attractions:
+    get:
+      operationId: listAttractions
+      summary: Lista atrações
+      responses:
+        "200":
+          description: Atrações
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Attraction"
+    post:
+      operationId: createAttraction
+      summary: Cadastra atração
+      security:
+        - operatorSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Attraction"
+      responses:
+        "201":
+          description: Criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attraction"
+
+  /gateways:
+    get:
+      operationId: listGateways
+      summary: Lista gateways provisionados
+      responses:
+        "200":
+          description: Gateways
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Gateway"
+    post:
+      operationId: provisionGateway
+      summary: Provisiona gateway (emite API key — ver Autenticação)
+      security:
+        - operatorSession: []
+      responses:
+        "201":
+          description: Gateway provisionado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gateway"
+
+  /operators:
+    get:
+      operationId: listOperators
+      summary: Lista operadores autorizados
+      security:
+        - operatorSession: []
+      responses:
+        "200":
+          description: Operadores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Operator"
+
+components:
+  securitySchemes:
+    gatewayApiKey:
+      type: http
+      scheme: bearer
+      description: >
+        Token estático por gateway, emitido no provisionamento (POST
+        /gateways). Endurecimento futuro: mTLS (ver ADR 0003, Postergado).
+    operatorSession:
+      type: apiKey
+      in: cookie
+      name: sb_session
+      description: Sessão de login humano do operator-web, modo kiosk incluso.
+
+  parameters:
+    InteractionId:
+      name: interaction_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 4294967295
+    TransactionId:
+      name: transaction_id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/TransactionId"
+
+  responses:
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Credencial ausente ou inválida
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    TransactionId:
+      type: string
+      description: 8 bytes do protocolo BLE em hex minúsculo
+      pattern: "^[0-9a-f]{16}$"
+
+    HealthStatus:
+      type: object
+      required: [status, database, last_backup_at]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        database:
+          type: string
+          enum: [ok, unreachable]
+        last_backup_at:
+          type: string
+          format: date-time
+          description: null se nunca houve backup
+
+    SightingReport:
+      type: object
+      required: [gateway_id, rssi, received_at, raw_payload]
+      properties:
+        gateway_id:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        rssi:
+          type: integer
+        received_at:
+          type: string
+          format: date-time
+        raw_payload:
+          type: string
+          contentEncoding: base64
+          description: 22 bytes do payload de advertising (binary-format.md), codificados em base64
+
+    SightingResult:
+      type: object
+      required: [resolved]
+      properties:
+        resolved:
+          type: boolean
+        interaction_id:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+
+    QueueEntry:
+      type: object
+      required: [interaction_id, display_code, status, queued_at]
+      properties:
+        interaction_id:
+          type: integer
+        display_code:
+          type: string
+          pattern: "^[0-9A-HJKMNP-TV-Z]{3}-[0-9A-HJKMNP-TV-Z]{3}$"
+        status:
+          type: string
+          enum: [queued, queued_ambiguous]
+        collides_with:
+          type: array
+          items:
+            type: integer
+          uniqueItems: true
+        queued_at:
+          type: string
+          format: date-time
+
+    ClaimRequest:
+      type: object
+      required: [operator_gateway_id, attraction_id]
+      properties:
+        operator_gateway_id:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        attraction_id:
+          type: integer
+          minimum: 0
+          maximum: 65535
+
+    ClaimResponse:
+      type: object
+      required: [transaction_id, interaction_id]
+      properties:
+        transaction_id:
+          $ref: "#/components/schemas/TransactionId"
+        interaction_id:
+          type: integer
+
+    TransactionStatus:
+      type: object
+      required: [transaction_id, interaction_id, state, attraction_id, operator_gateway_id]
+      properties:
+        transaction_id:
+          $ref: "#/components/schemas/TransactionId"
+        interaction_id:
+          type: integer
+        state:
+          type: string
+          enum:
+            - claimed
+            - awaiting_band_confirmation
+            - confirmed_pending_validation
+            - denied
+            - credit_reserved
+            - actuation_pending
+            - completed
+            - actuation_failed
+            - reconciliation_required
+            - confirmation_timeout
+            - cancelled
+        amount:
+          type: integer
+          minimum: 0
+        attraction_id:
+          type: integer
+        operator_gateway_id:
+          type: integer
+          description: origem da seleção e da atribuição da atração (AGENTS.md, interaction-queue.md)
+        radio_gateway_id:
+          type: integer
+          description: ponte BLE escolhida para a sessão GATT; pode diferir do operator_gateway_id
+        reservation_id:
+          type: string
+          format: uuid
+        actuation_command_id:
+          type: string
+          format: uuid
+
+    ActuationResult:
+      type: object
+      required: [actuation_command_id, result, occurred_at]
+      properties:
+        actuation_command_id:
+          type: string
+          format: uuid
+        result:
+          type: string
+          enum: [succeeded, not_executed, ambiguous]
+        occurred_at:
+          type: string
+          format: date-time
+
+    ActuationOverrideRequest:
+      type: object
+      required: [operator_id, operator_gateway_id, action, reason]
+      properties:
+        operator_id:
+          type: string
+          format: uuid
+        operator_gateway_id:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        action:
+          type: string
+          enum: [retry_actuation, release_reservation, manual_confirmation]
+        reason:
+          type: string
+          minLength: 1
+
+    LedgerEntry:
+      type: object
+      required: [ledger_entry_id, band_id, amount, balance_after, committed_at, kind]
+      properties:
+        ledger_entry_id:
+          type: string
+          format: uuid
+        band_id:
+          type: string
+          format: uuid
+        transaction_id:
+          $ref: "#/components/schemas/TransactionId"
+        amount:
+          type: integer
+          description: negativo para débito, positivo para crédito/estorno
+        balance_after:
+          type: integer
+          minimum: 0
+        committed_at:
+          type: string
+          format: date-time
+        kind:
+          type: string
+          enum: [debit, credit, manual_adjustment]
+        reason:
+          type: string
+
+    LedgerAdjustmentRequest:
+      type: object
+      required: [band_id, operator_id, amount, reason]
+      properties:
+        band_id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          description: positivo para devolver saldo, negativo para corrigir excesso
+        reason:
+          type: string
+        operator_id:
+          type: string
+          format: uuid
+        reference_transaction_id:
+          $ref: "#/components/schemas/TransactionId"
+
+    CreditTopUp:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+
+    Band:
+      type: object
+      required: [band_id, provisioned_at, balance]
+      properties:
+        band_id:
+          type: string
+          format: uuid
+        provisioned_at:
+          type: string
+          format: date-time
+        balance:
+          type: integer
+          minimum: 0
+
+    Attraction:
+      type: object
+      required: [attraction_id, name]
+      properties:
+        attraction_id:
+          type: integer
+        name:
+          type: string
+        default_cost:
+          type: integer
+          minimum: 0
+
+    Gateway:
+      type: object
+      required: [gateway_id, role]
+      properties:
+        gateway_id:
+          type: integer
+        role:
+          type: string
+          enum: [operator, radio, both]
+        status:
+          type: string
+          enum: [online, offline, degraded]
+
+    Operator:
+      type: object
+      required: [operator_id, operator_gateway_id]
+      properties:
+        operator_id:
+          type: string
+          format: uuid
+        operator_gateway_id:
+          type: integer
+        label:
+          type: string

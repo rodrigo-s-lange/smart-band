@@ -1,6 +1,16 @@
-# Gateway firmware
+# Firmware do gateway
 
-Reservado para a etapa 11 do roadmap.
+Etapa 10 do roadmap.
 
-Alvo inicial: ESP32-WROOM-32, ESP-IDF 6.0 e esp32libfun. A implementacao so
-comeca depois dos contratos e simuladores estarem validados.
+## Responsabilidades futuras
+
+- scanner BLE contínuo
+- envio autenticado de sightings
+- atualização da fila no TFT
+- seleção estável por `interaction_id`
+- papel de gateway operador e/ou gateway de rádio
+- GATT central para desafio e resultado
+- comunicação LAN com a appliance
+- acionamento seguro da atração
+
+Alvo inicial: ESP-IDF 6.0 e esp32libfun. MCU e TFT ainda serão definidos.

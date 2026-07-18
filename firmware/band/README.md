@@ -1,6 +1,16 @@
-# Band firmware
+# Firmware da pulseira
 
-Reservado para a etapa 12 do roadmap.
+Etapa 11 do roadmap.
 
-C3, C6 e S3 continuam candidatos. A escolha depende de medidas de consumo,
-display, interface, IR e autonomia feitas depois da validacao do sistema.
+## Responsabilidades futuras
+
+- botão: wake, solicitação e confirmação
+- OLED 128×32: código, atração, custo, resultado e saldo visual
+- advertising efêmero autenticado
+- GATT para desafio, decisão e resultado
+- chave exclusiva protegida
+- contador monotônico e proteção contra replay
+- sleep e autonomia mínima de 8 horas
+
+C3, C6 e S3 permanecem candidatos até medição da placa completa. IR não faz
+parte do produto.

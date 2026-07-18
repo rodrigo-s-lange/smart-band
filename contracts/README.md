@@ -1,9 +1,9 @@
 # Contracts
 
-Fronteiras executaveis e versionadas entre componentes.
+Fronteiras executáveis e versionadas do Smart-Band.
 
-- `openapi/`: APIs HTTP do edge e da cloud
-- `events/`: envelopes e schemas de sincronizacao
-- `proximity/`: maquina de estados e mensagens pulseira-gateway
+- `openapi/`: APIs HTTP e canais em tempo real da appliance.
+- `events/`: eventos internos entre servidor, gateways e interfaces.
+- `proximity/`: advertising BLE, GATT e confirmação da pulseira.
 
-Contratos devem ser definidos antes das implementacoes consumidoras.
+Contratos precedem implementações consumidoras e possuem versão explícita.

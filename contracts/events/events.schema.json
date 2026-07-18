@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smart-band.local/contracts/events/events.schema.json",
+  "title": "Smart-Band domain events",
+  "description": "Catálogo de eventos internos, correspondendo às transições de docs/architecture/domain-model.md. Eventos de negócio (interaction.*, transaction.*, attraction.*) e telemetria técnica (gateway.*) permanecem em namespaces separados (AGENTS.md).",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "transaction_id": {
+      "type": "string",
+      "description": "8 bytes do protocolo BLE, representados como hex minúsculo (ver contracts/proximity/binary-format.md)",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "interaction_id": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295,
+      "description": "uint32 atribuído pelo servidor (ADR 0004)"
+    },
+    "gateway_id": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "operator_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "attraction_id": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "money_minor_units": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "valor em unidade mínima da moeda (ex.: centavos)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "horário do servidor, sempre UTC"
+    },
+    "envelope": {
+      "type": "object",
+      "required": ["event_id", "event_type", "version", "occurred_at", "correlation_id", "payload"],
+      "properties": {
+        "event_id": { "$ref": "#/$defs/uuid" },
+        "event_type": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "occurred_at": { "$ref": "#/$defs/timestamp" },
+        "correlation_id": {
+          "$ref": "#/$defs/uuid",
+          "description": "estável para todos os eventos de uma mesma interaction_request/transaction_intent"
+        },
+        "payload": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+
+    "interaction.discovered": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "interaction.discovered" },
+        "payload": {
+          "type": "object",
+          "required": ["interaction_id", "display_code", "first_gateway_id", "rssi", "expires_at"],
+          "properties": {
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "display_code": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{3}-[0-9A-HJKMNP-TV-Z]{3}$" },
+            "first_gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "rssi": { "type": "integer" },
+            "expires_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "interaction.queued": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "interaction.queued" },
+        "payload": {
+          "type": "object",
+          "required": ["interaction_id", "display_code", "ambiguity_status", "queued_at"],
+          "properties": {
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "display_code": { "type": "string" },
+            "ambiguity_status": { "type": "string", "enum": ["clear", "duplicate_code"] },
+            "queued_at": { "$ref": "#/$defs/timestamp" },
+            "collides_with": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/interaction_id" },
+              "uniqueItems": true,
+              "description": "interações visíveis com o mesmo display_code; claim fica bloqueado (ADR 0005)"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "interaction.claimed": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "interaction.claimed" },
+        "payload": {
+          "type": "object",
+          "required": ["interaction_id", "transaction_id", "operator_gateway_id", "attraction_id", "claimed_at"],
+          "properties": {
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "operator_gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "attraction_id": { "$ref": "#/$defs/attraction_id" },
+            "claimed_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "interaction.confirmation_requested": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "interaction.confirmation_requested" },
+        "payload": {
+          "type": "object",
+          "required": ["interaction_id", "transaction_id", "radio_gateway_id", "attempt", "requested_at"],
+          "properties": {
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "radio_gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "attempt": { "type": "integer", "minimum": 1, "maximum": 3, "description": "ADR 0003: até 3 tentativas de lease" },
+            "requested_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "interaction.confirmed": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "interaction.confirmed" },
+        "payload": {
+          "type": "object",
+          "required": ["interaction_id", "transaction_id", "confirmed_at"],
+          "properties": {
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "confirmed_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "interaction.confirmation_timeout": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "interaction.confirmation_timeout" },
+        "payload": {
+          "type": "object",
+          "required": ["interaction_id", "transaction_id", "timed_out_at"],
+          "properties": {
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "timed_out_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "interaction.cancelled": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "interaction.cancelled" },
+        "payload": {
+          "type": "object",
+          "required": ["interaction_id", "cancelled_by_operator_gateway_id", "stage", "cancelled_at"],
+          "properties": {
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "transaction_id": {
+              "description": "presente apenas se já havia claim (stage claimed/awaiting_confirmation)",
+              "$ref": "#/$defs/transaction_id"
+            },
+            "cancelled_by_operator_gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "stage": { "type": "string", "enum": ["queued", "claimed", "awaiting_confirmation"] },
+            "cancelled_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "interaction.expired": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "interaction.expired" },
+        "payload": {
+          "type": "object",
+          "required": ["interaction_id", "stage", "expired_at"],
+          "properties": {
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "stage": { "type": "string", "enum": ["discovered", "queued", "claimed"] },
+            "expired_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "transaction.denied": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "transaction.denied" },
+        "payload": {
+          "type": "object",
+          "required": ["transaction_id", "interaction_id", "reason", "denied_at"],
+          "properties": {
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "reason": { "type": "string", "enum": ["insufficient_balance", "rule_violation"] },
+            "denied_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "transaction.credit_reserved": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "transaction.credit_reserved" },
+        "payload": {
+          "type": "object",
+          "required": ["transaction_id", "interaction_id", "attraction_id", "amount", "reservation_id", "reserved_at"],
+          "properties": {
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "attraction_id": { "$ref": "#/$defs/attraction_id" },
+            "amount": { "$ref": "#/$defs/money_minor_units" },
+            "reservation_id": { "$ref": "#/$defs/uuid" },
+            "reserved_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "transaction.completed": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "transaction.completed" },
+        "payload": {
+          "type": "object",
+          "required": ["transaction_id", "interaction_id", "attraction_id", "remaining_balance", "actuation", "actuation_command_id", "ledger_entry_id", "completed_at"],
+          "properties": {
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "attraction_id": { "$ref": "#/$defs/attraction_id" },
+            "remaining_balance": { "$ref": "#/$defs/money_minor_units" },
+            "actuation": { "type": "string", "enum": ["automatic", "manual_override"] },
+            "actuation_command_id": { "$ref": "#/$defs/uuid" },
+            "ledger_entry_id": { "$ref": "#/$defs/uuid" },
+            "completed_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "attraction.actuation_failed": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "attraction.actuation_failed" },
+        "payload": {
+          "type": "object",
+          "required": ["transaction_id", "interaction_id", "attraction_id", "operator_gateway_id", "actuation_command_id", "failure_kind", "failed_at"],
+          "properties": {
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "attraction_id": { "$ref": "#/$defs/attraction_id" },
+            "operator_gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "actuation_command_id": { "$ref": "#/$defs/uuid" },
+            "failure_kind": { "type": "string", "enum": ["not_executed", "ambiguous"] },
+            "failed_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "transaction.reconciliation_required": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "transaction.reconciliation_required" },
+        "payload": {
+          "type": "object",
+          "required": ["transaction_id", "interaction_id", "actuation_command_id", "detected_at"],
+          "properties": {
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "actuation_command_id": { "$ref": "#/$defs/uuid" },
+            "detected_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "transaction.actuation_override": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "transaction.actuation_override" },
+        "payload": {
+          "type": "object",
+          "required": ["transaction_id", "interaction_id", "operator_id", "operator_gateway_id", "action", "reason", "overridden_at"],
+          "properties": {
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "operator_id": { "$ref": "#/$defs/operator_id" },
+            "operator_gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "action": { "type": "string", "enum": ["retry_actuation", "release_reservation", "manual_confirmation"] },
+            "reason": { "type": "string", "minLength": 1 },
+            "overridden_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false,
+          "description": "exceção auditada por operador individual e terminal (ADR 0005)"
+        }
+      }
+    },
+
+    "gateway.status_changed": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "gateway.status_changed" },
+        "payload": {
+          "type": "object",
+          "required": ["gateway_id", "status", "changed_at"],
+          "properties": {
+            "gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "status": { "type": "string", "enum": ["online", "offline", "degraded"] },
+            "changed_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false,
+          "description": "telemetria técnica — nunca mistura com eventos de ledger (AGENTS.md)"
+        }
+      }
+    }
+  },
+
+  "oneOf": [
+    { "$ref": "#/$defs/interaction.discovered" },
+    { "$ref": "#/$defs/interaction.queued" },
+    { "$ref": "#/$defs/interaction.claimed" },
+    { "$ref": "#/$defs/interaction.confirmation_requested" },
+    { "$ref": "#/$defs/interaction.confirmed" },
+    { "$ref": "#/$defs/interaction.confirmation_timeout" },
+    { "$ref": "#/$defs/interaction.cancelled" },
+    { "$ref": "#/$defs/interaction.expired" },
+    { "$ref": "#/$defs/transaction.denied" },
+    { "$ref": "#/$defs/transaction.credit_reserved" },
+    { "$ref": "#/$defs/transaction.completed" },
+    { "$ref": "#/$defs/attraction.actuation_failed" },
+    { "$ref": "#/$defs/transaction.reconciliation_required" },
+    { "$ref": "#/$defs/transaction.actuation_override" },
+    { "$ref": "#/$defs/gateway.status_changed" }
+  ]
+}
