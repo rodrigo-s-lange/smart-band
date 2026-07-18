@@ -47,22 +47,19 @@ type Band struct {
 }
 
 type Actor struct {
-	Kind              string
-	InternalID        string
-	ProtocolID        uint16
-	GatewayInternalID string
-	Label             string
+	Kind       string
+	InternalID string
+	ProtocolID uint16
+	Label      string
 }
 
 type ClaimRequest struct {
-	InteractionID     uint32
-	OperatorGatewayID uint16
-	AttractionID      uint16
+	InteractionID uint32
+	AttractionID  uint16
 }
 
 type ClaimCommand struct {
 	InteractionID         uint32
-	OperatorID            string
 	OperatorGatewayID     uint16
 	AttractionID          uint16
 	TransactionProtocolID []byte
@@ -125,7 +122,6 @@ type Repository interface {
 	Gateways(context.Context) ([]Gateway, error)
 	Bands(context.Context) ([]Band, error)
 	AuthenticateGateway(context.Context, []byte) (Actor, error)
-	AuthenticateOperator(context.Context, []byte) (Actor, error)
 	ActiveBandKeys(context.Context) ([]ActiveBandKey, error)
 	SaveAuthenticatedSighting(context.Context, AuthenticatedSighting) (uint32, error)
 	ClaimInteraction(context.Context, ClaimCommand) (ClaimResult, error)
@@ -140,7 +136,6 @@ type Store interface {
 	Gateways(context.Context) ([]Gateway, error)
 	Bands(context.Context) ([]Band, error)
 	AuthenticateGateway(context.Context, []byte) (Actor, error)
-	AuthenticateOperator(context.Context, []byte) (Actor, error)
 	ReportSighting(context.Context, Actor, SightingReport) (SightingResult, error)
 	ClaimInteraction(context.Context, Actor, ClaimRequest) (ClaimResult, error)
 	EventsAfter(context.Context, int64, int32) ([]StreamEvent, error)

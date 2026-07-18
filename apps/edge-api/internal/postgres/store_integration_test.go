@@ -45,12 +45,6 @@ func TestStoreAgainstPostgreSQL(t *testing.T) {
 	if err != nil || actor.ProtocolID != 1 {
 		t.Fatalf("gateway auth actor=%+v err=%v", actor, err)
 	}
-	operatorToken := sha256.Sum256([]byte("operator-test-session"))
-	actor, err = store.AuthenticateOperator(ctx, operatorToken[:])
-	if err != nil || actor.Kind != "operator" {
-		t.Fatalf("operator auth actor=%+v err=%v", actor, err)
-	}
-
 	if _, err := pool.Exec(ctx, `
         UPDATE interaction_requests
            SET state = 'queued', expires_at = now() + interval '60 seconds'
@@ -132,8 +126,8 @@ func TestAtomicClaimSelectsStrongestRecentRadio(t *testing.T) {
 	}
 
 	repository := New(pool)
-	operatorToken := sha256.Sum256([]byte("operator-test-session"))
-	actor, err := repository.AuthenticateOperator(ctx, operatorToken[:])
+	gatewayToken := sha256.Sum256([]byte("gateway-test-secret"))
+	actor, err := repository.AuthenticateGateway(ctx, gatewayToken[:])
 	if err != nil || actor.ProtocolID != 1 {
 		t.Fatalf("actor=%+v err=%v", actor, err)
 	}
@@ -147,7 +141,7 @@ func TestAtomicClaimSelectsStrongestRecentRadio(t *testing.T) {
 		go func() {
 			defer wait.Done()
 			result, claimErr := service.ClaimInteraction(ctx, actor, application.ClaimRequest{
-				InteractionID: 101, OperatorGatewayID: 1, AttractionID: 10,
+				InteractionID: 101, AttractionID: 10,
 			})
 			if claimErr != nil {
 				errorsFound <- claimErr
@@ -214,7 +208,7 @@ func TestAtomicClaimSelectsStrongestRecentRadio(t *testing.T) {
 	}
 
 	_, err = service.ClaimInteraction(ctx, actor, application.ClaimRequest{
-		InteractionID: 102, OperatorGatewayID: 1, AttractionID: 10,
+		InteractionID: 102, AttractionID: 10,
 	})
 	if !errors.Is(err, application.ErrNoRadioGateway) {
 		t.Fatalf("no-radio error=%v", err)

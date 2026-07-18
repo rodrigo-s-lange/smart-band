@@ -40,8 +40,8 @@ estados completa e verificada em
 - seleção usa ID estável, nunca posição da linha
 - uma interação possui no máximo um claim ativo
 - claim possui lease e expira se o rádio falhar
-- a sessão do operador é vinculada ao gateway físico; o corpo da requisição
-  não pode substituir essa identidade
+- a credencial do gateway determina `operator_gateway_id`; o corpo informa
+  somente a atração e não pode substituir a identidade do equipamento
 - uma pulseira possui no máximo uma interação ativa
 - código visual duplicado publica ambas as entradas como ambíguas, bloqueia
   claim e orienta regeneração; nenhuma solicitação fica invisível

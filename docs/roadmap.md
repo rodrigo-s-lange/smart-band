@@ -7,7 +7,8 @@ execução no [gate parcial 05](stage-gates/05-backend-foundation.md). A ingest�
 BLE autenticada, a deduplicação e o SSE já estão materializados; claim e o fluxo
 transacional continuam em execução. O claim CAS, a escolha determinística do
 gateway de rádio e a criação atômica do transaction intent já estão
-materializados.
+materializados. A identidade operacional é o gateway cadastrado, sem login
+individual de quem o utiliza (ADR 0010).
 
 1. Domínio e invariantes
 2. Contrato BLE e máquina de estados

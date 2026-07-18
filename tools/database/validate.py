@@ -171,14 +171,18 @@ def main() -> int:
         print(f"database fixture prepared: {len(migrations)} migrations")
         return 0
 
-    if migrations[-1].name.startswith("00008_"):
+    if migrations[-1].name.startswith("00009_"):
         reset(psql)
-        apply_up(psql, migrations[:-3])
+        apply_up(psql, migrations[:-4])
         psql.run(read_test("upgrade_stage4_fixture.sql"))
-        apply_up(psql, migrations[-3:])
+        apply_up(psql, [migrations[-4]])
         psql.run(read_test("upgrade_stage4_assertions.sql"))
+        apply_up(psql, [migrations[-3]])
         psql.run(read_test("upgrade_stage5_assertions.sql"))
+        apply_up(psql, [migrations[-2]])
         psql.run(read_test("upgrade_stage6_assertions.sql"))
+        apply_up(psql, [migrations[-1]])
+        psql.run(read_test("upgrade_stage7_assertions.sql"))
 
     reset(psql)
     apply_up(psql, migrations)

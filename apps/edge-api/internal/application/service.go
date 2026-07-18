@@ -13,10 +13,9 @@ import (
 )
 
 var (
-	ErrGatewayIdentityMismatch = errors.New("gateway identity does not match sighting")
+	ErrGatewayIdentityMismatch = errors.New("gateway identity does not match request")
 	ErrBandKeyCollision        = errors.New("advertising authenticates with more than one band key")
 	ErrBandBusy                = errors.New("band already has an active interaction")
-	ErrOperatorGatewayMismatch = errors.New("operator session does not match gateway")
 	ErrClaimNotFound           = errors.New("interaction not found")
 	ErrClaimConflict           = errors.New("interaction cannot be claimed")
 	ErrNoRadioGateway          = errors.New("no recent radio gateway")
@@ -63,16 +62,13 @@ func (s *Service) Bands(ctx context.Context) ([]Band, error) {
 func (s *Service) AuthenticateGateway(ctx context.Context, hash []byte) (Actor, error) {
 	return s.repository.AuthenticateGateway(ctx, hash)
 }
-func (s *Service) AuthenticateOperator(ctx context.Context, hash []byte) (Actor, error) {
-	return s.repository.AuthenticateOperator(ctx, hash)
-}
 func (s *Service) EventsAfter(ctx context.Context, sequence int64, limit int32) ([]StreamEvent, error) {
 	return s.repository.EventsAfter(ctx, sequence, limit)
 }
 
 func (s *Service) ClaimInteraction(ctx context.Context, actor Actor, request ClaimRequest) (ClaimResult, error) {
-	if actor.Kind != "operator" || actor.ProtocolID != request.OperatorGatewayID || actor.GatewayInternalID == "" {
-		return ClaimResult{}, ErrOperatorGatewayMismatch
+	if actor.Kind != "gateway" || actor.InternalID == "" {
+		return ClaimResult{}, ErrGatewayIdentityMismatch
 	}
 	for attempt := 0; attempt < 3; attempt++ {
 		transactionID := make([]byte, 8)
@@ -84,8 +80,8 @@ func (s *Service) ClaimInteraction(ctx context.Context, actor Actor, request Cla
 			return ClaimResult{}, fmt.Errorf("generate challenge nonce: %w", err)
 		}
 		result, err := s.repository.ClaimInteraction(ctx, ClaimCommand{
-			InteractionID: request.InteractionID, OperatorID: actor.InternalID,
-			OperatorGatewayID: request.OperatorGatewayID, AttractionID: request.AttractionID,
+			InteractionID:     request.InteractionID,
+			OperatorGatewayID: actor.ProtocolID, AttractionID: request.AttractionID,
 			TransactionProtocolID: transactionID, ChallengeNonce: challengeNonce,
 			Now: s.clock().UTC(),
 		})

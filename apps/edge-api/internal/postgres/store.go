@@ -121,30 +121,15 @@ func (s *Store) AuthenticateGateway(ctx context.Context, hash []byte) (applicati
 	return application.Actor{Kind: "gateway", InternalID: row.GatewayID, ProtocolID: uint16(row.ProtocolID)}, nil
 }
 
-func (s *Store) AuthenticateOperator(ctx context.Context, hash []byte) (application.Actor, error) {
-	row, err := s.queries.AuthenticateOperator(ctx, hash)
-	if err != nil {
-		return application.Actor{}, err
-	}
-	return application.Actor{
-		Kind: "operator", InternalID: row.OperatorID, ProtocolID: uint16(row.GatewayProtocolID),
-		GatewayInternalID: row.GatewayID, Label: row.DisplayName,
-	}, nil
-}
-
 func (s *Store) ClaimInteraction(ctx context.Context, command application.ClaimCommand) (application.ClaimResult, error) {
-	operatorID, err := uuid.Parse(command.OperatorID)
-	if err != nil {
-		return application.ClaimResult{}, fmt.Errorf("parse operator id: %w", err)
-	}
 	var outcome string
 	var transactionID []byte
 	var radioGatewayID *int32
 	var leaseExpiresAt *time.Time
-	err = s.pool.QueryRow(ctx, `
+	err := s.pool.QueryRow(ctx, `
         SELECT outcome, transaction_protocol_id, radio_gateway_protocol_id, lease_expires_at
-          FROM smartband_claim_interaction($1, $2, $3, $4, $5, $6, $7)`,
-		int64(command.InteractionID), operatorID, int32(command.OperatorGatewayID),
+          FROM smartband_claim_interaction($1, $2, $3, $4, $5, $6)`,
+		int64(command.InteractionID), int32(command.OperatorGatewayID),
 		int32(command.AttractionID), command.TransactionProtocolID, command.ChallengeNonce,
 		command.Now).Scan(&outcome, &transactionID, &radioGatewayID, &leaseExpiresAt)
 	if err != nil {
@@ -166,7 +151,7 @@ func (s *Store) ClaimInteraction(ctx context.Context, command application.ClaimC
 	case "invalid_attraction":
 		return application.ClaimResult{}, application.ErrInvalidAttraction
 	case "invalid_operator_gateway":
-		return application.ClaimResult{}, application.ErrOperatorGatewayMismatch
+		return application.ClaimResult{}, application.ErrGatewayIdentityMismatch
 	case "transaction_id_collision":
 		return application.ClaimResult{}, application.ErrTransactionIDCollision
 	default:

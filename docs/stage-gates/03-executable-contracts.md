@@ -25,7 +25,7 @@ request e em pushes para `main`.
 
 - exemplos válidos de eventos passam e inválidos são rejeitados
 - reserva de crédito não aceita `ledger_entry_id`
-- override sem `operator_id` é rejeitado
+- override sem gateway cadastrado, ação ou motivo é rejeitado
 - estados de reserva, acionamento e reconciliação existem no OpenAPI
 - resultados físicos são `succeeded`, `not_executed` ou `ambiguous`
 - cinco tipos BLE usam bytes de domínio distintos

@@ -75,8 +75,8 @@ def validate_openapi_contract() -> None:
     override_required = set(
         spec["components"]["schemas"]["ActuationOverrideRequest"]["required"]
     )
-    if not {"operator_id", "operator_gateway_id", "action", "reason"} <= override_required:
-        raise AssertionError("operational override is not individually auditable")
+    if not {"action", "reason"} <= override_required:
+        raise AssertionError("operational override must declare action and reason")
 
 
 def cmac(key: bytes, message: bytes) -> bytes:

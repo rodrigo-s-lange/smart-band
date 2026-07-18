@@ -35,7 +35,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 14. `docs/decisions/0007-edge-api-foundation.md`
 15. `docs/decisions/0008-authenticated-sightings-and-sse.md`
 16. `docs/decisions/0009-atomic-claim-and-radio-selection.md`
-17. `docs/roadmap.md`
+17. `docs/decisions/0010-gateway-as-operational-identity.md`
+18. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -51,7 +52,9 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - TTL de interação usa relógio da appliance, nunca o relógio do gateway.
 - SSE retoma pelo `stream_sequence`; snapshot inicial vem de `GET /v1/queue`.
 - O gateway operador pode ser diferente do gateway de rádio.
-- Sessão de operador é vinculada ao gateway físico e não pode declarar outro.
+- O gateway cadastrado é a identidade operacional; não há login ou cadastro de
+  operador humano no fluxo.
+- Claim deriva `operator_gateway_id` da credencial do gateway e recebe apenas a atração.
 - Claim, transaction intent e evento `interaction.claimed` nascem atomicamente.
 - Rádio inicial usa sightings do servidor dos últimos 10 segundos: maior RSSI,
   maior recência e menor ID como desempate.
@@ -75,7 +78,7 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - Chaves de pulseira não são armazenadas em gateways.
 - Timeout ou rejeição na pulseira não alteram saldo.
 - `operator_gateway_id`, `radio_gateway_id` e `attraction_id` são registrados separadamente.
-- Override, ajuste e reconciliação exigem `operator_id` individual.
+- Override e reconciliação registram gateway, ação, motivo e horário.
 - O sistema precisa funcionar sem internet.
 
 ## Fronteiras de responsabilidade

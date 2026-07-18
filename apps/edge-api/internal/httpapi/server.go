@@ -48,8 +48,7 @@ type sightingRequest struct {
 }
 
 type claimRequest struct {
-	OperatorGatewayID uint16 `json:"operator_gateway_id"`
-	AttractionID      uint16 `json:"attraction_id"`
+	AttractionID uint16 `json:"attraction_id"`
 }
 
 type contextKey string
@@ -90,20 +89,19 @@ func (s *Server) claimInteraction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	actor, ok := actorFromContext(r.Context())
-	if !ok || actor.Kind != "operator" {
-		writeError(w, http.StatusForbidden, "operator_required", "an operator session is required")
+	if !ok || actor.Kind != "gateway" {
+		writeError(w, http.StatusForbidden, "gateway_required", "a registered gateway credential is required")
 		return
 	}
 	result, err := s.store.ClaimInteraction(r.Context(), actor, application.ClaimRequest{
-		InteractionID: uint32(interactionValue), OperatorGatewayID: request.OperatorGatewayID,
-		AttractionID: request.AttractionID,
+		InteractionID: uint32(interactionValue), AttractionID: request.AttractionID,
 	})
 	if err != nil {
 		switch {
 		case errors.Is(err, application.ErrClaimNotFound):
 			writeError(w, http.StatusNotFound, "interaction_not_found", "interaction was not found")
-		case errors.Is(err, application.ErrOperatorGatewayMismatch):
-			writeError(w, http.StatusForbidden, "operator_gateway_mismatch", "operator session is not bound to this gateway")
+		case errors.Is(err, application.ErrGatewayIdentityMismatch):
+			writeError(w, http.StatusForbidden, "gateway_mismatch", "gateway credential is not valid for this operation")
 		case errors.Is(err, application.ErrNoRadioGateway):
 			writeError(w, http.StatusConflict, "no_radio_gateway", "no gateway has a recent authenticated sighting")
 		case errors.Is(err, application.ErrInvalidAttraction):
@@ -289,9 +287,6 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 		if header := r.Header.Get("Authorization"); strings.HasPrefix(header, "Bearer ") {
 			hash := sha256.Sum256([]byte(strings.TrimPrefix(header, "Bearer ")))
 			actor, err = s.store.AuthenticateGateway(r.Context(), hash[:])
-		} else if cookie, cookieErr := r.Cookie("sb_session"); cookieErr == nil {
-			hash := sha256.Sum256([]byte(cookie.Value))
-			actor, err = s.store.AuthenticateOperator(r.Context(), hash[:])
 		} else {
 			err = pgx.ErrNoRows
 		}

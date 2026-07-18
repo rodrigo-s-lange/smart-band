@@ -7,7 +7,6 @@
   "payload": {
     "transaction_id": "aabbccddeeff0011",
     "interaction_id": 1,
-    "operator_id": "44444444-4444-4444-8444-444444444444",
     "operator_gateway_id": 3,
     "action": "release_reservation",
     "reason": "atração indisponível",

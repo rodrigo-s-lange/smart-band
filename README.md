@@ -85,7 +85,8 @@ docs/
 12. [docs/stage-gates/05-backend-foundation.md](docs/stage-gates/05-backend-foundation.md)
 13. [docs/decisions/0008-authenticated-sightings-and-sse.md](docs/decisions/0008-authenticated-sightings-and-sse.md)
 14. [docs/decisions/0009-atomic-claim-and-radio-selection.md](docs/decisions/0009-atomic-claim-and-radio-selection.md)
-15. [docs/roadmap.md](docs/roadmap.md)
+15. [docs/decisions/0010-gateway-as-operational-identity.md](docs/decisions/0010-gateway-as-operational-identity.md)
+16. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 
@@ -95,6 +96,10 @@ transacionais HTTP continuam em construção. O claim CAS e a seleção do gatew
 de rádio já são executáveis; despacho GATT, confirmação e reserva são as
 próximas fatias. Hardware e firmware ESP32
 permanecem no fim.
+
+Qualquer pessoa autorizada pode operar um gateway. O equipamento é cadastrado,
+possui credencial própria e só libera as atrações explicitamente associadas a
+ele; não existe identificação individual de operador no fluxo operacional.
 
 Validação local:
 
