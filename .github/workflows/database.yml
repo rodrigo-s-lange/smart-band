@@ -1,0 +1,46 @@
+name: Database
+
+on:
+  pull_request:
+    paths:
+      - "apps/edge-api/internal/postgres/**"
+      - "tests/database/**"
+      - "tools/database/**"
+      - ".github/workflows/database.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/edge-api/internal/postgres/**"
+      - "tests/database/**"
+      - "tools/database/**"
+      - ".github/workflows/database.yml"
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.4
+        env:
+          POSTGRES_DB: smartband
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d smartband"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/smartband
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Validate migrations and invariants
+        run: python tools/database/validate.py

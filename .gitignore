@@ -16,3 +16,5 @@ vendor/
 sdkconfig
 sdkconfig.old
 *.local
+__pycache__/
+*.pyc
