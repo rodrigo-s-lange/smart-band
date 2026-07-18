@@ -8,6 +8,7 @@
 - [0006 — Appliance single-tenant e single-site](0006-single-tenant-single-site-appliance.md)
 - [0007 — Fundação do edge-api local](0007-edge-api-foundation.md)
 - [0008 — Sightings autenticados, proteção de chaves e SSE retomável](0008-authenticated-sightings-and-sse.md)
+- [0009 — Claim atômico e seleção do gateway de rádio](0009-atomic-claim-and-radio-selection.md)
 
 Mudanças de fronteira, autoridade, segurança ou experiência transacional exigem
 novo ADR e atualização correspondente no vault.

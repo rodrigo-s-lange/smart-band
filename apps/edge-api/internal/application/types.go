@@ -47,10 +47,34 @@ type Band struct {
 }
 
 type Actor struct {
-	Kind       string
-	InternalID string
-	ProtocolID uint16
-	Label      string
+	Kind              string
+	InternalID        string
+	ProtocolID        uint16
+	GatewayInternalID string
+	Label             string
+}
+
+type ClaimRequest struct {
+	InteractionID     uint32
+	OperatorGatewayID uint16
+	AttractionID      uint16
+}
+
+type ClaimCommand struct {
+	InteractionID         uint32
+	OperatorID            string
+	OperatorGatewayID     uint16
+	AttractionID          uint16
+	TransactionProtocolID []byte
+	ChallengeNonce        []byte
+	Now                   time.Time
+}
+
+type ClaimResult struct {
+	TransactionID  string    `json:"transaction_id"`
+	InteractionID  uint32    `json:"interaction_id"`
+	RadioGatewayID uint16    `json:"radio_gateway_id"`
+	LeaseExpiresAt time.Time `json:"lease_expires_at"`
 }
 
 type SightingReport struct {
@@ -104,6 +128,7 @@ type Repository interface {
 	AuthenticateOperator(context.Context, []byte) (Actor, error)
 	ActiveBandKeys(context.Context) ([]ActiveBandKey, error)
 	SaveAuthenticatedSighting(context.Context, AuthenticatedSighting) (uint32, error)
+	ClaimInteraction(context.Context, ClaimCommand) (ClaimResult, error)
 	EventsAfter(context.Context, int64, int32) ([]StreamEvent, error)
 }
 
@@ -117,5 +142,6 @@ type Store interface {
 	AuthenticateGateway(context.Context, []byte) (Actor, error)
 	AuthenticateOperator(context.Context, []byte) (Actor, error)
 	ReportSighting(context.Context, Actor, SightingReport) (SightingResult, error)
+	ClaimInteraction(context.Context, Actor, ClaimRequest) (ClaimResult, error)
 	EventsAfter(context.Context, int64, int32) ([]StreamEvent, error)
 }

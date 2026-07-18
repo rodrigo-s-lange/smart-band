@@ -2,8 +2,12 @@ package application
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"time"
 
 	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/proximity"
 )
@@ -12,15 +16,32 @@ var (
 	ErrGatewayIdentityMismatch = errors.New("gateway identity does not match sighting")
 	ErrBandKeyCollision        = errors.New("advertising authenticates with more than one band key")
 	ErrBandBusy                = errors.New("band already has an active interaction")
+	ErrOperatorGatewayMismatch = errors.New("operator session does not match gateway")
+	ErrClaimNotFound           = errors.New("interaction not found")
+	ErrClaimConflict           = errors.New("interaction cannot be claimed")
+	ErrNoRadioGateway          = errors.New("no recent radio gateway")
+	ErrInvalidAttraction       = errors.New("attraction is not available at operator gateway")
+	ErrTransactionIDCollision  = errors.New("transaction protocol id collision")
 )
 
 type Service struct {
 	repository Repository
 	keys       BandKeyDecryptor
+	random     io.Reader
+	clock      func() time.Time
 }
 
-func NewService(repository Repository, keys BandKeyDecryptor) *Service {
-	return &Service{repository: repository, keys: keys}
+type ServiceOption func(*Service)
+
+func WithRandom(reader io.Reader) ServiceOption      { return func(s *Service) { s.random = reader } }
+func WithClock(clock func() time.Time) ServiceOption { return func(s *Service) { s.clock = clock } }
+
+func NewService(repository Repository, keys BandKeyDecryptor, options ...ServiceOption) *Service {
+	service := &Service{repository: repository, keys: keys, random: rand.Reader, clock: time.Now}
+	for _, option := range options {
+		option(service)
+	}
+	return service
 }
 
 func (s *Service) Ping(ctx context.Context) error { return s.repository.Ping(ctx) }
@@ -47,6 +68,37 @@ func (s *Service) AuthenticateOperator(ctx context.Context, hash []byte) (Actor,
 }
 func (s *Service) EventsAfter(ctx context.Context, sequence int64, limit int32) ([]StreamEvent, error) {
 	return s.repository.EventsAfter(ctx, sequence, limit)
+}
+
+func (s *Service) ClaimInteraction(ctx context.Context, actor Actor, request ClaimRequest) (ClaimResult, error) {
+	if actor.Kind != "operator" || actor.ProtocolID != request.OperatorGatewayID || actor.GatewayInternalID == "" {
+		return ClaimResult{}, ErrOperatorGatewayMismatch
+	}
+	for attempt := 0; attempt < 3; attempt++ {
+		transactionID := make([]byte, 8)
+		challengeNonce := make([]byte, 8)
+		if _, err := io.ReadFull(s.random, transactionID); err != nil {
+			return ClaimResult{}, fmt.Errorf("generate transaction id: %w", err)
+		}
+		if _, err := io.ReadFull(s.random, challengeNonce); err != nil {
+			return ClaimResult{}, fmt.Errorf("generate challenge nonce: %w", err)
+		}
+		result, err := s.repository.ClaimInteraction(ctx, ClaimCommand{
+			InteractionID: request.InteractionID, OperatorID: actor.InternalID,
+			OperatorGatewayID: request.OperatorGatewayID, AttractionID: request.AttractionID,
+			TransactionProtocolID: transactionID, ChallengeNonce: challengeNonce,
+			Now: s.clock().UTC(),
+		})
+		if errors.Is(err, ErrTransactionIDCollision) {
+			continue
+		}
+		if err != nil {
+			return ClaimResult{}, err
+		}
+		result.TransactionID = hex.EncodeToString(transactionID)
+		return result, nil
+	}
+	return ClaimResult{}, ErrTransactionIDCollision
 }
 
 func (s *Service) ReportSighting(ctx context.Context, actor Actor, report SightingReport) (SightingResult, error) {

@@ -5,7 +5,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/binary"
+	"errors"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -74,6 +76,163 @@ func TestStoreAgainstPostgreSQL(t *testing.T) {
 	bands, err := store.Bands(ctx)
 	if err != nil || len(bands) != 2 {
 		t.Fatalf("bands=%+v err=%v", bands, err)
+	}
+}
+
+func TestAtomicClaimSelectsStrongestRecentRadio(t *testing.T) {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("DATABASE_URL is not set")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	pool, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	if _, err := pool.Exec(ctx, `DELETE FROM outbox_events`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+        DELETE FROM transaction_intents WHERE interaction_id IN (
+            SELECT interaction_id FROM interaction_requests WHERE protocol_id IN (101, 102)
+        )`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+        DELETE FROM interaction_claims WHERE interaction_id IN (
+            SELECT interaction_id FROM interaction_requests WHERE protocol_id IN (101, 102)
+        )`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+        DELETE FROM interaction_sightings WHERE interaction_id IN (
+            SELECT interaction_id FROM interaction_requests WHERE protocol_id IN (101, 102)
+        )`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+        UPDATE interaction_requests SET state = 'queued', expires_at = $1::timestamptz + interval '60 seconds'
+         WHERE protocol_id IN (101, 102)`, now); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+        INSERT INTO interaction_sightings (
+            interaction_id, gateway_id, tenant_id, site_id, rssi, received_at, gateway_observed_at
+        )
+        SELECT i.interaction_id, g.gateway_id, i.tenant_id, i.site_id,
+               CASE g.protocol_id WHEN 1 THEN -70 ELSE -40 END,
+               $1::timestamptz - interval '2 seconds', $1::timestamptz - interval '2 seconds'
+          FROM interaction_requests i CROSS JOIN gateways g
+         WHERE i.protocol_id = 101 AND g.protocol_id IN (1, 2)`, now); err != nil {
+		t.Fatal(err)
+	}
+
+	repository := New(pool)
+	operatorToken := sha256.Sum256([]byte("operator-test-session"))
+	actor, err := repository.AuthenticateOperator(ctx, operatorToken[:])
+	if err != nil || actor.ProtocolID != 1 {
+		t.Fatalf("actor=%+v err=%v", actor, err)
+	}
+	service := application.NewService(repository, nil, application.WithClock(func() time.Time { return now }))
+
+	results := make(chan application.ClaimResult, 2)
+	errorsFound := make(chan error, 2)
+	var wait sync.WaitGroup
+	for range 2 {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			result, claimErr := service.ClaimInteraction(ctx, actor, application.ClaimRequest{
+				InteractionID: 101, OperatorGatewayID: 1, AttractionID: 10,
+			})
+			if claimErr != nil {
+				errorsFound <- claimErr
+				return
+			}
+			results <- result
+		}()
+	}
+	wait.Wait()
+	close(results)
+	close(errorsFound)
+	if len(results) != 1 || len(errorsFound) != 1 {
+		t.Fatalf("successes=%d errors=%d", len(results), len(errorsFound))
+	}
+	winner := <-results
+	loser := <-errorsFound
+	if !errors.Is(loser, application.ErrClaimConflict) {
+		t.Fatalf("loser error=%v", loser)
+	}
+	if winner.RadioGatewayID != 2 || !winner.LeaseExpiresAt.Equal(now.Add(10*time.Second)) {
+		t.Fatalf("winner=%+v", winner)
+	}
+
+	var state, transactionStatus string
+	var operatorGateway, radioGateway int
+	var nonceLength, eventCount int
+	if err := pool.QueryRow(ctx, `
+        SELECT i.state, t.status, og.protocol_id, rg.protocol_id,
+               octet_length(t.challenge_nonce),
+               (SELECT count(*) FROM outbox_events WHERE event_type = 'interaction.claimed')
+          FROM interaction_requests i
+          JOIN transaction_intents t USING (interaction_id)
+          JOIN gateways og ON og.gateway_id = t.operator_gateway_id
+          JOIN gateways rg ON rg.gateway_id = t.radio_gateway_id
+         WHERE i.protocol_id = 101`).Scan(
+		&state, &transactionStatus, &operatorGateway, &radioGateway, &nonceLength, &eventCount); err != nil {
+		t.Fatal(err)
+	}
+	if state != "claimed" || transactionStatus != "claimed" || operatorGateway != 1 || radioGateway != 2 || nonceLength != 8 || eventCount != 1 {
+		t.Fatalf("state=%s tx=%s operator=%d radio=%d nonce=%d events=%d", state, transactionStatus, operatorGateway, radioGateway, nonceLength, eventCount)
+	}
+
+	if _, err := pool.Exec(ctx, `
+        INSERT INTO operational_sessions (session_id, tenant_id, site_id, event_id)
+        VALUES ('99999999-9999-9999-9999-999999999997',
+                '11111111-1111-1111-1111-111111111111',
+                '22222222-2222-2222-2222-222222222222',
+                '33333333-3333-3333-3333-333333333333')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+        INSERT INTO wallets (wallet_id, tenant_id, session_id, current_balance)
+        VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
+                '11111111-1111-1111-1111-111111111111',
+                '99999999-9999-9999-9999-999999999997', 100)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+        INSERT INTO band_assignments (tenant_id, session_id, band_id)
+        VALUES ('11111111-1111-1111-1111-111111111111',
+                '99999999-9999-9999-9999-999999999997',
+                '66666666-6666-6666-6666-666666666662')`); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = service.ClaimInteraction(ctx, actor, application.ClaimRequest{
+		InteractionID: 102, OperatorGatewayID: 1, AttractionID: 10,
+	})
+	if !errors.Is(err, application.ErrNoRadioGateway) {
+		t.Fatalf("no-radio error=%v", err)
+	}
+	if err := pool.QueryRow(ctx, `SELECT state FROM interaction_requests WHERE protocol_id = 102`).Scan(&state); err != nil {
+		t.Fatal(err)
+	}
+	if state != "queued" {
+		t.Fatalf("no-radio mutated state=%s", state)
+	}
+	if _, err := pool.Exec(ctx, `DELETE FROM band_assignments WHERE session_id = '99999999-9999-9999-9999-999999999997'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `DELETE FROM wallets WHERE session_id = '99999999-9999-9999-9999-999999999997'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `DELETE FROM operational_sessions WHERE session_id = '99999999-9999-9999-9999-999999999997'`); err != nil {
+		t.Fatal(err)
 	}
 }
 
