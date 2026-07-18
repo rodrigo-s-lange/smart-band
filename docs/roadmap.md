@@ -1,8 +1,8 @@
 # Roadmap
 
-Estado em 2026-07-18: etapas 1–3 concluídas e protegidas pelo gate em
-[docs/stage-gates/03-executable-contracts.md](stage-gates/03-executable-contracts.md).
-A Etapa 4 aguarda decisão explícita antes da implementação.
+Estado em 2026-07-18: etapas 1–4 concluídas e protegidas pelos gates
+[03](stage-gates/03-executable-contracts.md) e
+[04](stage-gates/04-postgresql-model.md). A próxima frente é a Etapa 5.
 
 1. Domínio e invariantes
 2. Contrato BLE e máquina de estados

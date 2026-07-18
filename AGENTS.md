@@ -31,7 +31,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 10. `docs/decisions/0003-ble-protocol-parameters.md`
 11. `docs/decisions/0004-advertising-payload-and-transport.md`
 12. `docs/decisions/0005-protocol-correction-and-transaction-safety.md`
-13. `docs/roadmap.md`
+13. `docs/decisions/0006-single-tenant-single-site-appliance.md`
+14. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -45,6 +46,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - A fila de solicitações pertence ao servidor local.
 - O gateway operador pode ser diferente do gateway de rádio.
 - A EasySmart Platform não está no caminho operacional.
+- Uma appliance atende um único tenant e um único site operacional por vez.
+- Um site mantém múltiplos eventos históricos e no máximo um evento ativo.
 - Serviços externos são opcionais e não recebem dados pessoais por padrão.
 - Hardware e firmware ESP32 vêm depois de contratos, simuladores e backend.
 
@@ -116,6 +119,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 
 - executar `python tools/validation/validate.py` quando tocar contratos,
   protocolo, eventos, OpenAPI, estados ou documentação vinculada
+- executar `python tools/database/validate.py` contra PostgreSQL real quando
+  tocar migrations, constraints, reservas, comandos ou ledger
 - formatadores e linters da linguagem
 - testes unitários afetados
 - testes de contrato afetados

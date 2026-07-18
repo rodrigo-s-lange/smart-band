@@ -5,6 +5,15 @@ Modelo vigente após a correção da [ADR 0005](../decisions/0005-protocol-corre
 ## Entidades
 
 ```text
+appliance_configuration
+  singleton_id               PK, valor fixo 1
+  tenant_id                  FK -> tenant
+  site_id                    FK -> site do mesmo tenant
+
+tenant                       cliente operador; um por appliance
+site                         unidade física; um ativo por appliance
+event                        contexto operacional; no máximo um ativo por site
+
 interaction_request
   interaction_id             PK, atribuído pelo servidor
   band_id                     FK, resolvido apenas no servidor
@@ -161,3 +170,10 @@ interação nem renova a expiração original.
 - `(band_id, session_nonce)` é único e durável no PostgreSQL.
 - `transaction_counter` é usado na Decision GATT e deve crescer estritamente
   por pulseira; o valor é persistido antes da emissão da resposta.
+
+## Escopo operacional
+
+A configuração singleton materializa a ADR 0006. O caso inicial é uma
+appliance da VRPlay em uma unidade de shopping, com 7 a 10 gateways, 25 a 40
+pulseiras e várias atrações em aproximadamente 1.500 m². `event` representa a
+operação regular ou uma campanha vigente; não obriga recriação diária.

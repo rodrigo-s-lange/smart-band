@@ -15,6 +15,10 @@ Pode atuar como gateway operador, gateway de rádio ou ambos.
 Mantém fila global, identidade, regras, ledger, saldo, aplicação e banco. É a
 única autoridade transacional e funciona sem internet.
 
+Cada instalação atende um único cliente e um único site operacional por vez.
+Eventos sucessivos preservam o histórico da unidade. Operações simultâneas em
+outro site usam outra appliance.
+
 ## Serviços externos opcionais
 
 Licença, atualização, suporte, monitoramento técnico e backup autorizado. Não

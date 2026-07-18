@@ -27,6 +27,7 @@ pulseiras -- BLE --> gateways -- LAN --> appliance local
 ```
 
 - A appliance local é a autoridade transacional.
+- Cada appliance atende um único cliente e um único site operacional por vez.
 - Internet e EasySmart Platform não são necessárias para operar.
 - Serviços externos são opcionais para licença, atualização, suporte e backup.
 - O gateway da atração pode ser diferente do gateway usado como ponte de rádio.
@@ -78,14 +79,16 @@ docs/
 6. [docs/architecture/domain-invariants.md](docs/architecture/domain-invariants.md)
 7. [contracts/proximity/README.md](contracts/proximity/README.md)
 8. [docs/decisions/0005-protocol-correction-and-transaction-safety.md](docs/decisions/0005-protocol-correction-and-transaction-safety.md)
-9. [docs/stage-gates/03-executable-contracts.md](docs/stage-gates/03-executable-contracts.md)
-10. [docs/roadmap.md](docs/roadmap.md)
+9. [docs/decisions/0006-single-tenant-single-site-appliance.md](docs/decisions/0006-single-tenant-single-site-appliance.md)
+10. [docs/stage-gates/03-executable-contracts.md](docs/stage-gates/03-executable-contracts.md)
+11. [docs/stage-gates/04-postgresql-model.md](docs/stage-gates/04-postgresql-model.md)
+12. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 
-Etapas 1–3 concluídas: domínio, protocolo, fila e contratos executáveis estão
-versionados e validados por CI. A próxima decisão é o desenho da Etapa 4
-(PostgreSQL e migrations). Hardware e firmware ESP32 permanecem no fim.
+Etapas 1–4 concluídas: contratos e modelo PostgreSQL estão protegidos por CI. A
+próxima frente é a Etapa 5, backend local. Hardware e firmware ESP32 permanecem
+no fim.
 
 Validação local:
 
