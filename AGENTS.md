@@ -23,10 +23,12 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 2. `docs/architecture/layers.md`
 3. `docs/architecture/interaction-queue.md`
 4. `docs/architecture/transaction-flow.md`
-5. `contracts/proximity/README.md`
-6. `docs/decisions/0001-local-first-appliance.md`
-7. `docs/decisions/0002-ble-global-queue-band-confirmation.md`
-8. `docs/roadmap.md`
+5. `docs/architecture/domain-model.md`
+6. `docs/architecture/domain-invariants.md`
+7. `contracts/proximity/README.md`
+8. `docs/decisions/0001-local-first-appliance.md`
+9. `docs/decisions/0002-ble-global-queue-band-confirmation.md`
+10. `docs/roadmap.md`
 
 ## Decisões vigentes
 

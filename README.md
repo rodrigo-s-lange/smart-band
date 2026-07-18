@@ -39,7 +39,7 @@ apps/
 services/
   gateway-coordinator/      sightings, claims e sessões de rádio
 contracts/
-  openapi/                  contratos HTTP/WebSocket
+  openapi/                  contratos HTTP e SSE (fila em tempo real)
   events/                   eventos internos versionados
   proximity/                advertising, GATT e confirmação
 simulators/
@@ -73,8 +73,10 @@ docs/
 2. [docs/architecture/layers.md](docs/architecture/layers.md)
 3. [docs/architecture/interaction-queue.md](docs/architecture/interaction-queue.md)
 4. [docs/architecture/transaction-flow.md](docs/architecture/transaction-flow.md)
-5. [contracts/proximity/README.md](contracts/proximity/README.md)
-6. [docs/roadmap.md](docs/roadmap.md)
+5. [docs/architecture/domain-model.md](docs/architecture/domain-model.md)
+6. [docs/architecture/domain-invariants.md](docs/architecture/domain-invariants.md)
+7. [contracts/proximity/README.md](contracts/proximity/README.md)
+8. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 
