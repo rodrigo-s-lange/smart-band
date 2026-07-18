@@ -1,6 +1,6 @@
 # Gate parcial da Etapa 5 — Fundação do backend
 
-Status: candidato — 2026-07-18
+Status: concluído — 2026-07-18
 
 ## Entregue nesta fatia
 
@@ -37,6 +37,10 @@ go build ./cmd/edge-api
 
 O workflow `Backend` também prepara as seis migrations em PostgreSQL real,
 regenera o `sqlc`, compara o resultado versionado e constrói a imagem.
+
+Evidência: workflow verde na PR 3 em
+[GitHub Actions](https://github.com/rodrigo-s-lange/smart-band/actions/runs/29647127575),
+além dos workflows `Contracts` e `Database`.
 
 ## Ainda necessário para concluir a Etapa 5
 
