@@ -15,3 +15,7 @@
 
 Hardware começa somente depois de confirmação, idempotência, concorrência,
 replay e recuperação estarem validados com simuladores.
+
+A Etapa 4 deve materializar `credit_reservation`, `actuation_command` e
+`operational_resolution`, além das constraints da ADR 0005. Nenhuma migration
+de ledger pode preservar a antiga ordem “débito antes do acionamento”.

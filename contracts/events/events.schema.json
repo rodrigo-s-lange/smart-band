@@ -24,6 +24,10 @@
       "minimum": 0,
       "maximum": 65535
     },
+    "operator_id": {
+      "type": "string",
+      "format": "uuid"
+    },
     "attraction_id": {
       "type": "integer",
       "minimum": 0,
@@ -81,14 +85,17 @@
         "event_type": { "const": "interaction.queued" },
         "payload": {
           "type": "object",
-          "required": ["interaction_id", "display_code", "queued_at"],
+          "required": ["interaction_id", "display_code", "ambiguity_status", "queued_at"],
           "properties": {
             "interaction_id": { "$ref": "#/$defs/interaction_id" },
             "display_code": { "type": "string" },
+            "ambiguity_status": { "type": "string", "enum": ["clear", "duplicate_code"] },
             "queued_at": { "$ref": "#/$defs/timestamp" },
-            "withheld_for_duplicate_of": {
-              "description": "interaction_id que está bloqueando a publicação por colisão de display_code (ADR 0004); ausente quando não há colisão",
-              "$ref": "#/$defs/interaction_id"
+            "collides_with": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/interaction_id" },
+              "uniqueItems": true,
+              "description": "interações visíveis com o mesmo display_code; claim fica bloqueado (ADR 0005)"
             }
           },
           "additionalProperties": false
@@ -225,20 +232,20 @@
       }
     },
 
-    "transaction.authorized": {
+    "transaction.credit_reserved": {
       "allOf": [{ "$ref": "#/$defs/envelope" }],
       "properties": {
-        "event_type": { "const": "transaction.authorized" },
+        "event_type": { "const": "transaction.credit_reserved" },
         "payload": {
           "type": "object",
-          "required": ["transaction_id", "interaction_id", "attraction_id", "amount", "ledger_entry_id", "authorized_at"],
+          "required": ["transaction_id", "interaction_id", "attraction_id", "amount", "reservation_id", "reserved_at"],
           "properties": {
             "transaction_id": { "$ref": "#/$defs/transaction_id" },
             "interaction_id": { "$ref": "#/$defs/interaction_id" },
             "attraction_id": { "$ref": "#/$defs/attraction_id" },
             "amount": { "$ref": "#/$defs/money_minor_units" },
-            "ledger_entry_id": { "$ref": "#/$defs/uuid" },
-            "authorized_at": { "$ref": "#/$defs/timestamp" }
+            "reservation_id": { "$ref": "#/$defs/uuid" },
+            "reserved_at": { "$ref": "#/$defs/timestamp" }
           },
           "additionalProperties": false
         }
@@ -251,13 +258,15 @@
         "event_type": { "const": "transaction.completed" },
         "payload": {
           "type": "object",
-          "required": ["transaction_id", "interaction_id", "attraction_id", "remaining_balance", "actuation", "completed_at"],
+          "required": ["transaction_id", "interaction_id", "attraction_id", "remaining_balance", "actuation", "actuation_command_id", "ledger_entry_id", "completed_at"],
           "properties": {
             "transaction_id": { "$ref": "#/$defs/transaction_id" },
             "interaction_id": { "$ref": "#/$defs/interaction_id" },
             "attraction_id": { "$ref": "#/$defs/attraction_id" },
             "remaining_balance": { "$ref": "#/$defs/money_minor_units" },
             "actuation": { "type": "string", "enum": ["automatic", "manual_override"] },
+            "actuation_command_id": { "$ref": "#/$defs/uuid" },
+            "ledger_entry_id": { "$ref": "#/$defs/uuid" },
             "completed_at": { "$ref": "#/$defs/timestamp" }
           },
           "additionalProperties": false
@@ -271,13 +280,33 @@
         "event_type": { "const": "attraction.actuation_failed" },
         "payload": {
           "type": "object",
-          "required": ["transaction_id", "interaction_id", "attraction_id", "operator_gateway_id", "failed_at"],
+          "required": ["transaction_id", "interaction_id", "attraction_id", "operator_gateway_id", "actuation_command_id", "failure_kind", "failed_at"],
           "properties": {
             "transaction_id": { "$ref": "#/$defs/transaction_id" },
             "interaction_id": { "$ref": "#/$defs/interaction_id" },
             "attraction_id": { "$ref": "#/$defs/attraction_id" },
             "operator_gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "actuation_command_id": { "$ref": "#/$defs/uuid" },
+            "failure_kind": { "type": "string", "enum": ["not_executed", "ambiguous"] },
             "failed_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "transaction.reconciliation_required": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "transaction.reconciliation_required" },
+        "payload": {
+          "type": "object",
+          "required": ["transaction_id", "interaction_id", "actuation_command_id", "detected_at"],
+          "properties": {
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "actuation_command_id": { "$ref": "#/$defs/uuid" },
+            "detected_at": { "$ref": "#/$defs/timestamp" }
           },
           "additionalProperties": false
         }
@@ -290,15 +319,18 @@
         "event_type": { "const": "transaction.actuation_override" },
         "payload": {
           "type": "object",
-          "required": ["transaction_id", "interaction_id", "operator_gateway_id", "overridden_at"],
+          "required": ["transaction_id", "interaction_id", "operator_id", "operator_gateway_id", "action", "reason", "overridden_at"],
           "properties": {
             "transaction_id": { "$ref": "#/$defs/transaction_id" },
             "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "operator_id": { "$ref": "#/$defs/operator_id" },
             "operator_gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "action": { "type": "string", "enum": ["retry_actuation", "release_reservation", "manual_confirmation"] },
+            "reason": { "type": "string", "minLength": 1 },
             "overridden_at": { "$ref": "#/$defs/timestamp" }
           },
           "additionalProperties": false,
-          "description": "auditoria de override manual (ADR 0003); base para detectar padrão anômalo de overrides por gateway"
+          "description": "exceção auditada por operador individual e terminal (ADR 0005)"
         }
       }
     },
@@ -332,9 +364,10 @@
     { "$ref": "#/$defs/interaction.cancelled" },
     { "$ref": "#/$defs/interaction.expired" },
     { "$ref": "#/$defs/transaction.denied" },
-    { "$ref": "#/$defs/transaction.authorized" },
+    { "$ref": "#/$defs/transaction.credit_reserved" },
     { "$ref": "#/$defs/transaction.completed" },
     { "$ref": "#/$defs/attraction.actuation_failed" },
+    { "$ref": "#/$defs/transaction.reconciliation_required" },
     { "$ref": "#/$defs/transaction.actuation_override" },
     { "$ref": "#/$defs/gateway.status_changed" }
   ]

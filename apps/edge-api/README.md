@@ -9,8 +9,10 @@ Aplicação principal da appliance local e autoridade transacional.
 - ingestão autenticada de sightings
 - fila global, claims e transaction intents
 - desafio e validação da confirmação da pulseira
-- ledger, saldo, carga, débito, estorno e ajuste
+- reserva de crédito, comandos de acionamento, ledger, saldo, carga, débito,
+  estorno e ajuste
 - auditoria, health checks, backup e restore
+- reconciliação e exceções vinculadas a `operator_id`
 
 ## Restrições
 

@@ -1,6 +1,9 @@
 # ADR 0004 — Payload de advertising, expiração de descoberta e transporte de fila
 
-Status: accepted — 2026-07-17
+Status: accepted — 2026-07-17; parcialmente substituída pela ADR 0005
+
+> A ADR 0005 corrige a entrada do CMAC e renomeia `expires_at_local` para
+> `request_ttl_seconds`. O tamanho de 22 bytes e a escolha de SSE permanecem.
 
 ## Decisão
 

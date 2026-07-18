@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Smart-Band Edge API
-  version: "1.0.0"
+  version: "1.1.0"
   description: >
     API HTTP da appliance local (apps/edge-api). Autoridade transacional
     única do sistema — ver AGENTS.md e docs/decisions/0001-local-first-appliance.md.
@@ -116,8 +116,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         "409":
           description: >
-            Já existe um claim ativo para esta interação (I3) — outro
-            operador chegou primeiro.
+            Já existe claim ativo ou o código está ambíguo; a interação não
+            pode avançar.
           content:
             application/json:
               schema:
@@ -126,7 +126,7 @@ paths:
   /interactions/{interaction_id}/cancel:
     post:
       operationId: cancelInteraction
-      summary: Cancelamento do operador, a qualquer estágio (ADR 0003)
+      summary: Cancelamento antes do despacho do comando físico (ADR 0005)
       security:
         - operatorSession: []
       parameters:
@@ -134,12 +134,11 @@ paths:
       responses:
         "204":
           description: >
-            Cancelado. Se a transação já havia alcançado o commit do ledger,
-            o cancelamento é rejeitado como no-op (ver 409).
+            Cancelado; uma reserva ativa é liberada atomicamente.
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
-          description: Ledger já commitado — cancelamento tardio, rejeitado como no-op (ADR 0003)
+          description: Comando físico já despachado ou ledger commitado; exige reconciliação/ajuste
           content:
             application/json:
               schema:
@@ -181,10 +180,9 @@ paths:
       responses:
         "200":
           description: >
-            Resultado registrado. Em sucesso, dispara transaction.completed
-            e a escrita GATT de Result para a pulseira. Em falha, dispara
-            attraction.actuation_failed — nenhum estorno automático ocorre
-            (ADR 0003).
+            Resultado idempotente registrado. Em sucesso, consome a reserva,
+            cria o débito e dispara transaction.completed. `not_executed`
+            não debita; timeout/ack ambíguo exige reconciliação (ADR 0005).
           content:
             application/json:
               schema:
@@ -192,7 +190,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
-          description: Transação não está em `authorized` — resultado fora de ordem
+          description: Transação não está em `actuation_pending` ou command_id não corresponde
           content:
             application/json:
               schema:
@@ -201,17 +199,23 @@ paths:
   /transactions/{transaction_id}/actuation-override:
     post:
       operationId: overrideActuation
-      summary: Operador aciona manualmente após falha de acionamento (ADR 0003)
+      summary: Operador identificado resolve falha ou ambiguidade (ADR 0005)
       security:
         - operatorSession: []
       parameters:
         - $ref: "#/components/parameters/TransactionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActuationOverrideRequest"
       responses:
         "200":
           description: >
-            Override registrado e auditado por operator_gateway_id; dispara
-            transaction.actuation_override e transaction.completed. Nenhum
-            novo lançamento de ledger é criado — o débito já existia.
+            Resolução registrada com operator_id e operator_gateway_id. Uma
+            confirmação manual comprovada consome a reserva e cria um único
+            débito; liberação da reserva não cria ledger.
           content:
             application/json:
               schema:
@@ -219,7 +223,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
-          description: Transação não está em `actuation_failed`
+          description: Transação não está em `actuation_failed` ou `reconciliation_required`
           content:
             application/json:
               schema:
@@ -508,13 +512,21 @@ components:
 
     QueueEntry:
       type: object
-      required: [interaction_id, display_code, queued_at]
+      required: [interaction_id, display_code, status, queued_at]
       properties:
         interaction_id:
           type: integer
         display_code:
           type: string
           pattern: "^[0-9A-HJKMNP-TV-Z]{3}-[0-9A-HJKMNP-TV-Z]{3}$"
+        status:
+          type: string
+          enum: [queued, queued_ambiguous]
+        collides_with:
+          type: array
+          items:
+            type: integer
+          uniqueItems: true
         queued_at:
           type: string
           format: date-time
@@ -543,7 +555,7 @@ components:
 
     TransactionStatus:
       type: object
-      required: [transaction_id, interaction_id, state]
+      required: [transaction_id, interaction_id, state, attraction_id, operator_gateway_id]
       properties:
         transaction_id:
           $ref: "#/components/schemas/TransactionId"
@@ -556,9 +568,11 @@ components:
             - awaiting_band_confirmation
             - confirmed_pending_validation
             - denied
-            - authorized
+            - credit_reserved
+            - actuation_pending
             - completed
             - actuation_failed
+            - reconciliation_required
             - confirmation_timeout
             - cancelled
         amount:
@@ -572,14 +586,44 @@ components:
         radio_gateway_id:
           type: integer
           description: ponte BLE escolhida para a sessão GATT; pode diferir do operator_gateway_id
+        reservation_id:
+          type: string
+          format: uuid
+        actuation_command_id:
+          type: string
+          format: uuid
 
     ActuationResult:
       type: object
-      required: [result]
+      required: [actuation_command_id, result, occurred_at]
       properties:
+        actuation_command_id:
+          type: string
+          format: uuid
         result:
           type: string
-          enum: [success, failed]
+          enum: [succeeded, not_executed, ambiguous]
+        occurred_at:
+          type: string
+          format: date-time
+
+    ActuationOverrideRequest:
+      type: object
+      required: [operator_id, operator_gateway_id, action, reason]
+      properties:
+        operator_id:
+          type: string
+          format: uuid
+        operator_gateway_id:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        action:
+          type: string
+          enum: [retry_actuation, release_reservation, manual_confirmation]
+        reason:
+          type: string
+          minLength: 1
 
     LedgerEntry:
       type: object
@@ -610,7 +654,7 @@ components:
 
     LedgerAdjustmentRequest:
       type: object
-      required: [band_id, amount, reason]
+      required: [band_id, operator_id, amount, reason]
       properties:
         band_id:
           type: string
@@ -620,6 +664,9 @@ components:
           description: positivo para devolver saldo, negativo para corrigir excesso
         reason:
           type: string
+        operator_id:
+          type: string
+          format: uuid
         reference_transaction_id:
           $ref: "#/components/schemas/TransactionId"
 
@@ -672,8 +719,11 @@ components:
 
     Operator:
       type: object
-      required: [operator_gateway_id]
+      required: [operator_id, operator_gateway_id]
       properties:
+        operator_id:
+          type: string
+          format: uuid
         operator_gateway_id:
           type: integer
         label:

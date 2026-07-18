@@ -28,7 +28,10 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 7. `contracts/proximity/README.md`
 8. `docs/decisions/0001-local-first-appliance.md`
 9. `docs/decisions/0002-ble-global-queue-band-confirmation.md`
-10. `docs/roadmap.md`
+10. `docs/decisions/0003-ble-protocol-parameters.md`
+11. `docs/decisions/0004-advertising-payload-and-transport.md`
+12. `docs/decisions/0005-protocol-correction-and-transaction-safety.md`
+13. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -48,6 +51,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 ## Invariantes
 
 - Um `transaction_id` causa no máximo um débito.
+- Débito só é commitado depois de ack positivo e idempotente do acionamento.
+- Reserva de crédito não é lançamento de ledger e pode ser liberada antes da entrega.
 - Saldo e ledger mudam na mesma transação de banco.
 - Uma `interaction_request` possui no máximo um claim ativo.
 - Seleção usa `interaction_id`, nunca posição visual na fila.
@@ -57,6 +62,7 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - Chaves de pulseira não são armazenadas em gateways.
 - Timeout ou rejeição na pulseira não alteram saldo.
 - `operator_gateway_id`, `radio_gateway_id` e `attraction_id` são registrados separadamente.
+- Override, ajuste e reconciliação exigem `operator_id` individual.
 - O sistema precisa funcionar sem internet.
 
 ## Fronteiras de responsabilidade
@@ -88,7 +94,10 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - Proteger comparações de MAC contra timing leaks.
 - Preferir tags autenticadoras de pelo menos 64 bits no MVP.
 - Tratar replay, relay, tracking, clonagem, rollback e fila falsa nos testes.
+- Separar por domínio todas as entradas de CMAC e testar a transcrição completa.
 - Prever Secure Boot, Flash Encryption e proteção de debug para produção.
+- Não afirmar chave não exportável em eFuse sem prova no MCU/API escolhidos;
+  validar o caminho real usado pelo AES-CMAC.
 - Dados pessoais permanecem locais por padrão.
 - Backup externo precisa ser criptografado e autorizado pelo cliente.
 

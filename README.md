@@ -11,7 +11,8 @@ acessos em atrações de eventos.
 4. O servidor autentica, deduplica e publica o código em uma fila global.
 5. O operador da atração seleciona o código verbalizado pela pessoa.
 6. A pulseira mostra a atração e o custo e exige confirmação consciente.
-7. O servidor grava o débito uma única vez e libera a atração.
+7. O servidor reserva o crédito, envia um comando idempotente e grava o
+   débito uma única vez somente após confirmar o acionamento da atração.
 
 A confirmação na pulseira é simultaneamente uma regra de segurança e parte da
 experiência: a pessoa possui poder real de decisão sobre a ação.
@@ -76,7 +77,8 @@ docs/
 5. [docs/architecture/domain-model.md](docs/architecture/domain-model.md)
 6. [docs/architecture/domain-invariants.md](docs/architecture/domain-invariants.md)
 7. [contracts/proximity/README.md](contracts/proximity/README.md)
-8. [docs/roadmap.md](docs/roadmap.md)
+8. [docs/decisions/0005-protocol-correction-and-transaction-safety.md](docs/decisions/0005-protocol-correction-and-transaction-safety.md)
+9. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 

@@ -7,9 +7,10 @@ validado com `openapi-spec-validator`). Cobre:
 - ingestão de sightings autenticados e resolução de identidade
 - fila global (snapshot HTTP + stream SSE)
 - claim e cancelamento de solicitações
-- transações: status, resultado de acionamento, override manual, estados
+- transações: reserva, comando idempotente, resultado de acionamento,
+  reconciliação identificada e estados
   espelhando `docs/architecture/domain-model.md`
-- ledger: consulta e ajuste manual (estorno)
+- ledger: consulta e ajuste manual com `operator_id`
 - pulseiras, créditos, atrações, gateways, operadores — CRUD representativo;
   o conjunto completo é preenchido na Etapa 5 (backend local), seguindo o
   mesmo padrão de auth/versionamento/erro já fixado no arquivo

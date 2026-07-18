@@ -1,160 +1,89 @@
 # Vetores de teste do protocolo BLE
 
-Valores de AES-128-CMAC calculados de verdade (biblioteca `cryptography`,
-Python), não fabricados — usados para validar qualquer implementação
-(firmware, simuladores, backend) contra um resultado conhecido. Convenção:
-truncamento para 64 bits sempre pega os **8 bytes mais significativos**
-(leftmost) da saída de 128 bits do AES-CMAC.
+Calculados com `cryptography.hazmat.primitives.cmac.CMAC`. Truncamento sempre
+usa os oito bytes mais significativos. Chave de teste:
+`2b7e151628aed2a6abf7158809cf4f3c`.
 
-## Sanity check — RFC 4493 Example 2
-
-Confirma que a implementação de AES-CMAC usada está correta antes de
-confiar em qualquer vetor abaixo (chave e mensagem padrão da RFC, saída de
-128 bits, sem truncamento):
+## Sanity check RFC 4493
 
 ```text
-key     = 2b7e151628aed2a6abf7158809cf4f3c
 message = 6bc1bee22e409f96e93d7e117393172a
-AES-CMAC = 070a16b46b4d4144f79bdd9dd04a287c
+CMAC    = 070a16b46b4d4144f79bdd9dd04a287c
 ```
 
-Qualquer implementação deve reproduzir exatamente essa saída antes de
-prosseguir para os vetores específicos do protocolo.
-
-## Chave de pulseira usada nos vetores abaixo
+## Advertising
 
 ```text
-band_key = 2b7e151628aed2a6abf7158809cf4f3c
-```
-
-(reaproveita a chave de teste da RFC 4493 — não é uma chave de produção.)
-
-## 1. Advertising — Solicitação válida
-
-Entrada:
-
-```text
+protocol_version    = 01
 session_nonce       = 0102030405060708
-display_code (u32)  = 0x12345678   (Crockford Base32: 28T-5CY-0)
-expires_at_local     = 60  (0x3c)
-transaction_counter  = 42  (0x2a000000 LE)
+display_code_LE     = 78563412
+request_ttl_seconds = 3c
+CMAC input          = 01 01 0102030405060708 78563412 3c
+                    = 01010102030405060708785634123c
+full CMAC           = 5317788fcfee63d0c9ffd21bdc8bf0f7
+tag                 = 5317788fcfee63d0
+payload (22B)       = 0101020304050607085317788fcfee63d0785634123c
 ```
 
-CMAC:
+Busca de identidade para a mesma entrada:
 
 ```text
-CMAC input (17B) = session_nonce ‖ display_code_LE ‖ expires_at_local ‖ transaction_counter_LE
-                  = 0102030405060708785634123c2a000000
-full CMAC (16B)  = a220c576f07101988f29ab553a75a93e
-tag (8B, leftmost) = a220c576f0710198
+000102030405060708090a0b0c0d0e0f -> bc4058dde92dd76b
+2b7e151628aed2a6abf7158809cf4f3c -> 5317788fcfee63d0 MATCH
+ffeeddccbbaa99887766554433221100 -> 93f4aa6a09373ab1
 ```
 
-Payload de advertising completo (22 bytes,
-`protocol_version ‖ session_nonce ‖ tag ‖ display_code_LE ‖ expires_at_local`):
+Alterar `display_code` para `0x12345679` produz `8720d885197edfeb`; manter a
+tag original deve rejeitar o payload.
+
+## Challenge
 
 ```text
-010102030405060708a220c576f0710198785634123c
+transaction_id      = aabbccddeeff0011
+challenge_nonce     = 1122334455667788
+interaction_id_LE   = 01000000
+attraction_id_LE    = 0700
+operator_gateway_LE = 0300
+amount_LE           = dc050000
+CMAC input          = 0201aabbccddeeff001111223344556677880100000007000300dc050000
+server_auth_tag     = 69521d189b105519
+payload (37B)       = 01aabbccddeeff001111223344556677880100000007000300dc05000069521d189b105519
 ```
 
-## 2. Resolução de identidade — busca por chave
-
-Mesmo `adv_input` acima, testado contra um pool de 3 chaves candidatas
-(simulando o servidor buscando qual pulseira provisionada corresponde ao
-`session_nonce` recebido):
+## Decision vinculada ao Challenge
 
 ```text
-candidate[0] = 000102030405060708090a0b0c0d0e0f -> tag=43051d4d0aae868c (no match)
-candidate[1] = 2b7e151628aed2a6abf7158809cf4f3c -> tag=a220c576f0710198 (MATCH)
-candidate[2] = ffeeddccbbaa99887766554433221100 -> tag=f47f10941b4ebefc (no match)
+decision            = 01
+transaction_counter = 2b000000
+CMAC input          = 0301aabbccddeeff001111223344556677880100000007000300dc050000012b000000
+band_auth_tag       = 7bd168f8308d9643
+payload (26B)       = 01aabbccddeeff001101000000012b0000007bd168f8308d9643
 ```
 
-Implementações de referência devem iterar até achar `candidate[1]` e parar
-ali — a comparação de cada tentativa deve ser em tempo constante (AGENTS.md).
+Se apenas o custo do Challenge mudar de 1500 para 1501, a tag esperada passa
+a `ce72ba9a8a98ae7e`. Portanto a tag original deve ser rejeitada mesmo que o
+payload curto da Decision permaneça igual.
 
-## 3. Caso inválido — payload adulterado
-
-Mesmo cenário do item 1, mas com um único bit invertido em `display_code`
-(`0x12345678` → `0x12345679`) mantendo o `tag` original — simula um
-gateway ou atacante alterando o payload em trânsito:
+## Result
 
 ```text
-display_code adulterado = 0x12345679
-tag recebido (original)  = a220c576f0710198
-tag recalculado           = cc6cbf644bcf528a
-resultado esperado        = MISMATCH -> payload rejeitado (I6: advertising inválido não entra na fila)
+CMAC input      = 0401aabbccddeeff00110234210000
+result_auth_tag = e2f6ddf09c0797c7
+payload (22B)   = 01aabbccddeeff00110234210000e2f6ddf09c0797c7
 ```
 
-## 4. GATT Challenge (servidor → pulseira)
-
-Entrada:
+## Cancel
 
 ```text
-transaction_id       = aabbccddeeff0011
-challenge_nonce      = 1122334455667788
-interaction_id       = 1
-attraction_id        = 7
-operator_gateway_id  = 3
-amount (cents)       = 1500
+CMAC input      = 0501aabbccddeeff0011
+server_auth_tag = b8ccd465710441cb
+payload (17B)   = 01aabbccddeeff0011b8ccd465710441cb
 ```
 
-```text
-CMAC input (29B) = 01aabbccddeeff001111223344556677880100000007000300dc050000
-server_auth_tag  = 376e39a5624f124b
-payload completo (37B) = 01aabbccddeeff001111223344556677880100000007000300dc050000376e39a5624f124b
-```
+## Propriedades obrigatórias
 
-## 5. GATT Decision (pulseira → servidor)
-
-Entrada:
-
-```text
-transaction_id       = aabbccddeeff0011  (mesmo do item 4)
-interaction_id       = 1
-decision             = 1  (confirmado)
-transaction_counter  = 43
-```
-
-```text
-CMAC input (18B) = 01aabbccddeeff001101000000012b000000
-band_auth_tag    = b6e47b128ece1137
-payload completo (26B) = 01aabbccddeeff001101000000012b000000b6e47b128ece1137
-```
-
-## 6. GATT Result (servidor → pulseira)
-
-Entrada:
-
-```text
-transaction_id     = aabbccddeeff0011
-result              = 2  (concluído com sucesso)
-remaining_balance   = 8500 (cents)
-```
-
-```text
-CMAC input (13B)  = aabbccddeeff00110234210000
-result_auth_tag   = 7ac5f8f80bba87fa
-payload completo (21B) = aabbccddeeff001102342100007ac5f8f80bba87fa
-```
-
-## 7. GATT Cancel (servidor → pulseira)
-
-Entrada:
-
-```text
-transaction_id = aabbccddeeff0011
-```
-
-```text
-CMAC input (9B) = 01aabbccddeeff0011
-server_auth_tag = a8317eeb88f2ae8c
-payload completo (17B) = 01aabbccddeeff0011a8317eeb88f2ae8c
-```
-
-## Reprodutibilidade
-
-Vetores gerados com `cryptography.hazmat.primitives.cmac.CMAC` (Python) —
-qualquer outra implementação de AES-128-CMAC (mbedTLS no firmware ESP-IDF,
-`aes-cmac` no backend, etc.) deve reproduzir exatamente os mesmos bytes para
-as mesmas entradas. Divergência indica erro de ordenação de bytes
-(endianness), erro de concatenação dos campos de entrada, ou truncamento no
-lado errado (deve ser sempre os 8 bytes mais significativos).
+- trocar o byte de domínio deve mudar a tag;
+- alterar qualquer campo da transcrição Decision deve invalidar a resposta;
+- repetir `(band_id, session_nonce)` deve recuperar a interação original sem
+  estender `expires_at`;
+- contador Decision igual ou menor que o último aceito deve ser rejeitado.

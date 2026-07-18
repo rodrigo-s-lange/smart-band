@@ -12,16 +12,22 @@
 10. Pessoa confirma por clique curto.
 11. Pulseira autentica a decisão.
 12. Servidor valida saldo e regras.
-13. Ledger e saldo mudam na mesma transação PostgreSQL.
-14. Gateway operador recebe autorização de acionamento.
-15. Pulseira e gateway recebem o resultado.
+13. Servidor cria uma reserva atômica de crédito; ainda não há débito.
+14. Servidor persiste um `actuation_command_id` e o envia ao gateway operador.
+15. Gateway executa cada comando no máximo uma vez e persiste o ack.
+16. Ack positivo converte reserva em débito na mesma transação PostgreSQL.
+17. Pulseira e gateway recebem o resultado autenticado.
 
 ## Invariantes
 
 - código verbalizado não autoriza débito sozinho
 - confirmação é vinculada à atração, custo e transação
 - um `transaction_id` causa no máximo um débito
+- um `actuation_command_id` causa no máximo um acionamento físico
+- débito só existe depois de ack positivo do acionamento
+- ack `not_executed` libera ou mantém uma reserva conforme decisão auditada; ack
+  ambíguo exige reconciliação e nunca dispara novo acionamento automático
 - timeout ou rejeição não alteram saldo
 - gateway e pulseira não são autoridades do saldo
 - internet não participa do fluxo
-- falha de acionamento é auditada separadamente do débito
+- override, ajuste e reconciliação exigem identidade individual do operador

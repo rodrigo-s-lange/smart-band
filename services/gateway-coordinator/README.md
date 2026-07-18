@@ -11,6 +11,7 @@ saldo. Pode começar integrado à Edge API e ser extraído somente se necessári
 - executar claim lease e fallback de rádio
 - transportar desafios e respostas GATT
 - publicar atualizações da fila para TFTs
+- persistir `actuation_command_id` e deduplicar ack/retry de acionamento
 
 O `operator_gateway_id` define a atração; o `radio_gateway_id` é apenas a ponte
 BLE escolhida para aquela sessão.
