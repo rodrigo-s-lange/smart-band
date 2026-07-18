@@ -29,7 +29,8 @@ interaction_sighting
   interaction_id              FK -> interaction_request
   gateway_id
   rssi
-  received_at
+  gateway_observed_at         relógio do gateway; somente auditoria
+  received_at                 relógio do servidor; TTL e seleção de rádio
 
 interaction_claim
   claim_id                    PK
@@ -166,6 +167,8 @@ interação nem renova a expiração original.
 ## Regras de expiração e replay
 
 - `request_ttl_seconds` é contado a partir do primeiro sighting autenticado.
+- O relógio autoritativo para TTL é o da appliance; horário do gateway não
+  altera expiração nem autorização.
 - Repetir o mesmo `session_nonce` não estende a expiração.
 - `(band_id, session_nonce)` é único e durável no PostgreSQL.
 - `transaction_counter` é usado na Decision GATT e deve crescer estritamente

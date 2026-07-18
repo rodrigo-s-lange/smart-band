@@ -12,9 +12,11 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/application"
 	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/config"
 	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/httpapi"
 	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/postgres"
+	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/security"
 )
 
 func main() {
@@ -30,6 +32,17 @@ func run(logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	keyEncryptionKey, err := security.LoadBandKeyEncryptionKey(cfg.BandKeyKEKFile)
+	if err != nil {
+		return err
+	}
+	bandKeyBox, err := security.NewBandKeyBox(keyEncryptionKey)
+	for index := range keyEncryptionKey {
+		keyEncryptionKey[index] = 0
+	}
+	if err != nil {
+		return err
+	}
 
 	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
 	if err != nil {
@@ -42,12 +55,14 @@ func run(logger *slog.Logger) error {
 	}
 	defer pool.Close()
 
+	repository := postgres.New(pool)
+	service := application.NewService(repository, bandKeyBox)
 	server := &http.Server{
 		Addr:              cfg.HTTPAddress,
-		Handler:           httpapi.New(postgres.New(pool), logger),
+		Handler:           httpapi.New(service, logger),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      30 * time.Second,
+		WriteTimeout:      0,
 		IdleTimeout:       60 * time.Second,
 	}
 

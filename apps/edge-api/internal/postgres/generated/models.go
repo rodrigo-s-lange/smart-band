@@ -152,13 +152,14 @@ type InteractionRequest struct {
 }
 
 type InteractionSighting struct {
-	SightingID    uuid.UUID
-	InteractionID uuid.UUID
-	GatewayID     uuid.UUID
-	TenantID      uuid.UUID
-	SiteID        uuid.UUID
-	Rssi          int16
-	ReceivedAt    pgtype.Timestamptz
+	SightingID        uuid.UUID
+	InteractionID     uuid.UUID
+	GatewayID         uuid.UUID
+	TenantID          uuid.UUID
+	SiteID            uuid.UUID
+	Rssi              int16
+	ReceivedAt        pgtype.Timestamptz
+	GatewayObservedAt pgtype.Timestamptz
 }
 
 type LedgerEntry struct {
@@ -216,16 +217,17 @@ type OperatorSession struct {
 }
 
 type OutboxEvent struct {
-	OutboxEventID uuid.UUID
-	TenantID      uuid.UUID
-	AggregateType string
-	AggregateID   uuid.UUID
-	EventType     string
-	EventVersion  int32
-	Payload       []byte
-	OccurredAt    pgtype.Timestamptz
-	PublishedAt   pgtype.Timestamptz
-	Attempts      int32
+	OutboxEventID  uuid.UUID
+	TenantID       uuid.UUID
+	AggregateType  string
+	AggregateID    uuid.UUID
+	EventType      string
+	EventVersion   int32
+	Payload        []byte
+	OccurredAt     pgtype.Timestamptz
+	PublishedAt    pgtype.Timestamptz
+	Attempts       int32
+	StreamSequence *int64
 }
 
 type Participant struct {

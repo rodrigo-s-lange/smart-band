@@ -33,7 +33,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 12. `docs/decisions/0005-protocol-correction-and-transaction-safety.md`
 13. `docs/decisions/0006-single-tenant-single-site-appliance.md`
 14. `docs/decisions/0007-edge-api-foundation.md`
-15. `docs/roadmap.md`
+15. `docs/decisions/0008-authenticated-sightings-and-sse.md`
+16. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -45,6 +46,9 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - PostgreSQL local é autoridade de saldo e ledger.
 - Pulseira e gateway não debitam saldo isoladamente.
 - A fila de solicitações pertence ao servidor local.
+- `band_key` fica somente na pulseira e cifrada na appliance; gateway não a recebe.
+- TTL de interação usa relógio da appliance, nunca o relógio do gateway.
+- SSE retoma pelo `stream_sequence`; snapshot inicial vem de `GET /v1/queue`.
 - O gateway operador pode ser diferente do gateway de rádio.
 - A EasySmart Platform não está no caminho operacional.
 - Uma appliance atende um único tenant e um único site operacional por vez.

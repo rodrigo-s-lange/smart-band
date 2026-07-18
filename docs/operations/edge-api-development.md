@@ -5,6 +5,7 @@
 - Go 1.26.5 ou imagem `golang:1.26.5-alpine`
 - PostgreSQL 18 com as migrations aplicadas
 - `DATABASE_URL` apontando para o banco local
+- arquivo de KEK de teste com 32 bytes, fora do repositório
 
 Não use credenciais reais da instalação em fixtures, comandos ou logs.
 
@@ -24,6 +25,7 @@ python tools/database/validate.py \
 ```bash
 cd apps/edge-api
 export DATABASE_URL='postgresql://postgres:postgres@localhost:5432/smartband?sslmode=disable'
+export SMARTBAND_BAND_KEY_KEK_FILE='/run/secrets/smartband-band-key-kek'
 go run ./cmd/edge-api
 ```
 

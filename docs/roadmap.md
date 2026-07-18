@@ -3,7 +3,9 @@
 Estado em 2026-07-18: etapas 1–4 concluídas e protegidas pelos gates
 [03](stage-gates/03-executable-contracts.md) e
 [04](stage-gates/04-postgresql-model.md). A fundação da Etapa 5 está em
-validação no [gate parcial 05](stage-gates/05-backend-foundation.md).
+execução no [gate parcial 05](stage-gates/05-backend-foundation.md). A ingestão
+BLE autenticada, a deduplicação e o SSE já estão materializados; claim e o fluxo
+transacional continuam sendo as próximas fatias.
 
 1. Domínio e invariantes
 2. Contrato BLE e máquina de estados
@@ -21,6 +23,5 @@ validação no [gate parcial 05](stage-gates/05-backend-foundation.md).
 Hardware começa somente depois de confirmação, idempotência, concorrência,
 replay e recuperação estarem validados com simuladores.
 
-A Etapa 4 deve materializar `credit_reservation`, `actuation_command` e
-`operational_resolution`, além das constraints da ADR 0005. Nenhuma migration
-de ledger pode preservar a antiga ordem “débito antes do acionamento”.
+A próxima fatia da Etapa 5 implementa claim CAS, escolha do gateway de rádio e
+criação atômica do `transaction_intent`, sem iniciar hardware ou firmware.

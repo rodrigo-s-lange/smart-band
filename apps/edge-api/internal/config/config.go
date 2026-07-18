@@ -11,6 +11,7 @@ import (
 type Config struct {
 	HTTPAddress     string
 	DatabaseURL     string
+	BandKeyKEKFile  string
 	ShutdownTimeout time.Duration
 	DatabaseMaxConn int32
 }
@@ -19,11 +20,15 @@ func Load() (Config, error) {
 	cfg := Config{
 		HTTPAddress:     envOrDefault("SMARTBAND_HTTP_ADDRESS", ":8080"),
 		DatabaseURL:     os.Getenv("DATABASE_URL"),
+		BandKeyKEKFile:  os.Getenv("SMARTBAND_BAND_KEY_KEK_FILE"),
 		ShutdownTimeout: 10 * time.Second,
 		DatabaseMaxConn: 10,
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")
+	}
+	if cfg.BandKeyKEKFile == "" {
+		return Config{}, errors.New("SMARTBAND_BAND_KEY_KEK_FILE is required")
 	}
 
 	if raw := os.Getenv("SMARTBAND_SHUTDOWN_TIMEOUT"); raw != "" {

@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 )
 
@@ -52,6 +53,60 @@ type Actor struct {
 	Label      string
 }
 
+type SightingReport struct {
+	GatewayID         uint16
+	RSSI              int16
+	GatewayObservedAt time.Time
+	ReceivedAt        time.Time
+	RawPayload        []byte
+}
+
+type SightingResult struct {
+	Resolved      bool    `json:"resolved"`
+	InteractionID *uint32 `json:"interaction_id,omitempty"`
+}
+
+type ActiveBandKey struct {
+	BandID       string
+	EncryptedKey []byte
+}
+
+type AuthenticatedSighting struct {
+	BandID            string
+	GatewayInternalID string
+	ProtocolVersion   uint8
+	SessionNonce      []byte
+	DisplayCode       string
+	TTLSeconds        uint8
+	RSSI              int16
+	GatewayObservedAt time.Time
+	ReceivedAt        time.Time
+}
+
+type StreamEvent struct {
+	Sequence  int64
+	EventType string
+	Envelope  json.RawMessage
+}
+
+type BandKeyDecryptor interface {
+	Decrypt(string, []byte) ([]byte, error)
+}
+
+type Repository interface {
+	Ping(context.Context) error
+	Appliance(context.Context) (ApplianceContext, error)
+	Queue(context.Context) ([]QueueEntry, error)
+	Attractions(context.Context) ([]Attraction, error)
+	Gateways(context.Context) ([]Gateway, error)
+	Bands(context.Context) ([]Band, error)
+	AuthenticateGateway(context.Context, []byte) (Actor, error)
+	AuthenticateOperator(context.Context, []byte) (Actor, error)
+	ActiveBandKeys(context.Context) ([]ActiveBandKey, error)
+	SaveAuthenticatedSighting(context.Context, AuthenticatedSighting) (uint32, error)
+	EventsAfter(context.Context, int64, int32) ([]StreamEvent, error)
+}
+
 type Store interface {
 	Ping(context.Context) error
 	Appliance(context.Context) (ApplianceContext, error)
@@ -61,4 +116,6 @@ type Store interface {
 	Bands(context.Context) ([]Band, error)
 	AuthenticateGateway(context.Context, []byte) (Actor, error)
 	AuthenticateOperator(context.Context, []byte) (Actor, error)
+	ReportSighting(context.Context, Actor, SightingReport) (SightingResult, error)
+	EventsAfter(context.Context, int64, int32) ([]StreamEvent, error)
 }

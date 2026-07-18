@@ -51,6 +51,16 @@ Configuração adicional e valores padrão ficam em [.env.example](.env.example)
 O serviço expõe health/readiness públicos e exige bearer token de gateway ou
 cookie `sb_session` nos endpoints operacionais de leitura.
 
+Sightings usam `POST /v1/sightings`. A credencial precisa pertencer ao mesmo
+`gateway_id` do corpo; payloads não autenticados retornam `resolved=false` e não
+entram na fila. O stream `GET /v1/queue/stream` publica envelopes do outbox com
+ID monotônico e aceita `Last-Event-ID`.
+
+`SMARTBAND_BAND_KEY_KEK_FILE` aponta para um arquivo de 32 bytes (bruto ou
+Base64) montado fora do banco e do repositório. Em produção, restringir leitura
+ao usuário do processo e incluir a KEK no procedimento separado de backup e
+restore; não copiá-la para a imagem.
+
 ```bash
 go test -race ./...
 go vet ./...

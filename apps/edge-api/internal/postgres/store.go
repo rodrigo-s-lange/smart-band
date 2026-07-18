@@ -2,7 +2,12 @@ package postgres
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/application"
@@ -121,4 +126,86 @@ func (s *Store) AuthenticateOperator(ctx context.Context, hash []byte) (applicat
 		return application.Actor{}, err
 	}
 	return application.Actor{Kind: "operator", InternalID: row.OperatorID, Label: row.DisplayName}, nil
+}
+
+func (s *Store) ActiveBandKeys(ctx context.Context) ([]application.ActiveBandKey, error) {
+	rows, err := s.pool.Query(ctx, `
+        SELECT b.band_id::text, b.encrypted_key
+          FROM bands b
+          JOIN appliance_configuration ac ON ac.tenant_id = b.tenant_id
+          JOIN events e ON e.site_id = ac.site_id
+                       AND e.tenant_id = ac.tenant_id
+                       AND e.status = 'active'
+          JOIN band_assignments ba ON ba.band_id = b.band_id AND ba.status = 'active'
+          JOIN operational_sessions os ON os.session_id = ba.session_id
+                                      AND os.event_id = e.event_id
+                                      AND os.status = 'active'
+         WHERE b.status = 'assigned'
+         ORDER BY b.band_id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := make([]application.ActiveBandKey, 0)
+	for rows.Next() {
+		var item application.ActiveBandKey
+		if err := rows.Scan(&item.BandID, &item.EncryptedKey); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
+}
+
+func (s *Store) SaveAuthenticatedSighting(ctx context.Context, value application.AuthenticatedSighting) (uint32, error) {
+	bandID, err := uuid.Parse(value.BandID)
+	if err != nil {
+		return 0, fmt.Errorf("parse band id: %w", err)
+	}
+	gatewayID, err := uuid.Parse(value.GatewayInternalID)
+	if err != nil {
+		return 0, fmt.Errorf("parse gateway id: %w", err)
+	}
+	var protocolID int64
+	err = s.pool.QueryRow(ctx, `
+        SELECT interaction_protocol_id
+          FROM smartband_record_authenticated_sighting(
+            $1, $2, $3, $4, $5, $6, $7, $8, $9
+          )`, gatewayID, bandID, value.SessionNonce, value.DisplayCode,
+		int16(value.ProtocolVersion), int16(value.TTLSeconds), value.RSSI,
+		value.GatewayObservedAt, value.ReceivedAt).Scan(&protocolID)
+	if err != nil {
+		var databaseError *pgconn.PgError
+		if errors.As(err, &databaseError) && databaseError.Code == "23505" &&
+			strings.Contains(databaseError.Message, "band already has an active interaction") {
+			return 0, application.ErrBandBusy
+		}
+		return 0, err
+	}
+	return uint32(protocolID), nil
+}
+
+func (s *Store) EventsAfter(ctx context.Context, sequence int64, limit int32) ([]application.StreamEvent, error) {
+	if _, err := s.pool.Exec(ctx, `SELECT smartband_expire_discovery(now())`); err != nil {
+		return nil, err
+	}
+	rows, err := s.pool.Query(ctx, `
+        SELECT stream_sequence, event_type, payload
+          FROM outbox_events
+         WHERE stream_sequence > $1
+         ORDER BY stream_sequence
+         LIMIT $2`, sequence, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := make([]application.StreamEvent, 0)
+	for rows.Next() {
+		var item application.StreamEvent
+		if err := rows.Scan(&item.Sequence, &item.EventType, &item.Envelope); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
 }
