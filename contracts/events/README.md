@@ -23,7 +23,7 @@ gateway.status_changed
 
 `transaction.completed` é o único evento automático que informa débito:
 contém `ledger_entry_id` e `actuation_command_id`. Reserva não é ledger.
-Eventos de resolução/override sempre carregam `operator_id` individual.
+Eventos de resolução/override carregam o gateway cadastrado, ação e motivo.
 
 Todo evento possui `event_id`, `event_type`, `version`, `occurred_at`
 (horário do servidor), `correlation_id` e `payload` validado — schema

@@ -36,56 +36,6 @@ func (q *Queries) AuthenticateGateway(ctx context.Context, apiKeyHash []byte) (A
 	return i, err
 }
 
-const authenticateOperator = `-- name: AuthenticateOperator :one
-SELECT o.operator_id::text AS operator_id, o.display_name,
-       g.gateway_id::text AS gateway_id, g.protocol_id AS gateway_protocol_id
-FROM operator_sessions s
-JOIN operators o ON o.operator_id = s.operator_id AND o.tenant_id = s.tenant_id
-JOIN gateways g ON g.gateway_id = s.gateway_id
-               AND g.tenant_id = s.tenant_id
-               AND g.site_id = s.site_id
-WHERE s.token_hash = $1
-  AND s.revoked_at IS NULL
-  AND s.expires_at > now()
-  AND o.status = 'active'
-  AND g.status = 'active'
-LIMIT 1
-`
-
-type AuthenticateOperatorRow struct {
-	OperatorID        string
-	DisplayName       string
-	GatewayID         string
-	GatewayProtocolID int32
-}
-
-// AuthenticateOperator
-//
-//	SELECT o.operator_id::text AS operator_id, o.display_name,
-//	       g.gateway_id::text AS gateway_id, g.protocol_id AS gateway_protocol_id
-//	FROM operator_sessions s
-//	JOIN operators o ON o.operator_id = s.operator_id AND o.tenant_id = s.tenant_id
-//	JOIN gateways g ON g.gateway_id = s.gateway_id
-//	               AND g.tenant_id = s.tenant_id
-//	               AND g.site_id = s.site_id
-//	WHERE s.token_hash = $1
-//	  AND s.revoked_at IS NULL
-//	  AND s.expires_at > now()
-//	  AND o.status = 'active'
-//	  AND g.status = 'active'
-//	LIMIT 1
-func (q *Queries) AuthenticateOperator(ctx context.Context, tokenHash []byte) (AuthenticateOperatorRow, error) {
-	row := q.db.QueryRow(ctx, authenticateOperator, tokenHash)
-	var i AuthenticateOperatorRow
-	err := row.Scan(
-		&i.OperatorID,
-		&i.DisplayName,
-		&i.GatewayID,
-		&i.GatewayProtocolID,
-	)
-	return i, err
-}
-
 const getApplianceContext = `-- name: GetApplianceContext :one
 SELECT
     ac.tenant_id::text AS tenant_id,

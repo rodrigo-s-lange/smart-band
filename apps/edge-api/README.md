@@ -5,14 +5,14 @@ Aplicação principal da appliance local e autoridade transacional.
 ## Responsabilidades
 
 - participantes, sessões e associação de pulseiras
-- gateways, atrações e operadores
+- gateways, atrações e vínculos de liberação
 - ingestão autenticada de sightings
 - fila global, claims e transaction intents
 - desafio e validação da confirmação da pulseira
 - reserva de crédito, comandos de acionamento, ledger, saldo, carga, débito,
   estorno e ajuste
 - auditoria, health checks, backup e restore
-- reconciliação e exceções vinculadas a `operator_id`
+- reconciliação e exceções vinculadas ao gateway cadastrado e a um motivo
 
 ## Restrições
 
@@ -50,11 +50,11 @@ go run ./cmd/edge-api
 ```
 
 Configuração adicional e valores padrão ficam em [.env.example](.env.example).
-O serviço expõe health/readiness públicos e exige bearer token de gateway ou
-cookie `sb_session` nos endpoints operacionais de leitura.
+O serviço expõe health/readiness públicos e exige bearer token do gateway nos
+endpoints operacionais de leitura.
 
-`POST /v1/interactions/{interaction_id}/claim` exige sessão de operador
-vinculada ao `operator_gateway_id`. O retorno inclui a ponte BLE escolhida e o
+`POST /v1/interactions/{interaction_id}/claim` exige a credencial do gateway;
+o `operator_gateway_id` é derivado dela. O retorno inclui a ponte BLE escolhida e o
 fim do lease de 10 segundos. `no_radio_gateway` não cria estado parcial.
 
 Sightings usam `POST /v1/sightings`. A credencial precisa pertencer ao mesmo

@@ -7,7 +7,6 @@
   "payload": {
     "transaction_id": "aabbccddeeff0011",
     "interaction_id": 1,
-    "operator_gateway_id": 3,
     "action": "release_reservation",
     "reason": "atração indisponível",
     "overridden_at": "2026-07-18T12:01:00Z"

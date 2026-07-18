@@ -1,12 +1,12 @@
 openapi: 3.1.0
 info:
   title: Smart-Band Edge API
-  version: "1.4.0"
+  version: "1.5.0"
   description: >
     API HTTP da appliance local (apps/edge-api). Autoridade transacional
     única do sistema — ver AGENTS.md e docs/decisions/0001-local-first-appliance.md.
     Endpoints administrativos (bands, participants, attractions, gateways,
-    operators, credits) são representativos: o CRUD completo é preenchido
+    credits) são representativos: o CRUD completo é preenchido
     durante a Etapa 5 (backend local), seguindo o mesmo padrão de auth,
     versionamento e forma de erro já fixado aqui.
 servers:
@@ -17,7 +17,6 @@ servers:
 
 security:
   - gatewayApiKey: []
-  - operatorSession: []
 
 paths:
   /health:
@@ -158,7 +157,7 @@ paths:
       operationId: claimInteraction
       summary: Claim atômico de uma interação (compare-and-swap, I3/I16)
       security:
-        - operatorSession: []
+        - gatewayApiKey: []
       parameters:
         - $ref: "#/components/parameters/InteractionId"
       requestBody:
@@ -190,7 +189,7 @@ paths:
       operationId: cancelInteraction
       summary: Cancelamento antes do despacho do comando físico (ADR 0005)
       security:
-        - operatorSession: []
+        - gatewayApiKey: []
       parameters:
         - $ref: "#/components/parameters/InteractionId"
       responses:
@@ -211,7 +210,7 @@ paths:
       operationId: getTransaction
       summary: Status de uma transação
       security:
-        - operatorSession: []
+        - localAdminSession: []
         - gatewayApiKey: []
       parameters:
         - $ref: "#/components/parameters/TransactionId"
@@ -261,9 +260,9 @@ paths:
   /transactions/{transaction_id}/actuation-override:
     post:
       operationId: overrideActuation
-      summary: Operador identificado resolve falha ou ambiguidade (ADR 0005)
+      summary: Gateway cadastrado resolve falha ou ambiguidade operacional
       security:
-        - operatorSession: []
+        - gatewayApiKey: []
       parameters:
         - $ref: "#/components/parameters/TransactionId"
       requestBody:
@@ -275,7 +274,7 @@ paths:
       responses:
         "200":
           description: >
-            Resolução registrada com operator_id e operator_gateway_id. Uma
+            Resolução registrada com operator_gateway_id e motivo. Uma
             confirmação manual comprovada consome a reserva e cria um único
             débito; liberação da reserva não cria ledger.
           content:
@@ -296,7 +295,7 @@ paths:
       operationId: listLedgerEntries
       summary: Consulta de ledger (auditoria)
       security:
-        - operatorSession: []
+        - localAdminSession: []
       parameters:
         - name: band_id
           in: query
@@ -325,7 +324,7 @@ paths:
       operationId: createLedgerAdjustment
       summary: Estorno/ajuste manual — sempre revisado por humano (ADR 0003)
       security:
-        - operatorSession: []
+        - localAdminSession: []
       requestBody:
         required: true
         content:
@@ -345,7 +344,7 @@ paths:
       operationId: listBands
       summary: Lista pulseiras provisionadas
       security:
-        - operatorSession: []
+        - gatewayApiKey: []
       responses:
         "200":
           description: Pulseiras
@@ -359,7 +358,7 @@ paths:
       operationId: provisionBand
       summary: Provisiona uma pulseira nova (gera band_key exclusiva)
       security:
-        - operatorSession: []
+        - localAdminSession: []
       responses:
         "201":
           description: Pulseira provisionada
@@ -373,7 +372,7 @@ paths:
       operationId: topUpCredits
       summary: Carga de créditos/vidas na pulseira
       security:
-        - operatorSession: []
+        - localAdminSession: []
       parameters:
         - name: band_id
           in: path
@@ -412,7 +411,7 @@ paths:
       operationId: createAttraction
       summary: Cadastra atração
       security:
-        - operatorSession: []
+        - localAdminSession: []
       requestBody:
         required: true
         content:
@@ -444,7 +443,7 @@ paths:
       operationId: provisionGateway
       summary: Provisiona gateway (emite API key — ver Autenticação)
       security:
-        - operatorSession: []
+        - localAdminSession: []
       responses:
         "201":
           description: Gateway provisionado
@@ -452,22 +451,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Gateway"
-
-  /operators:
-    get:
-      operationId: listOperators
-      summary: Lista operadores autorizados
-      security:
-        - operatorSession: []
-      responses:
-        "200":
-          description: Operadores
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Operator"
 
 components:
   securitySchemes:
@@ -477,11 +460,11 @@ components:
       description: >
         Token estático por gateway, emitido no provisionamento (POST
         /gateways). Endurecimento futuro: mTLS (ver ADR 0003, Postergado).
-    operatorSession:
+    localAdminSession:
       type: apiKey
       in: cookie
-      name: sb_session
-      description: Sessão de login humano do operator-web, modo kiosk incluso.
+      name: sb_admin_session
+      description: Sessão administrativa local; não identifica quem opera o gateway.
 
   parameters:
     InteractionId:
@@ -647,12 +630,8 @@ components:
     ClaimRequest:
       type: object
       additionalProperties: false
-      required: [operator_gateway_id, attraction_id]
+      required: [attraction_id]
       properties:
-        operator_gateway_id:
-          type: integer
-          minimum: 0
-          maximum: 65535
         attraction_id:
           type: integer
           minimum: 0
@@ -733,15 +712,8 @@ components:
 
     ActuationOverrideRequest:
       type: object
-      required: [operator_id, operator_gateway_id, action, reason]
+      required: [action, reason]
       properties:
-        operator_id:
-          type: string
-          format: uuid
-        operator_gateway_id:
-          type: integer
-          minimum: 0
-          maximum: 65535
         action:
           type: string
           enum: [retry_actuation, release_reservation, manual_confirmation]
@@ -778,7 +750,7 @@ components:
 
     LedgerAdjustmentRequest:
       type: object
-      required: [band_id, operator_id, amount, reason]
+      required: [band_id, amount, reason]
       properties:
         band_id:
           type: string
@@ -788,9 +760,6 @@ components:
           description: positivo para devolver saldo, negativo para corrigir excesso
         reason:
           type: string
-        operator_id:
-          type: string
-          format: uuid
         reference_transaction_id:
           $ref: "#/components/schemas/TransactionId"
 
@@ -836,19 +805,7 @@ components:
           type: integer
         role:
           type: string
-          enum: [operator, radio, both]
+          enum: [release, radio, both]
         status:
           type: string
           enum: [online, offline, degraded]
-
-    Operator:
-      type: object
-      required: [operator_id, operator_gateway_id]
-      properties:
-        operator_id:
-          type: string
-          format: uuid
-        operator_gateway_id:
-          type: integer
-        label:
-          type: string

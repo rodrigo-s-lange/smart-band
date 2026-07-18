@@ -49,8 +49,8 @@ Uma confirmação válida cria reserva de crédito, não débito. O servidor ger
 vez. Ack positivo converte reserva em débito e produz Result `completed`.
 
 Ack `not_executed` ou ambíguo não cria débito. Ele exige retry/resolução auditada
-ou liberação comprovada da reserva. Override e reconciliação exigem `operator_id` e
-`operator_gateway_id`.
+ou liberação comprovada da reserva. Override e reconciliação exigem o gateway
+cadastrado e um motivo.
 
 Após o clique, a pulseira mostra progresso por até 30 segundos. Sem resultado,
 entra em `attention_required`, exibe “PROCURE OPERADOR” e mantém a mesma

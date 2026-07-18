@@ -1,6 +1,9 @@
 # ADR 0005 — Correção do protocolo e segurança transacional
 
-Status: accepted — 2026-07-18
+Status: parcialmente substituída pela ADR 0010 — 2026-07-18
+
+A segurança transacional continua vigente. A exigência de identidade humana
+individual em exceções foi substituída pela identidade do gateway cadastrado.
 
 Substitui parcialmente as ADRs 0003 e 0004 nos pontos de advertising,
 autenticação das mensagens, replay, ordem entre débito e acionamento,

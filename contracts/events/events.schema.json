@@ -24,10 +24,6 @@
       "minimum": 0,
       "maximum": 65535
     },
-    "operator_id": {
-      "type": "string",
-      "format": "uuid"
-    },
     "attraction_id": {
       "type": "integer",
       "minimum": 0,
@@ -319,18 +315,17 @@
         "event_type": { "const": "transaction.actuation_override" },
         "payload": {
           "type": "object",
-          "required": ["transaction_id", "interaction_id", "operator_id", "operator_gateway_id", "action", "reason", "overridden_at"],
+          "required": ["transaction_id", "interaction_id", "operator_gateway_id", "action", "reason", "overridden_at"],
           "properties": {
             "transaction_id": { "$ref": "#/$defs/transaction_id" },
             "interaction_id": { "$ref": "#/$defs/interaction_id" },
-            "operator_id": { "$ref": "#/$defs/operator_id" },
             "operator_gateway_id": { "$ref": "#/$defs/gateway_id" },
             "action": { "type": "string", "enum": ["retry_actuation", "release_reservation", "manual_confirmation"] },
             "reason": { "type": "string", "minLength": 1 },
             "overridden_at": { "$ref": "#/$defs/timestamp" }
           },
           "additionalProperties": false,
-          "description": "exceção auditada por operador individual e terminal (ADR 0005)"
+          "description": "exceção auditada pelo gateway cadastrado e motivo"
         }
       }
     },

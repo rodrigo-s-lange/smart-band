@@ -18,7 +18,7 @@ Cenários obrigatórios:
 - repetição do mesmo `actuation_command_id` não aciona nem debita novamente
 - ack `not_executed` não cria débito
 - ack perdido leva a reconciliação sem auto-retry físico
-- override e liberação de reserva exigem `operator_id`
+- override e liberação de reserva exigem gateway cadastrado e motivo
 - cancelamento do operador em qualquer estágio, incluindo durante
   confirmação (cancelamento sempre vence a corrida, ADR 0003)
 - cancelamento libera reserva antes do despacho; durante acionamento exige

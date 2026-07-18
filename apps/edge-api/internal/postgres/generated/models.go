@@ -47,7 +47,6 @@ type AuditRecord struct {
 	AuditRecordID uuid.UUID
 	TenantID      uuid.UUID
 	SiteID        *uuid.UUID
-	OperatorID    *uuid.UUID
 	GatewayID     *uuid.UUID
 	Action        string
 	SubjectType   string
@@ -171,7 +170,6 @@ type LedgerEntry struct {
 	Amount        int64
 	BalanceAfter  int64
 	Reason        *string
-	OperatorID    *uuid.UUID
 	CommittedAt   pgtype.Timestamptz
 }
 
@@ -180,7 +178,6 @@ type OperationalResolution struct {
 	TransactionID     uuid.UUID
 	TenantID          uuid.UUID
 	SiteID            uuid.UUID
-	OperatorID        uuid.UUID
 	OperatorGatewayID uuid.UUID
 	Action            string
 	Reason            string
@@ -196,26 +193,6 @@ type OperationalSession struct {
 	Status        string
 	OpenedAt      pgtype.Timestamptz
 	ClosedAt      pgtype.Timestamptz
-}
-
-type Operator struct {
-	OperatorID  uuid.UUID
-	TenantID    uuid.UUID
-	Login       string
-	DisplayName string
-	Status      string
-	CreatedAt   pgtype.Timestamptz
-}
-
-type OperatorSession struct {
-	TokenHash  []byte
-	OperatorID uuid.UUID
-	TenantID   uuid.UUID
-	CreatedAt  pgtype.Timestamptz
-	ExpiresAt  pgtype.Timestamptz
-	RevokedAt  pgtype.Timestamptz
-	SiteID     uuid.UUID
-	GatewayID  uuid.UUID
 }
 
 type OutboxEvent struct {

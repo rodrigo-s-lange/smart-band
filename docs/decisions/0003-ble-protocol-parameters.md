@@ -1,10 +1,11 @@
 # ADR 0003 — Parâmetros do protocolo BLE e resolução de falhas operacionais
 
-Status: accepted — 2026-07-17; parcialmente substituída pela ADR 0005
+Status: histórico — substituído parcialmente pelas ADRs 0005 e 0010
 
 > A ADR 0005 substitui as decisões sobre replay no advertising, transcrição
 > autenticada, débito antes do acionamento, espera indefinida, colisão de
-> código e identidade de operador em exceções. Este arquivo é histórico.
+> código. A ADR 0010 substitui identidade humana pela identidade do gateway
+> cadastrado nas operações e exceções. Este arquivo é histórico.
 
 ## Decisão
 

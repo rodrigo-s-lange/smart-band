@@ -10,8 +10,8 @@ validado com `openapi-spec-validator`). Cobre:
 - transações: reserva, comando idempotente, resultado de acionamento,
   reconciliação identificada e estados
   espelhando `docs/architecture/domain-model.md`
-- ledger: consulta e ajuste manual com `operator_id`
-- pulseiras, créditos, atrações, gateways, operadores — CRUD representativo;
+- ledger: consulta e ajuste administrativo local com motivo obrigatório
+- pulseiras, créditos, atrações e gateways — CRUD representativo;
   o conjunto completo é preenchido na Etapa 5 (backend local), seguindo o
   mesmo padrão de auth/versionamento/erro já fixado no arquivo
 

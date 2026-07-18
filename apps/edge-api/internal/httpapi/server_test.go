@@ -50,19 +50,10 @@ func (f *fakeStore) AuthenticateGateway(_ context.Context, hash []byte) (applica
 	}
 	return application.Actor{Kind: "gateway", InternalID: "77777777-7777-7777-7777-777777777771", ProtocolID: 1}, nil
 }
-func (f *fakeStore) AuthenticateOperator(_ context.Context, hash []byte) (application.Actor, error) {
-	if len(hash) != 32 {
-		return application.Actor{}, pgx.ErrNoRows
-	}
-	return application.Actor{
-		Kind: "operator", InternalID: "55555555-5555-5555-5555-555555555555",
-		ProtocolID: 1, GatewayInternalID: "77777777-7777-7777-7777-777777777771",
-	}, nil
-}
 func (f *fakeStore) ClaimInteraction(_ context.Context, actor application.Actor, request application.ClaimRequest) (application.ClaimResult, error) {
 	f.claimRequest = request
-	if actor.Kind != "operator" || actor.ProtocolID != request.OperatorGatewayID {
-		return application.ClaimResult{}, application.ErrOperatorGatewayMismatch
+	if actor.Kind != "gateway" {
+		return application.ClaimResult{}, application.ErrGatewayIdentityMismatch
 	}
 	if f.claimErr != nil {
 		return application.ClaimResult{}, f.claimErr
@@ -181,33 +172,32 @@ func TestSightingReportsBandBusyAsConflict(t *testing.T) {
 	}
 }
 
-func TestClaimRequiresOperatorSession(t *testing.T) {
-	body := strings.NewReader(`{"operator_gateway_id":1,"attraction_id":10}`)
+func TestClaimRequiresGatewayCredential(t *testing.T) {
+	body := strings.NewReader(`{"attraction_id":10}`)
 	request := httptest.NewRequest(http.MethodPost, "/v1/interactions/101/claim", body)
-	request.Header.Set("Authorization", "Bearer gateway-test-secret")
 	response := httptest.NewRecorder()
 	testHandler(&fakeStore{}).ServeHTTP(response, request)
-	if response.Code != http.StatusForbidden {
+	if response.Code != http.StatusUnauthorized {
 		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
 	}
 }
 
-func TestClaimRejectsGatewayOutsideOperatorSession(t *testing.T) {
+func TestClaimRejectsDeclaredGatewayIdentity(t *testing.T) {
 	body := strings.NewReader(`{"operator_gateway_id":2,"attraction_id":10}`)
 	request := httptest.NewRequest(http.MethodPost, "/v1/interactions/101/claim", body)
-	request.AddCookie(&http.Cookie{Name: "sb_session", Value: "operator-test-session"})
+	request.Header.Set("Authorization", "Bearer gateway-test-secret")
 	response := httptest.NewRecorder()
 	testHandler(&fakeStore{}).ServeHTTP(response, request)
-	if response.Code != http.StatusForbidden {
+	if response.Code != http.StatusBadRequest {
 		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
 	}
 }
 
 func TestClaimReturnsSelectedRadioAndLease(t *testing.T) {
 	store := &fakeStore{}
-	body := strings.NewReader(`{"operator_gateway_id":1,"attraction_id":10}`)
+	body := strings.NewReader(`{"attraction_id":10}`)
 	request := httptest.NewRequest(http.MethodPost, "/v1/interactions/101/claim", body)
-	request.AddCookie(&http.Cookie{Name: "sb_session", Value: "operator-test-session"})
+	request.Header.Set("Authorization", "Bearer gateway-test-secret")
 	response := httptest.NewRecorder()
 	testHandler(store).ServeHTTP(response, request)
 	if response.Code != http.StatusOK || store.claimRequest.InteractionID != 101 {
@@ -220,9 +210,9 @@ func TestClaimReturnsSelectedRadioAndLease(t *testing.T) {
 
 func TestClaimReportsNoRecentRadioAsConflict(t *testing.T) {
 	store := &fakeStore{claimErr: application.ErrNoRadioGateway}
-	body := strings.NewReader(`{"operator_gateway_id":1,"attraction_id":10}`)
+	body := strings.NewReader(`{"attraction_id":10}`)
 	request := httptest.NewRequest(http.MethodPost, "/v1/interactions/101/claim", body)
-	request.AddCookie(&http.Cookie{Name: "sb_session", Value: "operator-test-session"})
+	request.Header.Set("Authorization", "Bearer gateway-test-secret")
 	response := httptest.NewRecorder()
 	testHandler(store).ServeHTTP(response, request)
 	if response.Code != http.StatusConflict || !strings.Contains(response.Body.String(), "no_radio_gateway") {

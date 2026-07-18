@@ -30,4 +30,4 @@
 - timeout ou rejeição não alteram saldo
 - gateway e pulseira não são autoridades do saldo
 - internet não participa do fluxo
-- override, ajuste e reconciliação exigem identidade individual do operador
+- override e reconciliação exigem gateway cadastrado, ação, motivo e horário

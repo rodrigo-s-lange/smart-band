@@ -29,7 +29,7 @@ etapas de banco, backend e simuladores.
 | I21 | Um `actuation_command_id` causa no máximo um acionamento | persistência idempotente no gateway |
 | I22 | Débito só ocorre após ack positivo de acionamento | reserva convertida em ledger no ack |
 | I23 | Ack ambíguo nunca gera auto-retry físico | `reconciliation_required` |
-| I24 | Exceção operacional identifica a pessoa responsável | `operator_id` obrigatório |
+| I24 | Exceção operacional identifica o equipamento responsável | gateway autenticado + ação, motivo e horário |
 | I25 | Replay do advertising não renova expiração | UNIQUE `(band_id, session_nonce)` + primeiro sighting |
 | I26 | Mensagens CMAC de tipos diferentes não compartilham a mesma entrada | byte de domínio `0x01` a `0x05` |
 | I27 | Reserva não é liberada enquanto o resultado físico puder ser sucesso | cancelamento bloqueado em `actuation_pending`; exige `not_executed` ou reconciliação |

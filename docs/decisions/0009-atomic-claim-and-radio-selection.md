@@ -1,6 +1,10 @@
 # ADR 0009 — Claim atômico e seleção do gateway de rádio
 
-Status: aceita — 2026-07-18
+Status: parcialmente substituída pela ADR 0010 — 2026-07-18
+
+A seleção de rádio e a atomicidade continuam vigentes. A identidade humana e a
+sessão de operador foram substituídas pelo gateway autenticado conforme a
+[ADR 0010](0010-gateway-as-operational-identity.md).
 
 ## Contexto
 
@@ -16,8 +20,8 @@ O PostgreSQL executa, em uma única transação, o compare-and-swap de `queued`
 para `claimed`, a criação de `interaction_claim` e `transaction_intent`, a
 escolha do gateway de rádio e a publicação de `interaction.claimed` no outbox.
 
-- A sessão do operador fica vinculada a um `gateway_id` e `site_id`. O
-  `operator_gateway_id` do pedido deve coincidir com esse vínculo.
+- O gateway que solicita o claim é identificado por sua própria credencial;
+  `operator_gateway_id` é derivado dela e não é recebido no corpo.
 - O gateway operador precisa estar ativo e associado à atração selecionada.
 - Somente sightings recebidos pelo relógio do servidor nos 10 segundos
   anteriores ao claim são elegíveis.
@@ -44,8 +48,8 @@ evento pertence ao despacho GATT da próxima fatia.
 
 ## Migração
 
-Sessões de operador anteriores não possuem vínculo comprovável com gateway e
-são invalidadas, exigindo novo login. Desafios legados ativos de 16 bytes são
+Sessões de operador criadas por esta decisão foram removidas pela ADR 0010.
+Desafios legados ativos de 16 bytes são
 cancelados e seus claims liberados antes da conversão do schema para os 8 bytes
 definidos no contrato BLE; desafios históricos são reduzidos apenas para
 compatibilidade estrutural.

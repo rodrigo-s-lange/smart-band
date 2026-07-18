@@ -82,7 +82,6 @@ ledger_entry
 operational_resolution
   resolution_id                PK
   transaction_id              FK -> transaction_intent
-  operator_id                  identidade humana obrigatória
   operator_gateway_id
   action                      retry_actuation | release_reservation | manual_confirmation
   reason
@@ -124,8 +123,8 @@ actuation_pending --ack positivo do mesmo command_id; reserva vira débito--> co
 actuation_pending --ack not_executed--> actuation_failed
 actuation_pending --timeout/ack ambíguo--> reconciliation_required
 actuation_failed --retry auditado--> actuation_pending
-actuation_failed --reserva liberada por operador identificado--> cancelled
-reconciliation_required --entrega comprovada por operador identificado--> completed
+actuation_failed --reserva liberada por gateway cadastrado + motivo--> cancelled
+reconciliation_required --entrega comprovada por gateway cadastrado--> completed
 reconciliation_required --não entrega comprovada; reserva liberada--> cancelled
 ```
 

@@ -46,7 +46,7 @@ além dos workflows `Contracts` e `Database`.
 
 - validação da Decision GATT
 - reserva, despacho, cancelamento, ack e reconciliação pela camada de aplicação
-- provisioning seguro e login/PIN operacional
+- provisioning seguro de gateways e administração local
 
 ## Segunda fatia entregue
 
@@ -64,7 +64,7 @@ Detalhes e consequências: [ADR 0008](../decisions/0008-authenticated-sightings-
 
 ## Terceira fatia entregue
 
-- sessão do operador vinculada ao gateway físico e ao site
+- gateway cadastrado como identidade operacional, sem login individual
 - `POST /v1/interactions/{interaction_id}/claim` conforme OpenAPI 1.4
 - claim CAS concorrente com exatamente um vencedor
 - escolha do rádio por sightings do servidor nos últimos 10 segundos, maior

@@ -36,21 +36,6 @@ FROM gateways
 WHERE api_key_hash = $1 AND status = 'active'
 LIMIT 1;
 
--- name: AuthenticateOperator :one
-SELECT o.operator_id::text AS operator_id, o.display_name,
-       g.gateway_id::text AS gateway_id, g.protocol_id AS gateway_protocol_id
-FROM operator_sessions s
-JOIN operators o ON o.operator_id = s.operator_id AND o.tenant_id = s.tenant_id
-JOIN gateways g ON g.gateway_id = s.gateway_id
-               AND g.tenant_id = s.tenant_id
-               AND g.site_id = s.site_id
-WHERE s.token_hash = $1
-  AND s.revoked_at IS NULL
-  AND s.expires_at > now()
-  AND o.status = 'active'
-  AND g.status = 'active'
-LIMIT 1;
-
 -- name: ListAttractions :many
 SELECT protocol_id, display_name, price_minor
 FROM attractions a
