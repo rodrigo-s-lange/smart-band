@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "algorithm": "AES-128-CMAC",
+  "truncation": "leftmost-8-bytes",
+  "band_key_hex": "2b7e151628aed2a6abf7158809cf4f3c",
+  "vectors": [
+    {
+      "name": "advertising",
+      "domain_byte": 1,
+      "cmac_input_hex": "01010102030405060708785634123c",
+      "expected_full_cmac_hex": "5317788fcfee63d0c9ffd21bdc8bf0f7",
+      "expected_tag_hex": "5317788fcfee63d0",
+      "wire_payload_hex": "0101020304050607085317788fcfee63d0785634123c",
+      "wire_length_bytes": 22
+    },
+    {
+      "name": "challenge",
+      "domain_byte": 2,
+      "cmac_input_hex": "0201aabbccddeeff001111223344556677880100000007000300dc050000",
+      "expected_full_cmac_hex": "69521d189b105519107772dd6870dd2d",
+      "expected_tag_hex": "69521d189b105519",
+      "wire_payload_hex": "01aabbccddeeff001111223344556677880100000007000300dc05000069521d189b105519",
+      "wire_length_bytes": 37
+    },
+    {
+      "name": "decision",
+      "domain_byte": 3,
+      "cmac_input_hex": "0301aabbccddeeff001111223344556677880100000007000300dc050000012b000000",
+      "expected_full_cmac_hex": "7bd168f8308d96434a045a0390dacd60",
+      "expected_tag_hex": "7bd168f8308d9643",
+      "wire_payload_hex": "01aabbccddeeff001101000000012b0000007bd168f8308d9643",
+      "wire_length_bytes": 26
+    },
+    {
+      "name": "result",
+      "domain_byte": 4,
+      "cmac_input_hex": "0401aabbccddeeff00110234210000",
+      "expected_full_cmac_hex": "e2f6ddf09c0797c7d596aa1d0cebcc23",
+      "expected_tag_hex": "e2f6ddf09c0797c7",
+      "wire_payload_hex": "01aabbccddeeff00110234210000e2f6ddf09c0797c7",
+      "wire_length_bytes": 22
+    },
+    {
+      "name": "cancel",
+      "domain_byte": 5,
+      "cmac_input_hex": "0501aabbccddeeff0011",
+      "expected_full_cmac_hex": "b8ccd465710441cbe97b76aaaa3d948a",
+      "expected_tag_hex": "b8ccd465710441cb",
+      "wire_payload_hex": "01aabbccddeeff0011b8ccd465710441cb",
+      "wire_length_bytes": 17
+    }
+  ],
+  "tampering_cases": [
+    {
+      "name": "decision-amount-changed-from-1500-to-1501",
+      "original_cmac_input_hex": "0301aabbccddeeff001111223344556677880100000007000300dc050000012b000000",
+      "tampered_cmac_input_hex": "0301aabbccddeeff001111223344556677880100000007000300dd050000012b000000",
+      "expected_tampered_tag_hex": "ce72ba9a8a98ae7e"
+    }
+  ]
+}

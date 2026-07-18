@@ -4,6 +4,10 @@ Calculados com `cryptography.hazmat.primitives.cmac.CMAC`. Truncamento sempre
 usa os oito bytes mais significativos. Chave de teste:
 `2b7e151628aed2a6abf7158809cf4f3c`.
 
+A fonte estruturada executada pela CI é
+[test-vectors.json](test-vectors.json). Este documento é a representação
+humana dos mesmos casos.
+
 ## Sanity check RFC 4493
 
 ```text

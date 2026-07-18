@@ -114,12 +114,18 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 
 ## Validação mínima por mudança
 
+- executar `python tools/validation/validate.py` quando tocar contratos,
+  protocolo, eventos, OpenAPI, estados ou documentação vinculada
 - formatadores e linters da linguagem
 - testes unitários afetados
 - testes de contrato afetados
 - testes concorrentes quando tocar fila, claim, saldo ou ledger
 - testes de replay/idempotência quando tocar protocolo ou transação
 - atualização da documentação correspondente
+
+Dependências da suíte de contratos ficam em
+`tools/validation/requirements.txt`. A CI e o ambiente local devem executar o
+mesmo entrypoint; não duplicar regras apenas no workflow.
 
 ## Definição de pronto
 

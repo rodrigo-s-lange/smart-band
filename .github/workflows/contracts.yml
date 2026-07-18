@@ -1,0 +1,36 @@
+name: Contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contracts-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate executable contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tools/validation/requirements.txt
+
+      - name: Install validation dependencies
+        run: python -m pip install --disable-pip-version-check -r tools/validation/requirements.txt
+
+      - name: Validate contracts
+        run: python tools/validation/validate.py

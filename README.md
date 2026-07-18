@@ -78,12 +78,21 @@ docs/
 6. [docs/architecture/domain-invariants.md](docs/architecture/domain-invariants.md)
 7. [contracts/proximity/README.md](contracts/proximity/README.md)
 8. [docs/decisions/0005-protocol-correction-and-transaction-safety.md](docs/decisions/0005-protocol-correction-and-transaction-safety.md)
-9. [docs/roadmap.md](docs/roadmap.md)
+9. [docs/stage-gates/03-executable-contracts.md](docs/stage-gates/03-executable-contracts.md)
+10. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 
-Fase de especificação. Contratos, simuladores, backend e testes precedem
-hardware e firmware ESP32.
+Etapas 1–3 concluídas: domínio, protocolo, fila e contratos executáveis estão
+versionados e validados por CI. A próxima decisão é o desenho da Etapa 4
+(PostgreSQL e migrations). Hardware e firmware ESP32 permanecem no fim.
+
+Validação local:
+
+```bash
+python -m pip install -r tools/validation/requirements.txt
+python tools/validation/validate.py
+```
 
 ## Licença
 

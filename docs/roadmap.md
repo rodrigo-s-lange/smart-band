@@ -1,5 +1,9 @@
 # Roadmap
 
+Estado em 2026-07-18: etapas 1–3 concluídas e protegidas pelo gate em
+[docs/stage-gates/03-executable-contracts.md](stage-gates/03-executable-contracts.md).
+A Etapa 4 aguarda decisão explícita antes da implementação.
+
 1. Domínio e invariantes
 2. Contrato BLE e máquina de estados
 3. Fila global e coordenação de gateways
