@@ -52,10 +52,13 @@ estados completa e verificada em
 
 O claim deve ser realizado por compare-and-swap no banco. Dois operadores nunca
 podem avançar a mesma interação. Antes de entregar o Challenge GATT, uma falha
-de rádio renova o lease do mesmo claim e tenta outra ponte, sem retornar a
+de rádio renova o lease do mesmo claim e reavalia a ponte, sem retornar a
 interação à fila e sem criar outro `transaction_id`. O retry incrementa a
-tentativa e troca `radio_gateway_id` e `challenge_nonce`; esgotar três tentativas
-expira a interação.
+tentativa e troca `dispatch_id` e `challenge_nonce`. Ele prefere rádio ainda não
+tentado, mas pode reutilizar o melhor quando não houver alternativa; esgotar
+três tentativas expira interação/claim e cancela a transação. A fronteira de
+entrega e a retomada por banco estão na
+[ADR 0012](../decisions/0012-radio-retry-and-opaque-transport.md).
 
 O claim, o lease inicial de 10 segundos, o `transaction_intent` em estado
 `claimed` e o evento de outbox nascem na mesma transação PostgreSQL. A ausência

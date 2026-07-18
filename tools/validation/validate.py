@@ -78,6 +78,26 @@ def validate_openapi_contract() -> None:
     if not {"action", "reason"} <= override_required:
         raise AssertionError("operational override must declare action and reason")
 
+    operation_statuses: dict[str, str | None] = {}
+    for path_item in spec["paths"].values():
+        for method, operation in path_item.items():
+            if method not in {"get", "post", "put", "patch", "delete"}:
+                continue
+            operation_statuses[operation["operationId"]] = operation.get(
+                "x-smartband-status"
+            )
+    expected_blocked = {"topUpCredits", "createAttraction", "provisionGateway"}
+    actual_blocked = {
+        operation_id
+        for operation_id, status in operation_statuses.items()
+        if status == "client-decision-blocked"
+    }
+    if actual_blocked != expected_blocked:
+        raise AssertionError(
+            "client-decision OpenAPI gates diverged: "
+            f"expected {sorted(expected_blocked)}, got {sorted(actual_blocked)}"
+        )
+
 
 def cmac(key: bytes, message: bytes) -> bytes:
     calculator = CMAC(algorithms.AES(key))
@@ -163,17 +183,126 @@ def validate_markdown_links() -> None:
         raise AssertionError("missing Markdown links:\n" + "\n".join(missing))
 
 
+def validate_documentation_handoff() -> None:
+    required_paths = [
+        ROOT / "CURRENT_STATE.md",
+        ROOT / "docs/product/client-decisions-pending.md",
+        ROOT / "docs/decisions/0011-client-decision-gate-and-safe-prework.md",
+        ROOT / "docs/decisions/0012-radio-retry-and-opaque-transport.md",
+        ROOT / "contracts/gateway/radio-dispatch.md",
+    ]
+    missing = [
+        str(path.relative_to(ROOT)) for path in required_paths if not path.exists()
+    ]
+    if missing:
+        raise AssertionError(f"missing handoff documents: {missing}")
+
+    current = required_paths[0].read_text(encoding="utf-8")
+    client_gate = required_paths[1].read_text(encoding="utf-8")
+    agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    roadmap = (ROOT / "docs/roadmap.md").read_text(encoding="utf-8")
+    stage_gate = (ROOT / "docs/stage-gates/05-backend-foundation.md").read_text(
+        encoding="utf-8"
+    )
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    migration_count = len(
+        list((ROOT / "apps/edge-api/internal/postgres/migrations").glob("*.sql"))
+    )
+    count_match = re.search(r"Migrations vigentes: \*\*(\d+)\*\*", current)
+    if not count_match or int(count_match.group(1)) != migration_count:
+        documented = count_match.group(1) if count_match else "missing"
+        raise AssertionError(
+            f"CURRENT_STATE migration count {documented} != {migration_count}"
+        )
+    if f"as {migration_count} migrations" not in stage_gate:
+        raise AssertionError("Stage 5 gate does not expose the current migration count")
+
+    mandatory = [
+        "CURRENT_STATE.md",
+        "docs/product/client-decisions-pending.md",
+        "docs/decisions/0011-client-decision-gate-and-safe-prework.md",
+        "docs/decisions/0012-radio-retry-and-opaque-transport.md",
+        "contracts/gateway/radio-dispatch.md",
+    ]
+    for path in mandatory:
+        if path not in agents:
+            raise AssertionError(f"AGENTS mandatory reading missing {path}")
+
+    required_phrases = {
+        "CURRENT_STATE.md": [
+            "Próxima fatia da Etapa 5 — motor de retry de rádio e transporte simulado",
+            "Não objetivos da próxima fatia",
+            "Critérios de aceite",
+            "client-decisions-pending.md",
+            "radio-dispatch.md",
+            "radio_attempts_exhausted",
+        ],
+        "client-decisions-pending.md": [
+            "aguardando validação do cliente",
+            "client-decision-blocked",
+            "Trabalho permitido antes das respostas",
+        ],
+    }
+    for label, phrases in required_phrases.items():
+        source = current if label == "CURRENT_STATE.md" else client_gate
+        absent = [phrase for phrase in phrases if phrase not in source]
+        if absent:
+            raise AssertionError(f"{label} missing handoff markers: {absent}")
+
+    vault_pattern = re.compile(r"Vault commit validado: `([0-9a-f]{40})`")
+    current_vault = vault_pattern.search(current)
+    gate_vault = vault_pattern.search(client_gate)
+    if not current_vault or not gate_vault:
+        raise AssertionError("validated vault commit missing from handoff documents")
+    if current_vault.group(1) != gate_vault.group(1):
+        raise AssertionError("handoff documents reference different vault commits")
+
+    retry_contract = required_paths[4].read_text(encoding="utf-8")
+    retry_markers = [
+        "confirmou tecnicamente a escrita completa",
+        "ainda não usados pela transação",
+        "radio_attempts_exhausted",
+        "FOR UPDATE SKIP LOCKED",
+        "transaction_intent` como `cancelled",
+    ]
+    absent_retry = [marker for marker in retry_markers if marker not in retry_contract]
+    if absent_retry:
+        raise AssertionError(f"radio dispatch contract incomplete: {absent_retry}")
+
+    active_documents = {
+        "README.md": readme,
+        "docs/roadmap.md": roadmap,
+        "docs/stage-gates/05-backend-foundation.md": stage_gate,
+    }
+    stale_patterns = [
+        r"\b(?:oito|nove|8|9) migrations\b",
+        r"A próxima fatia da Etapa 5 despacha o Challenge",
+        r"despacho GATT, confirmação e reserva são as próximas fatias",
+    ]
+    for label, source in active_documents.items():
+        for pattern in stale_patterns:
+            if re.search(pattern, source, flags=re.IGNORECASE):
+                raise AssertionError(f"stale active documentation in {label}: {pattern}")
+
+    decisions_index = (ROOT / "docs/decisions/README.md").read_text(encoding="utf-8")
+    for path in sorted((ROOT / "docs/decisions").glob("[0-9][0-9][0-9][0-9]-*.md")):
+        if f"({path.name})" not in decisions_index:
+            raise AssertionError(f"ADR index missing {path.name}")
+
+
 def main() -> int:
     checks = [
         ("event schema and examples", validate_events),
         ("OpenAPI", validate_openapi_contract),
         ("AES-CMAC vectors", validate_cmac_vectors),
         ("Markdown links", validate_markdown_links),
+        ("documentation handoff consistency", validate_documentation_handoff),
     ]
     for label, check in checks:
         check()
         print(f"ok: {label}")
-    print("Stage 3 contract validation passed")
+    print("Executable contract and handoff validation passed")
     return 0
 
 
