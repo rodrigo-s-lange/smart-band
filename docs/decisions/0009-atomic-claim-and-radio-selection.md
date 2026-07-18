@@ -56,6 +56,10 @@ claim, `transaction_id`, atração e gateway operador; incrementa
 interação expira. Essa regra impede que outro gateway operador tome uma
 interação já selecionada durante o retry automático de rádio.
 
+A definição de entrega, a preferência por rádios ainda não tentados, o reuso
+quando não houver alternativa, o estado terminal e a retomada por banco são
+detalhados na [ADR 0012](0012-radio-retry-and-opaque-transport.md).
+
 ## Migração
 
 Sessões de operador criadas por esta decisão foram removidas pela ADR 0010.

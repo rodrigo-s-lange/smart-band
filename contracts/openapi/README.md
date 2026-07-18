@@ -11,9 +11,15 @@ validado com `openapi-spec-validator`). Cobre:
   reconciliação identificada e estados
   espelhando `docs/architecture/domain-model.md`
 - ledger: consulta e ajuste administrativo local com motivo obrigatório
-- pulseiras, créditos, atrações e gateways — CRUD representativo;
-  o conjunto completo é preenchido na Etapa 5 (backend local), seguindo o
-  mesmo padrão de auth/versionamento/erro já fixado no arquivo
+- pulseiras, créditos, atrações e gateways — projeções e CRUD representativos;
+  operações dependentes de decisão do cliente usam
+  `x-smartband-status: client-decision-blocked` e não autorizam implementação
+  definitiva antes da ADR correspondente
+
+O resumo dos bloqueios está em
+[client-decisions-pending.md](../../docs/product/client-decisions-pending.md).
+Schemas representativos não definem política final de preço, duração,
+capabilities, enrollment, pagamento ou perfil administrativo.
 
 ## Autenticação
 

@@ -1,6 +1,6 @@
-# Gate parcial da Etapa 5 — Backend local
+# Gate da fundação da Etapa 5 — Backend local
 
-Status: concluído — 2026-07-18
+Status: fundação concluída; Etapa 5 em execução — 2026-07-18
 
 ## Entregue nesta fatia
 
@@ -35,7 +35,7 @@ go vet ./...
 go build ./cmd/edge-api
 ```
 
-O workflow `Backend` também prepara as oito migrations em PostgreSQL real,
+O workflow `Backend` também prepara as 10 migrations em PostgreSQL real,
 regenera o `sqlc`, compara o resultado versionado e constrói a imagem.
 
 Evidência: workflow verde na PR 3 em
@@ -47,6 +47,10 @@ além dos workflows `Contracts` e `Database`.
 - validação da Decision GATT
 - reserva, despacho, cancelamento, ack e reconciliação pela camada de aplicação
 - provisioning seguro de gateways e administração local
+
+Partes dependentes de cadastro, pagamentos, preço, duração, acionamento e perfis
+administrativos aguardam o gate da ADR 0011 e não são escopo implícito deste
+gate de fundação.
 
 ## Segunda fatia entregue
 
@@ -65,7 +69,7 @@ Detalhes e consequências: [ADR 0008](../decisions/0008-authenticated-sightings-
 ## Terceira fatia entregue
 
 - gateway cadastrado como identidade operacional, sem login individual
-- `POST /v1/interactions/{interaction_id}/claim` conforme OpenAPI 1.4
+- `POST /v1/interactions/{interaction_id}/claim` conforme OpenAPI 1.5
 - claim CAS concorrente com exatamente um vencedor
 - escolha do rádio por sightings do servidor nos últimos 10 segundos, maior
   RSSI, maior recência e menor ID como desempate determinístico
@@ -78,3 +82,24 @@ Detalhes e consequências: [ADR 0008](../decisions/0008-authenticated-sightings-
   e gateway de rádio
 
 Detalhes e consequências: [ADR 0009](../decisions/0009-atomic-claim-and-radio-selection.md).
+
+## Quarta fatia entregue
+
+- gateway cadastrado confirmado como identidade operacional, sem operador humano;
+- migration 00009 remove identidade e sessão humana do schema vigente;
+- migration 00010 inclui `actuation_failed` no bloqueio de interação por pulseira;
+- retry de rádio esclarecido como continuidade do mesmo claim e transação;
+- evento ambíguo separado de falha comprovada;
+- conversão Crockford documentada e validada por vetor executável;
+- OpenAPI 1.6 marca operações dependentes do cliente como bloqueadas;
+- Contracts, Database e Backend verdes na PR 7.
+
+Evidência: merge `4019f7171bc8d8f91872831bba338c1d6a88b572`.
+
+## Próxima fatia autorizada
+
+Motor de retry de rádio e transporte simulado de payload opaco, conforme
+[CURRENT_STATE.md](../../CURRENT_STATE.md) e a
+[ADR 0012](../decisions/0012-radio-retry-and-opaque-transport.md). O Challenge/Decision final e os
+contratos administrativos dependentes do cliente permanecem bloqueados pela
+[ADR 0011](../decisions/0011-client-decision-gate-and-safe-prework.md).

@@ -10,6 +10,8 @@
 - [0008 — Sightings autenticados, proteção de chaves e SSE retomável](0008-authenticated-sightings-and-sse.md)
 - [0009 — Claim atômico e seleção do gateway de rádio](0009-atomic-claim-and-radio-selection.md)
 - [0010 — Gateway como identidade operacional](0010-gateway-as-operational-identity.md)
+- [0011 — Gate de decisões do cliente e trabalho técnico seguro](0011-client-decision-gate-and-safe-prework.md)
+- [0012 — Retry de rádio e transporte opaco recuperável](0012-radio-retry-and-opaque-transport.md)
 
 Mudanças de fronteira, autoridade, segurança ou experiência transacional exigem
 novo ADR e atualização correspondente no vault.

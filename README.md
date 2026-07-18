@@ -72,30 +72,36 @@ docs/
 ## Leitura inicial
 
 1. [AGENTS.md](AGENTS.md)
-2. [docs/architecture/layers.md](docs/architecture/layers.md)
-3. [docs/architecture/interaction-queue.md](docs/architecture/interaction-queue.md)
-4. [docs/architecture/transaction-flow.md](docs/architecture/transaction-flow.md)
-5. [docs/architecture/domain-model.md](docs/architecture/domain-model.md)
-6. [docs/architecture/domain-invariants.md](docs/architecture/domain-invariants.md)
-7. [contracts/proximity/README.md](contracts/proximity/README.md)
-8. [docs/decisions/0005-protocol-correction-and-transaction-safety.md](docs/decisions/0005-protocol-correction-and-transaction-safety.md)
-9. [docs/decisions/0006-single-tenant-single-site-appliance.md](docs/decisions/0006-single-tenant-single-site-appliance.md)
-10. [docs/stage-gates/03-executable-contracts.md](docs/stage-gates/03-executable-contracts.md)
-11. [docs/stage-gates/04-postgresql-model.md](docs/stage-gates/04-postgresql-model.md)
-12. [docs/stage-gates/05-backend-foundation.md](docs/stage-gates/05-backend-foundation.md)
-13. [docs/decisions/0008-authenticated-sightings-and-sse.md](docs/decisions/0008-authenticated-sightings-and-sse.md)
-14. [docs/decisions/0009-atomic-claim-and-radio-selection.md](docs/decisions/0009-atomic-claim-and-radio-selection.md)
-15. [docs/decisions/0010-gateway-as-operational-identity.md](docs/decisions/0010-gateway-as-operational-identity.md)
-16. [docs/roadmap.md](docs/roadmap.md)
+2. [CURRENT_STATE.md](CURRENT_STATE.md)
+3. [docs/product/client-decisions-pending.md](docs/product/client-decisions-pending.md)
+4. [docs/architecture/layers.md](docs/architecture/layers.md)
+5. [docs/architecture/interaction-queue.md](docs/architecture/interaction-queue.md)
+6. [docs/architecture/transaction-flow.md](docs/architecture/transaction-flow.md)
+7. [docs/architecture/domain-model.md](docs/architecture/domain-model.md)
+8. [docs/architecture/domain-invariants.md](docs/architecture/domain-invariants.md)
+9. [contracts/proximity/README.md](contracts/proximity/README.md)
+10. [docs/decisions/0005-protocol-correction-and-transaction-safety.md](docs/decisions/0005-protocol-correction-and-transaction-safety.md)
+11. [docs/decisions/0006-single-tenant-single-site-appliance.md](docs/decisions/0006-single-tenant-single-site-appliance.md)
+12. [docs/stage-gates/03-executable-contracts.md](docs/stage-gates/03-executable-contracts.md)
+13. [docs/stage-gates/04-postgresql-model.md](docs/stage-gates/04-postgresql-model.md)
+14. [docs/stage-gates/05-backend-foundation.md](docs/stage-gates/05-backend-foundation.md)
+15. [docs/decisions/0008-authenticated-sightings-and-sse.md](docs/decisions/0008-authenticated-sightings-and-sse.md)
+16. [docs/decisions/0009-atomic-claim-and-radio-selection.md](docs/decisions/0009-atomic-claim-and-radio-selection.md)
+17. [docs/decisions/0010-gateway-as-operational-identity.md](docs/decisions/0010-gateway-as-operational-identity.md)
+18. [docs/decisions/0011-client-decision-gate-and-safe-prework.md](docs/decisions/0011-client-decision-gate-and-safe-prework.md)
+19. [docs/decisions/0012-radio-retry-and-opaque-transport.md](docs/decisions/0012-radio-retry-and-opaque-transport.md)
+20. [contracts/gateway/radio-dispatch.md](contracts/gateway/radio-dispatch.md)
+21. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 
 Etapas 1–4 concluídas. A Etapa 5 já possui fundação do backend, ingestão BLE
-autenticada, deduplicação de sightings e fila SSE retomável; claim e os fluxos
-transacionais HTTP continuam em construção. O claim CAS e a seleção do gateway
-de rádio já são executáveis; despacho GATT, confirmação e reserva são as
-próximas fatias. Hardware e firmware ESP32
-permanecem no fim.
+autenticada, deduplicação de sightings, fila SSE retomável, claim CAS e seleção
+do gateway de rádio. A próxima entrega autorizada é o motor de retry de rádio
+com transporte simulado de payload opaco. Challenge/Decision final, cadastro,
+pagamentos, duração e acionamento aguardam o gate do cliente descrito em
+[CURRENT_STATE.md](CURRENT_STATE.md). Hardware e firmware ESP32 permanecem no
+fim.
 
 Qualquer pessoa autorizada pode operar um gateway. O equipamento é cadastrado,
 possui credencial própria e só libera as atrações explicitamente associadas a

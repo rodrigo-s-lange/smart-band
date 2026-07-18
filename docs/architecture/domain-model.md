@@ -109,8 +109,8 @@ discovered/queued/queued_ambiguous --expires_at--> expired
 
 queued --claim CAS--> claimed
 claimed --desafio GATT enviado--> awaiting_band_confirmation
-claimed --falha/timeout de rádio, tentativa < 3; troca rádio e nonce--> claimed
-claimed --3 tentativas esgotadas--> expired
+claimed --falha/timeout de rádio, tentativa < 3; novo dispatch/nonce e rádio reavaliado--> claimed
+claimed --3 tentativas esgotadas; transaction cancelled--> expired
 
 awaiting_band_confirmation --Decision válido--> confirmed_pending_validation
 awaiting_band_confirmation --10s sem clique--> confirmation_timeout
@@ -133,11 +133,15 @@ Não existe auto-retry de acionamento físico. Retry reutiliza o resultado se o
 auditada depois de falha explicitamente negativa.
 
 O retry automático acima existe somente antes do Challenge GATT ser entregue.
+Entrega exige confirmação técnica da escrita completa pela pulseira. A
+tentativa é persistida, cercada por `dispatch_id` e retomada por worker orientado
+pelo banco conforme a
+[ADR 0012](../decisions/0012-radio-retry-and-opaque-transport.md).
 Ele preserva o mesmo claim, `transaction_id`, atração e gateway operador,
 incrementa `attempt_count`, escolhe novamente `radio_gateway_id`, gera um novo
 `challenge_nonce` e renova o lease. A interação não retorna a `queued` e não
 passa por um segundo claim CAS; assim, outro gateway operador não pode tomar a
-seleção enquanto o servidor tenta outra ponte de rádio.
+seleção enquanto o servidor processa a próxima tentativa de rádio.
 
 Cancelamento é aceito até `credit_reserved`, antes do despacho do comando. Em
 `actuation_pending`, somente ack `not_executed` ou reconciliação identificada

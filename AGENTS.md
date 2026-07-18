@@ -10,6 +10,8 @@ a pessoa confirma a atração e o custo na própria pulseira antes do débito.
 
 ## Fontes da verdade
 
+- `CURRENT_STATE.md`: estado operacional, próxima entrega, bloqueios e critérios
+  de aceite para handoff.
 - Vault: decisões, contexto, arquitetura, plano e operação.
 - GitHub `rodrigo-s-lange/smart-band`: código e artefatos executáveis.
 - `/home/rodrigo/projects/products/smart-band`: laboratório atual.
@@ -20,23 +22,28 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 ## Leitura obrigatória antes de alterar código
 
 1. `README.md`
-2. `docs/architecture/layers.md`
-3. `docs/architecture/interaction-queue.md`
-4. `docs/architecture/transaction-flow.md`
-5. `docs/architecture/domain-model.md`
-6. `docs/architecture/domain-invariants.md`
-7. `contracts/proximity/README.md`
-8. `docs/decisions/0001-local-first-appliance.md`
-9. `docs/decisions/0002-ble-global-queue-band-confirmation.md`
-10. `docs/decisions/0003-ble-protocol-parameters.md`
-11. `docs/decisions/0004-advertising-payload-and-transport.md`
-12. `docs/decisions/0005-protocol-correction-and-transaction-safety.md`
-13. `docs/decisions/0006-single-tenant-single-site-appliance.md`
-14. `docs/decisions/0007-edge-api-foundation.md`
-15. `docs/decisions/0008-authenticated-sightings-and-sse.md`
-16. `docs/decisions/0009-atomic-claim-and-radio-selection.md`
-17. `docs/decisions/0010-gateway-as-operational-identity.md`
-18. `docs/roadmap.md`
+2. `CURRENT_STATE.md`
+3. `docs/product/client-decisions-pending.md`
+4. `docs/architecture/layers.md`
+5. `docs/architecture/interaction-queue.md`
+6. `docs/architecture/transaction-flow.md`
+7. `docs/architecture/domain-model.md`
+8. `docs/architecture/domain-invariants.md`
+9. `contracts/proximity/README.md`
+10. `docs/decisions/0001-local-first-appliance.md`
+11. `docs/decisions/0002-ble-global-queue-band-confirmation.md`
+12. `docs/decisions/0003-ble-protocol-parameters.md`
+13. `docs/decisions/0004-advertising-payload-and-transport.md`
+14. `docs/decisions/0005-protocol-correction-and-transaction-safety.md`
+15. `docs/decisions/0006-single-tenant-single-site-appliance.md`
+16. `docs/decisions/0007-edge-api-foundation.md`
+17. `docs/decisions/0008-authenticated-sightings-and-sse.md`
+18. `docs/decisions/0009-atomic-claim-and-radio-selection.md`
+19. `docs/decisions/0010-gateway-as-operational-identity.md`
+20. `docs/decisions/0011-client-decision-gate-and-safe-prework.md`
+21. `docs/decisions/0012-radio-retry-and-opaque-transport.md`
+22. `contracts/gateway/radio-dispatch.md`
+23. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -56,6 +63,12 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
   operador humano no fluxo.
 - Claim deriva `operator_gateway_id` da credencial do gateway e recebe apenas a atração.
 - Claim, transaction intent e evento `interaction.claimed` nascem atomicamente.
+- Retry anterior ao Challenge preserva claim e `transaction_id`; cria novo
+  `dispatch_id`, `challenge_nonce`, tentativa e lease. O rádio é reavaliado e
+  pode ser reutilizado se não houver alternativa elegível.
+- `delivered` exige confirmação técnica da escrita completa pela pulseira.
+- Após três falhas, interação e claim ficam `expired` e a transação `cancelled`.
+- Worker e fencing persistidos no PostgreSQL são autoridade; timer em memória não é.
 - Rádio inicial usa sightings do servidor dos últimos 10 segundos: maior RSSI,
   maior recência e menor ID como desempate.
 - A EasySmart Platform não está no caminho operacional.
@@ -71,6 +84,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - Reserva de crédito não é lançamento de ledger e pode ser liberada antes da entrega.
 - Saldo e ledger mudam na mesma transação de banco.
 - Uma `interaction_request` possui no máximo um claim ativo.
+- Uma pulseira possui no máximo uma interação ativa inclusive em
+  `actuation_failed` e `reconciliation_required`.
 - Seleção usa `interaction_id`, nunca posição visual na fila.
 - Código visual duplicado nunca resolve uma pulseira automaticamente.
 - Advertising inválido não entra na fila.
@@ -80,6 +95,18 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - `operator_gateway_id`, `radio_gateway_id` e `attraction_id` são registrados separadamente.
 - Override e reconciliação registram gateway, ação, motivo e horário.
 - O sistema precisa funcionar sem internet.
+
+## Gate atual e trabalho autorizado
+
+As decisões em `docs/product/client-decisions-pending.md` aguardam o cliente e
+não podem ser resolvidas por suposição. Isso inclui cadastro, pagamentos,
+validade, preço, duração, conteúdo final da pulseira, acionamento físico, perfis
+administrativos, campanhas e relatórios.
+
+A única próxima entrega autorizada está em `CURRENT_STATE.md`: motor de retry de
+rádio conforme `contracts/gateway/radio-dispatch.md`. Não congelar Challenge/Decision
+final, contratos administrativos, frontend, hardware ou firmware antes de
+atender o gate correspondente.
 
 ## Fronteiras de responsabilidade
 
@@ -120,6 +147,9 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 ## Regras de trabalho
 
 - Não introduzir EasySmart Platform, cloud obrigatória, IR ou saldo autoritativo em device sem nova decisão formal.
+- Não implementar como definitivas operações marcadas
+  `x-smartband-status: client-decision-blocked` no OpenAPI.
+- Não tratar fixture, exemplo ou schema representativo como decisão comercial.
 - Não implementar um transporte antes de versionar o contrato correspondente.
 - Não misturar telemetria técnica com ledger de negócio.
 - Não acoplar domínio a ESP-IDF, framework web ou transporte de rede.
@@ -151,3 +181,5 @@ mesmo entrypoint; não duplicar regras apenas no workflow.
 
 Uma etapa só está pronta quando código, testes, contrato, observabilidade e
 procedimento operacional relevante estão coerentes. Compilar não é suficiente.
+Toda entrega integrada também atualiza `CURRENT_STATE.md`, roadmap, gate da
+etapa e o handoff correspondente no vault.

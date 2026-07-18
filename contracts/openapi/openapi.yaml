@@ -1,14 +1,14 @@
 openapi: 3.1.0
 info:
   title: Smart-Band Edge API
-  version: "1.5.0"
+  version: "1.6.0"
   description: >
     API HTTP da appliance local (apps/edge-api). Autoridade transacional
     única do sistema — ver AGENTS.md e docs/decisions/0001-local-first-appliance.md.
     Endpoints administrativos (bands, participants, attractions, gateways,
-    credits) são representativos: o CRUD completo é preenchido
-    durante a Etapa 5 (backend local), seguindo o mesmo padrão de auth,
-    versionamento e forma de erro já fixado aqui.
+    credits) são representativos. Operações marcadas
+    x-smartband-status=client-decision-blocked não autorizam implementação
+    definitiva antes da decisão e do contrato correspondentes.
 servers:
   - url: "https://{host}/v1"
     variables:
@@ -371,6 +371,10 @@ paths:
     post:
       operationId: topUpCredits
       summary: Carga de créditos/vidas na pulseira
+      x-smartband-status: client-decision-blocked
+      description: >
+        Esqueleto representativo. Pacotes, pagamento, cancelamento, validade,
+        cortesia e perfis administrativos aguardam decisão do cliente (ADR 0011).
       security:
         - localAdminSession: []
       parameters:
@@ -410,6 +414,10 @@ paths:
     post:
       operationId: createAttraction
       summary: Cadastra atração
+      x-smartband-status: client-decision-blocked
+      description: >
+        Esqueleto representativo. Preço, duração, unidades, campanhas e política
+        de acesso aguardam decisão do cliente (ADR 0011).
       security:
         - localAdminSession: []
       requestBody:
@@ -442,6 +450,10 @@ paths:
     post:
       operationId: provisionGateway
       summary: Provisiona gateway (emite API key — ver Autenticação)
+      x-smartband-status: client-decision-blocked
+      description: >
+        Esqueleto representativo. Discovery, pairing, enrollment, capabilities
+        e perfis de acionamento aguardam contrato posterior à decisão do cliente.
       security:
         - localAdminSession: []
       responses:
@@ -787,6 +799,10 @@ components:
 
     Attraction:
       type: object
+      x-smartband-status: representative-projection
+      description: >
+        Projeção atual de leitura; não define política final de preço, duração,
+        unidades ou campanha.
       required: [attraction_id, name]
       properties:
         attraction_id:
@@ -796,9 +812,14 @@ components:
         default_cost:
           type: integer
           minimum: 0
+          description: Valor representativo vigente; não congela a política comercial final.
 
     Gateway:
       type: object
+      x-smartband-status: representative-projection
+      description: >
+        Projeção atual de inventário; role não substitui capabilities nem o
+        vínculo explícito gateway-attraction.
       required: [gateway_id, role]
       properties:
         gateway_id:
@@ -806,6 +827,7 @@ components:
         role:
           type: string
           enum: [release, radio, both]
+          description: Projeção derivada atual, não um papel físico definitivo.
         status:
           type: string
           enum: [online, offline, degraded]
