@@ -37,6 +37,8 @@ O schema oferece duas operações transacionais estreitas:
   nunca libera uma reserva depois que o comando venceu a corrida;
 - `smartband_record_actuation_ack(command_id, result, timestamp)` converte a
   reserva em um único débito somente para ack `succeeded`.
+- `smartband_claim_interaction(...)` realiza o claim CAS, escolhe a ponte BLE
+  recente e cria claim, transaction intent e outbox atomicamente.
 
 Validação local e de CI: [tools/database/README.md](../../tools/database/README.md).
 
@@ -50,6 +52,10 @@ go run ./cmd/edge-api
 Configuração adicional e valores padrão ficam em [.env.example](.env.example).
 O serviço expõe health/readiness públicos e exige bearer token de gateway ou
 cookie `sb_session` nos endpoints operacionais de leitura.
+
+`POST /v1/interactions/{interaction_id}/claim` exige sessão de operador
+vinculada ao `operator_gateway_id`. O retorno inclui a ponte BLE escolhida e o
+fim do lease de 10 segundos. `no_radio_gateway` não cria estado parcial.
 
 Sightings usam `POST /v1/sightings`. A credencial precisa pertencer ao mesmo
 `gateway_id` do corpo; payloads não autenticados retornam `resolved=false` e não
@@ -67,4 +73,6 @@ go vet ./...
 go build ./cmd/edge-api
 ```
 
-Arquitetura da fatia: [ADR 0007](../../docs/decisions/0007-edge-api-foundation.md).
+Arquitetura da fatia: [ADR 0007](../../docs/decisions/0007-edge-api-foundation.md),
+[ADR 0008](../../docs/decisions/0008-authenticated-sightings-and-sse.md) e
+[ADR 0009](../../docs/decisions/0009-atomic-claim-and-radio-selection.md).

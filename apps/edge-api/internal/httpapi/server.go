@@ -47,6 +47,11 @@ type sightingRequest struct {
 	RawPayload []byte    `json:"raw_payload"`
 }
 
+type claimRequest struct {
+	OperatorGatewayID uint16 `json:"operator_gateway_id"`
+	AttractionID      uint16 `json:"attraction_id"`
+}
+
 type contextKey string
 
 const actorContextKey contextKey = "actor"
@@ -60,10 +65,57 @@ func New(store application.Store, logger *slog.Logger) http.Handler {
 	mux.Handle("GET /v1/queue", server.authenticate(http.HandlerFunc(server.queue)))
 	mux.Handle("GET /v1/queue/stream", server.authenticate(http.HandlerFunc(server.queueStream)))
 	mux.Handle("POST /v1/sightings", server.authenticate(http.HandlerFunc(server.sighting)))
+	mux.Handle("POST /v1/interactions/{interaction_id}/claim", server.authenticate(http.HandlerFunc(server.claimInteraction)))
 	mux.Handle("GET /v1/attractions", server.authenticate(http.HandlerFunc(server.attractions)))
 	mux.Handle("GET /v1/gateways", server.authenticate(http.HandlerFunc(server.gateways)))
 	mux.Handle("GET /v1/bands", server.authenticate(http.HandlerFunc(server.bands)))
 	return server.accessLog(mux)
+}
+
+func (s *Server) claimInteraction(w http.ResponseWriter, r *http.Request) {
+	interactionValue, err := strconv.ParseUint(r.PathValue("interaction_id"), 10, 32)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_interaction_id", "interaction_id must be an unsigned 32-bit integer")
+		return
+	}
+	var request claimRequest
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&request); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", "request body must be valid JSON")
+		return
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		writeError(w, http.StatusBadRequest, "invalid_request", "request body must contain one JSON object")
+		return
+	}
+	actor, ok := actorFromContext(r.Context())
+	if !ok || actor.Kind != "operator" {
+		writeError(w, http.StatusForbidden, "operator_required", "an operator session is required")
+		return
+	}
+	result, err := s.store.ClaimInteraction(r.Context(), actor, application.ClaimRequest{
+		InteractionID: uint32(interactionValue), OperatorGatewayID: request.OperatorGatewayID,
+		AttractionID: request.AttractionID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, application.ErrClaimNotFound):
+			writeError(w, http.StatusNotFound, "interaction_not_found", "interaction was not found")
+		case errors.Is(err, application.ErrOperatorGatewayMismatch):
+			writeError(w, http.StatusForbidden, "operator_gateway_mismatch", "operator session is not bound to this gateway")
+		case errors.Is(err, application.ErrNoRadioGateway):
+			writeError(w, http.StatusConflict, "no_radio_gateway", "no gateway has a recent authenticated sighting")
+		case errors.Is(err, application.ErrInvalidAttraction):
+			writeError(w, http.StatusConflict, "invalid_attraction", "attraction is unavailable at this operator gateway")
+		case errors.Is(err, application.ErrClaimConflict):
+			writeError(w, http.StatusConflict, "claim_conflict", "interaction is ambiguous or no longer claimable")
+		default:
+			s.internalError(w, r, err)
+		}
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
 }
 
 func (s *Server) sighting(w http.ResponseWriter, r *http.Request) {

@@ -50,7 +50,7 @@ transaction_intent
   operator_gateway_id
   radio_gateway_id
   amount
-  challenge_nonce
+  challenge_nonce              8 bytes; novo a cada tentativa GATT
   status
 
 credit_reservation
@@ -93,6 +93,11 @@ operational_resolution
 `credit_reservation` reduz o saldo disponível, mas não altera o ledger. O
 `ledger_entry` nasce somente após ack positivo do acionamento e na mesma
 transação que consome a reserva.
+
+O primeiro `transaction_intent` nasce em `claimed`. Seu gateway de rádio é o
+melhor sighting autenticado recebido nos últimos 10 segundos conforme a
+[ADR 0009](../decisions/0009-atomic-claim-and-radio-selection.md). O lease do
+claim não é a janela de confirmação: ele cobre a conexão e o despacho GATT.
 
 ## Máquina de estados do servidor
 

@@ -34,7 +34,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 13. `docs/decisions/0006-single-tenant-single-site-appliance.md`
 14. `docs/decisions/0007-edge-api-foundation.md`
 15. `docs/decisions/0008-authenticated-sightings-and-sse.md`
-16. `docs/roadmap.md`
+16. `docs/decisions/0009-atomic-claim-and-radio-selection.md`
+17. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -50,6 +51,10 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - TTL de interação usa relógio da appliance, nunca o relógio do gateway.
 - SSE retoma pelo `stream_sequence`; snapshot inicial vem de `GET /v1/queue`.
 - O gateway operador pode ser diferente do gateway de rádio.
+- Sessão de operador é vinculada ao gateway físico e não pode declarar outro.
+- Claim, transaction intent e evento `interaction.claimed` nascem atomicamente.
+- Rádio inicial usa sightings do servidor dos últimos 10 segundos: maior RSSI,
+  maior recência e menor ID como desempate.
 - A EasySmart Platform não está no caminho operacional.
 - Uma appliance atende um único tenant e um único site operacional por vez.
 - Um site mantém múltiplos eventos históricos e no máximo um evento ativo.

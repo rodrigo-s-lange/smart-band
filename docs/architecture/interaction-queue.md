@@ -40,6 +40,8 @@ estados completa e verificada em
 - seleção usa ID estável, nunca posição da linha
 - uma interação possui no máximo um claim ativo
 - claim possui lease e expira se o rádio falhar
+- a sessão do operador é vinculada ao gateway físico; o corpo da requisição
+  não pode substituir essa identidade
 - uma pulseira possui no máximo uma interação ativa
 - código visual duplicado publica ambas as entradas como ambíguas, bloqueia
   claim e orienta regeneração; nenhuma solicitação fica invisível
@@ -52,10 +54,18 @@ O claim deve ser realizado por compare-and-swap no banco. Dois operadores nunca
 podem avançar a mesma interação. Falha de rádio pode liberar o lease para retry,
 mas não cria um segundo `transaction_id` depois da confirmação.
 
+O claim, o lease inicial de 10 segundos, o `transaction_intent` em estado
+`claimed` e o evento de outbox nascem na mesma transação PostgreSQL. A ausência
+de rádio recente não altera a interação.
+
 ## Gateways
 
 - `operator_gateway_id`: origem da seleção e da atribuição da atração.
 - `radio_gateway_id`: melhor ponte BLE disponível entre sightings recentes.
+
+"Recente" significa `received_at` do servidor nos últimos 10 segundos. A ponte
+é escolhida por RSSI decrescente, recência decrescente e menor ID de protocolo
+como desempate. O relógio informado pelo gateway não participa da decisão.
 
 Ambos são auditados, mas apenas o gateway operador determina a métrica de uso da
 atração.

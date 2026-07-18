@@ -5,7 +5,9 @@ Estado em 2026-07-18: etapas 1–4 concluídas e protegidas pelos gates
 [04](stage-gates/04-postgresql-model.md). A fundação da Etapa 5 está em
 execução no [gate parcial 05](stage-gates/05-backend-foundation.md). A ingestão
 BLE autenticada, a deduplicação e o SSE já estão materializados; claim e o fluxo
-transacional continuam sendo as próximas fatias.
+transacional continuam em execução. O claim CAS, a escolha determinística do
+gateway de rádio e a criação atômica do transaction intent já estão
+materializados.
 
 1. Domínio e invariantes
 2. Contrato BLE e máquina de estados
@@ -23,5 +25,6 @@ transacional continuam sendo as próximas fatias.
 Hardware começa somente depois de confirmação, idempotência, concorrência,
 replay e recuperação estarem validados com simuladores.
 
-A próxima fatia da Etapa 5 implementa claim CAS, escolha do gateway de rádio e
-criação atômica do `transaction_intent`, sem iniciar hardware ou firmware.
+A próxima fatia da Etapa 5 despacha o Challenge GATT pelo gateway de rádio,
+valida a Decision da pulseira e trata timeout/retry do lease, sem iniciar
+hardware ou firmware.

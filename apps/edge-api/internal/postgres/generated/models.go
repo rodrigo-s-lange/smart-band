@@ -214,6 +214,8 @@ type OperatorSession struct {
 	CreatedAt  pgtype.Timestamptz
 	ExpiresAt  pgtype.Timestamptz
 	RevokedAt  pgtype.Timestamptz
+	SiteID     uuid.UUID
+	GatewayID  uuid.UUID
 }
 
 type OutboxEvent struct {

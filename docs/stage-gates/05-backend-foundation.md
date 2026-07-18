@@ -35,7 +35,7 @@ go vet ./...
 go build ./cmd/edge-api
 ```
 
-O workflow `Backend` também prepara as sete migrations em PostgreSQL real,
+O workflow `Backend` também prepara as oito migrations em PostgreSQL real,
 regenera o `sqlc`, compara o resultado versionado e constrói a imagem.
 
 Evidência: workflow verde na PR 3 em
@@ -44,7 +44,6 @@ além dos workflows `Contracts` e `Database`.
 
 ## Ainda necessário para concluir a Etapa 5
 
-- claim CAS e escolha do gateway de rádio
 - validação da Decision GATT
 - reserva, despacho, cancelamento, ack e reconciliação pela camada de aplicação
 - provisioning seguro e login/PIN operacional
@@ -62,3 +61,20 @@ além dos workflows `Contracts` e `Database`.
   `Last-Event-ID`, heartbeat e expiração de descoberta
 
 Detalhes e consequências: [ADR 0008](../decisions/0008-authenticated-sightings-and-sse.md).
+
+## Terceira fatia entregue
+
+- sessão do operador vinculada ao gateway físico e ao site
+- `POST /v1/interactions/{interaction_id}/claim` conforme OpenAPI 1.4
+- claim CAS concorrente com exatamente um vencedor
+- escolha do rádio por sightings do servidor nos últimos 10 segundos, maior
+  RSSI, maior recência e menor ID como desempate determinístico
+- lease inicial de 10 segundos e `transaction_intent` em `claimed`
+- claim, transaction intent e `interaction.claimed` atômicos no PostgreSQL
+- `challenge_nonce` alinhado ao contrato BLE de 8 bytes
+- upgrade seguro que invalida sessões sem vínculo e cancela desafios legados
+  incompatíveis
+- testes de concorrência, ausência de rádio e separação entre gateway operador
+  e gateway de rádio
+
+Detalhes e consequências: [ADR 0009](../decisions/0009-atomic-claim-and-radio-selection.md).
