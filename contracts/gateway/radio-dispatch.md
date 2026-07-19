@@ -1,6 +1,6 @@
 # Contrato da porta de despacho de rádio
 
-Status: contrato técnico para a próxima fatia da Etapa 5.
+Status: contrato técnico implementado na quinta fatia da Etapa 5.
 
 Este contrato cerca o motor de retry sem definir o conteúdo do Challenge. A
 implementação pode usar structs Go internamente; nenhuma representação de rede

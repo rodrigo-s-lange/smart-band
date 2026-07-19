@@ -27,10 +27,13 @@ integrada e o gate atual de decisões do cliente é definido pela ADR 0011.
 Hardware começa somente depois de confirmação, idempotência, concorrência,
 replay e recuperação estarem validados com simuladores.
 
-A próxima fatia autorizada da Etapa 5 implementa timeout, lease e até três
-tentativas de rádio pela porta opaca definida na ADR 0012, com persistência,
-fencing, retomada por banco e simuladores.
+Timeout, lease e até três tentativas de rádio pela porta opaca definida na
+ADR 0012 estão materializados com persistência, fencing, retomada por banco e
+simulador fail-closed.
 Ela não congela o Challenge/Decision final. Cadastro, pagamentos, validade,
 preço, duração e acionamento aguardam as decisões do cliente listadas em
 [client-decisions-pending.md](product/client-decisions-pending.md). O handoff e
 os critérios de aceite estão em [CURRENT_STATE.md](../CURRENT_STATE.md).
+
+Nenhuma fatia posterior dependente dessas decisões fica autorizada por esta
+entrega; o próximo escopo técnico deve ser registrado no handoff canônico.

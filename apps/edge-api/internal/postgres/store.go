@@ -240,3 +240,217 @@ func (s *Store) EventsAfter(ctx context.Context, sequence int64, limit int32) ([
 	}
 	return items, rows.Err()
 }
+
+func (s *Store) StartRadioDispatch(
+	ctx context.Context,
+	command application.StartRadioDispatchCommand,
+) (application.RadioDispatchAttempt, error) {
+	dispatchID, err := uuid.Parse(command.DispatchID)
+	if err != nil {
+		return application.RadioDispatchAttempt{}, fmt.Errorf("parse dispatch id: %w", err)
+	}
+	var result string
+	var attempt *int16
+	var radioGatewayID *uuid.UUID
+	var status *string
+	var deadline *time.Time
+	err = s.pool.QueryRow(ctx, `
+        SELECT result, attempt, radio_gateway_id, status, deadline
+          FROM smartband_start_radio_dispatch($1, $2, $3, $4, $5, $6)`,
+		command.TransactionProtocolID, dispatchID, command.ChallengeNonce,
+		int32(command.ProtocolVersion), command.Payload, command.Now,
+	).Scan(&result, &attempt, &radioGatewayID, &status, &deadline)
+	if err != nil {
+		return application.RadioDispatchAttempt{}, err
+	}
+	switch result {
+	case "not_found":
+		return application.RadioDispatchAttempt{}, application.ErrRadioDispatchNotFound
+	case "not_claimed":
+		return application.RadioDispatchAttempt{}, application.ErrRadioDispatchNotClaimed
+	case "already_started":
+		return application.RadioDispatchAttempt{}, application.ErrRadioDispatchAlreadyStarted
+	case "started":
+		if attempt == nil || status == nil || deadline == nil {
+			return application.RadioDispatchAttempt{}, errors.New("radio dispatch start returned incomplete result")
+		}
+		item := application.RadioDispatchAttempt{
+			DispatchID: command.DispatchID,
+			Attempt:    *attempt,
+			Status:     *status,
+			Deadline:   *deadline,
+		}
+		if radioGatewayID != nil {
+			item.RadioGatewayID = radioGatewayID.String()
+		}
+		return item, nil
+	default:
+		return application.RadioDispatchAttempt{}, fmt.Errorf("unknown radio dispatch start result %q", result)
+	}
+}
+
+func (s *Store) DueRadioDispatches(
+	ctx context.Context,
+	now time.Time,
+	limit int32,
+) ([]application.DueRadioDispatch, error) {
+	rows, err := s.pool.Query(ctx, `
+        SELECT dispatch.dispatch_id::text, dispatch.transaction_id::text,
+               dispatch.attempt, dispatch.challenge_nonce, dispatch.status
+          FROM radio_dispatch_attempts dispatch
+         WHERE (status = 'waiting_for_radio' AND selection_deadline <= $1)
+            OR (status = 'pending' AND dispatch_deadline <= $1)
+         ORDER BY COALESCE(selection_deadline, dispatch_deadline), created_at
+         LIMIT $2`, now, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := make([]application.DueRadioDispatch, 0)
+	for rows.Next() {
+		var item application.DueRadioDispatch
+		if err := rows.Scan(
+			&item.DispatchID, &item.TransactionID, &item.Attempt,
+			&item.ChallengeNonce, &item.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
+}
+
+func (s *Store) AcquireRadioDispatches(
+	ctx context.Context,
+	workerID string,
+	now time.Time,
+	limit int32,
+) ([]application.RadioDispatchCommand, error) {
+	parsedWorkerID, err := uuid.Parse(workerID)
+	if err != nil {
+		return nil, fmt.Errorf("parse worker id: %w", err)
+	}
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err := tx.Exec(ctx, `SELECT smartband_promote_waiting_radio($1)`, now); err != nil {
+		return nil, err
+	}
+	rows, err := tx.Query(ctx, `
+        WITH candidates AS (
+            SELECT dispatch_id
+              FROM radio_dispatch_attempts
+             WHERE status = 'pending'
+               AND dispatch_deadline > $1
+               AND (work_lease_expires_at IS NULL OR work_lease_expires_at <= $1)
+             ORDER BY created_at
+             FOR UPDATE SKIP LOCKED
+             LIMIT $3
+        ), leased AS (
+            UPDATE radio_dispatch_attempts dispatch
+               SET worker_id = $2,
+                   work_lease_expires_at = LEAST(
+                       dispatch.dispatch_deadline,
+                       $1::timestamptz + interval '2 seconds'
+                   )
+              FROM candidates
+             WHERE dispatch.dispatch_id = candidates.dispatch_id
+            RETURNING dispatch.*
+        )
+        SELECT leased.dispatch_id::text,
+               transaction.interaction_id::text,
+               transaction.transaction_id::text,
+               leased.attempt,
+               leased.radio_gateway_id::text,
+               leased.challenge_nonce,
+               leased.protocol_version,
+               leased.payload,
+               leased.dispatch_deadline
+          FROM leased
+          JOIN transaction_intents transaction USING (transaction_id)
+         ORDER BY leased.created_at`, now, parsedWorkerID, limit)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]application.RadioDispatchCommand, 0)
+	for rows.Next() {
+		var item application.RadioDispatchCommand
+		var protocolVersion int32
+		if err := rows.Scan(
+			&item.DispatchID, &item.InteractionID, &item.TransactionID,
+			&item.Attempt, &item.RadioGatewayID, &item.ChallengeNonce,
+			&protocolVersion, &item.Payload, &item.Deadline,
+		); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		item.ProtocolVersion = uint16(protocolVersion)
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return nil, err
+	}
+	rows.Close()
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (s *Store) FinishRadioDispatch(
+	ctx context.Context,
+	command application.FinishRadioDispatchCommand,
+) (application.FinishRadioDispatchResult, error) {
+	dispatchID, err := uuid.Parse(command.DispatchID)
+	if err != nil {
+		return application.FinishRadioDispatchResult{}, fmt.Errorf("parse dispatch id: %w", err)
+	}
+	transactionID, err := uuid.Parse(command.TransactionID)
+	if err != nil {
+		return application.FinishRadioDispatchResult{}, fmt.Errorf("parse transaction id: %w", err)
+	}
+	nextDispatchID, err := uuid.Parse(command.NextDispatchID)
+	if err != nil {
+		return application.FinishRadioDispatchResult{}, fmt.Errorf("parse next dispatch id: %w", err)
+	}
+	var workerID any
+	if command.WorkerID != "" {
+		parsedWorkerID, parseErr := uuid.Parse(command.WorkerID)
+		if parseErr != nil {
+			return application.FinishRadioDispatchResult{}, fmt.Errorf("parse worker id: %w", parseErr)
+		}
+		workerID = parsedWorkerID
+	}
+	var result application.FinishRadioDispatchResult
+	var nextStatus *string
+	var returnedNextDispatchID *uuid.UUID
+	err = s.pool.QueryRow(ctx, `
+        SELECT result, next_status, next_dispatch_id
+          FROM smartband_finish_radio_dispatch(
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+          )`,
+		dispatchID, transactionID, command.Attempt, command.ChallengeNonce, workerID,
+		command.Outcome, nullableText(command.FailureKind), command.Now,
+		nextDispatchID, command.NextChallengeNonce,
+	).Scan(&result.Classification, &nextStatus, &returnedNextDispatchID)
+	if err != nil {
+		return application.FinishRadioDispatchResult{}, err
+	}
+	if nextStatus != nil {
+		result.NextStatus = *nextStatus
+	}
+	if returnedNextDispatchID != nil {
+		result.NextDispatchID = returnedNextDispatchID.String()
+	}
+	return result, nil
+}
+
+func nullableText(value string) any {
+	if value == "" {
+		return nil
+	}
+	return value
+}

@@ -171,19 +171,19 @@ def main() -> int:
         print(f"database fixture prepared: {len(migrations)} migrations")
         return 0
 
-    if migrations[-1].name.startswith("00010_"):
+    if any(migration.name.startswith("00010_") for migration in migrations):
         reset(psql)
-        apply_up(psql, migrations[:-5])
+        apply_up(psql, migrations[:5])
         psql.run(read_test("upgrade_stage4_fixture.sql"))
-        apply_up(psql, [migrations[-5]])
+        apply_up(psql, [migrations[5]])
         psql.run(read_test("upgrade_stage4_assertions.sql"))
-        apply_up(psql, [migrations[-4]])
+        apply_up(psql, [migrations[6]])
         psql.run(read_test("upgrade_stage5_assertions.sql"))
-        apply_up(psql, [migrations[-3]])
+        apply_up(psql, [migrations[7]])
         psql.run(read_test("upgrade_stage6_assertions.sql"))
-        apply_up(psql, [migrations[-2]])
+        apply_up(psql, [migrations[8]])
         psql.run(read_test("upgrade_stage7_assertions.sql"))
-        apply_up(psql, [migrations[-1]])
+        apply_up(psql, migrations[9:])
 
     reset(psql)
     apply_up(psql, migrations)
@@ -208,6 +208,11 @@ def main() -> int:
     reset(psql)
     apply_up(psql, migrations)
     psql.run(read_test("fixture.sql"))
+    psql.run(read_test("radio_dispatch_assertions.sql"))
+
+    reset(psql)
+    apply_up(psql, migrations)
+    psql.run(read_test("fixture.sql"))
     run_cancel_dispatch_race(psql)
 
     if args.docker_container:
@@ -225,7 +230,7 @@ def main() -> int:
 
     checks = (
         "invariants, concurrency, ambiguous ack, actuation-failed band lock, "
-        "cancel/dispatch race and rollback"
+        "radio retry, cancel/dispatch race and rollback"
     )
     if args.docker_container:
         checks += ", including database restart"

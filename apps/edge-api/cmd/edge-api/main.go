@@ -16,6 +16,7 @@ import (
 	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/config"
 	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/httpapi"
 	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/postgres"
+	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/radiosim"
 	"github.com/rodrigo-s-lange/smart-band/apps/edge-api/internal/security"
 )
 
@@ -57,6 +58,10 @@ func run(logger *slog.Logger) error {
 
 	repository := postgres.New(pool)
 	service := application.NewService(repository, bandKeyBox)
+	radioWorker, err := application.NewRadioWorker(repository, radiosim.New())
+	if err != nil {
+		return err
+	}
 	server := &http.Server{
 		Addr:              cfg.HTTPAddress,
 		Handler:           httpapi.New(service, logger),
@@ -69,9 +74,16 @@ func run(logger *slog.Logger) error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	serveErrors := make(chan error, 1)
+	workerErrors := make(chan error, 1)
+	workerContext, stopWorker := context.WithCancel(context.Background())
+	defer stopWorker()
 	go func() {
 		logger.Info("edge-api listening", "address", cfg.HTTPAddress)
 		serveErrors <- server.ListenAndServe()
+	}()
+	go func() {
+		logger.Info("radio dispatch worker started", "transport", "simulated")
+		workerErrors <- radioWorker.Run(workerContext, 250*time.Millisecond)
 	}()
 
 	select {
@@ -81,8 +93,13 @@ func run(logger *slog.Logger) error {
 		if !errors.Is(serveErr, http.ErrServerClosed) {
 			return serveErr
 		}
+	case workerErr := <-workerErrors:
+		if !errors.Is(workerErr, context.Canceled) {
+			return workerErr
+		}
 	}
 
+	stopWorker()
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 	defer cancel()
 	return server.Shutdown(ctx)

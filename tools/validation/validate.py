@@ -231,8 +231,8 @@ def validate_documentation_handoff() -> None:
 
     required_phrases = {
         "CURRENT_STATE.md": [
-            "Próxima fatia da Etapa 5 — motor de retry de rádio e transporte simulado",
-            "Não objetivos da próxima fatia",
+            "Quinta fatia da Etapa 5 — motor de retry de rádio e transporte simulado",
+            "Não objetivos desta fatia",
             "Critérios de aceite",
             "client-decisions-pending.md",
             "radio-dispatch.md",

@@ -8,6 +8,7 @@ interaction.discovered
 interaction.queued
 interaction.claimed
 interaction.confirmation_requested
+radio.dispatch_failed
 interaction.confirmed
 interaction.confirmation_timeout
 interaction.cancelled

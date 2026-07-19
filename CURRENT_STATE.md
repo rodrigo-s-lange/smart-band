@@ -13,7 +13,7 @@ implementação sem acesso ao histórico de conversas.
   `C:\Users\Familia\vault\01-projetos\smart-band\estado-atual-e-handoff.md`.
 - Laboratório reproduzível:
   `/home/rodrigo/projects/products/smart-band` no i5 `192.168.0.121`.
-- Migrations vigentes: **10**, de `00001` a `00010`.
+- Migrations vigentes: **11**, de `00001` a `00011`.
 
 O commit atual do próprio checkout deve ser verificado com `git rev-parse HEAD`.
 O hash funcional acima identifica a última mudança de comportamento anterior a
@@ -38,6 +38,8 @@ Entregue e validado:
 - claim, transaction intent e outbox atômicos;
 - bloqueio de nova interação em `actuation_failed`;
 - retry de rádio definido sobre o mesmo claim e `transaction_id`;
+- tentativas de rádio persistidas antes do I/O, com payload opaco, fencing,
+  `waiting_for_radio`, seleção/reuso de gateway e retomada por worker;
 - Contracts, Database e Backend verdes na PR 7.
 
 ## Gate atual de decisões do cliente
@@ -60,11 +62,11 @@ Permanecem bloqueados:
 - relatórios comerciais e fechamento de caixa;
 - contratos administrativos definitivos de gateway e atração.
 
-## Próxima entrega autorizada
+## Entrega técnica desta revisão
 
-### Próxima fatia da Etapa 5 — motor de retry de rádio e transporte simulado
+### Quinta fatia da Etapa 5 — motor de retry de rádio e transporte simulado
 
-Objetivo: implementar a orquestração anterior à entrega do Challenge sem
+Objetivo: materializar a orquestração anterior à entrega do Challenge sem
 congelar campos comerciais do payload GATT.
 
 Escopo:
@@ -103,7 +105,7 @@ Arquivos candidatos — confirmar o desenho existente antes de editar:
 - `contracts/events/`;
 - `tests/e2e/`.
 
-## Não objetivos da próxima fatia
+## Não objetivos desta fatia
 
 - não definir preço, duração, unidades ou validade;
 - não criar fluxo de cadastro, pagamento ou fechamento;
@@ -160,3 +162,7 @@ e procedimentos relevantes. Na mesma PR, atualizar:
 - contagem de migrations e evidência de CI, quando aplicável.
 
 Não marcar trabalho como concluído apenas porque compilou.
+
+Depois da integração desta fatia, nenhuma nova decisão comercial ou entrega
+dependente do cliente fica implicitamente autorizada. O próximo escopo deve ser
+registrado explicitamente neste arquivo antes de nova implementação.

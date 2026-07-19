@@ -96,9 +96,9 @@ docs/
 ## Estado
 
 Etapas 1–4 concluídas. A Etapa 5 já possui fundação do backend, ingestão BLE
-autenticada, deduplicação de sightings, fila SSE retomável, claim CAS e seleção
-do gateway de rádio. A próxima entrega autorizada é o motor de retry de rádio
-com transporte simulado de payload opaco. Challenge/Decision final, cadastro,
+autenticada, deduplicação de sightings, fila SSE retomável, claim CAS, seleção
+do gateway de rádio e motor persistido de retry com transporte simulado de
+payload opaco. Challenge/Decision final, cadastro,
 pagamentos, duração e acionamento aguardam o gate do cliente descrito em
 [CURRENT_STATE.md](CURRENT_STATE.md). Hardware e firmware ESP32 permanecem no
 fim.

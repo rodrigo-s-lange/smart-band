@@ -1,0 +1,17 @@
+{
+  "event_id": "91000000-0000-4000-8000-000000000001",
+  "event_type": "radio.dispatch_failed",
+  "version": 1,
+  "occurred_at": "2026-07-18T20:00:10Z",
+  "correlation_id": "92000000-0000-4000-8000-000000000001",
+  "payload": {
+    "interaction_id": 101,
+    "transaction_id": "0102030405060708",
+    "dispatch_id": "93000000-0000-4000-8000-000000000001",
+    "radio_gateway_id": 2,
+    "attempt": 1,
+    "challenge_nonce": "1112131415161718",
+    "failure_kind": "write_not_confirmed",
+    "failed_at": "2026-07-18T20:00:10Z"
+  }
+}

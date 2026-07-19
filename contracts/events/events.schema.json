@@ -13,6 +13,11 @@
       "description": "8 bytes do protocolo BLE, representados como hex minúsculo (ver contracts/proximity/binary-format.md)",
       "pattern": "^[0-9a-f]{16}$"
     },
+    "challenge_nonce": {
+      "type": "string",
+      "description": "8 bytes da tentativa de rádio, representados como hex minúsculo",
+      "pattern": "^[0-9a-f]{16}$"
+    },
     "interaction_id": {
       "type": "integer",
       "minimum": 0,
@@ -124,13 +129,40 @@
         "event_type": { "const": "interaction.confirmation_requested" },
         "payload": {
           "type": "object",
-          "required": ["interaction_id", "transaction_id", "radio_gateway_id", "attempt", "requested_at"],
+          "required": ["interaction_id", "transaction_id", "dispatch_id", "radio_gateway_id", "attempt", "challenge_nonce", "delivered_at"],
           "properties": {
             "interaction_id": { "$ref": "#/$defs/interaction_id" },
             "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "dispatch_id": { "$ref": "#/$defs/uuid" },
             "radio_gateway_id": { "$ref": "#/$defs/gateway_id" },
             "attempt": { "type": "integer", "minimum": 1, "maximum": 3, "description": "ADR 0003: até 3 tentativas de lease" },
-            "requested_at": { "$ref": "#/$defs/timestamp" }
+            "challenge_nonce": { "$ref": "#/$defs/challenge_nonce" },
+            "delivered_at": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+
+    "radio.dispatch_failed": {
+      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "properties": {
+        "event_type": { "const": "radio.dispatch_failed" },
+        "payload": {
+          "type": "object",
+          "required": ["interaction_id", "transaction_id", "dispatch_id", "attempt", "challenge_nonce", "failure_kind", "failed_at"],
+          "properties": {
+            "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "dispatch_id": { "$ref": "#/$defs/uuid" },
+            "radio_gateway_id": { "$ref": "#/$defs/gateway_id" },
+            "attempt": { "type": "integer", "minimum": 1, "maximum": 3 },
+            "challenge_nonce": { "$ref": "#/$defs/challenge_nonce" },
+            "failure_kind": {
+              "type": "string",
+              "enum": ["gateway_offline", "connect_failed", "write_not_confirmed", "transport_error", "no_radio_gateway", "timed_out"]
+            },
+            "failed_at": { "$ref": "#/$defs/timestamp" }
           },
           "additionalProperties": false
         }
@@ -202,6 +234,9 @@
           "required": ["interaction_id", "stage", "expired_at"],
           "properties": {
             "interaction_id": { "$ref": "#/$defs/interaction_id" },
+            "transaction_id": { "$ref": "#/$defs/transaction_id" },
+            "attempt": { "type": "integer", "minimum": 1, "maximum": 3 },
+            "reason": { "type": "string", "enum": ["radio_attempts_exhausted"] },
             "stage": { "type": "string", "enum": ["discovered", "queued", "claimed"] },
             "expired_at": { "$ref": "#/$defs/timestamp" }
           },
@@ -355,6 +390,7 @@
     { "$ref": "#/$defs/interaction.queued" },
     { "$ref": "#/$defs/interaction.claimed" },
     { "$ref": "#/$defs/interaction.confirmation_requested" },
+    { "$ref": "#/$defs/radio.dispatch_failed" },
     { "$ref": "#/$defs/interaction.confirmed" },
     { "$ref": "#/$defs/interaction.confirmation_timeout" },
     { "$ref": "#/$defs/interaction.cancelled" },
