@@ -222,6 +222,8 @@ MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 def validate_markdown_links() -> None:
     missing: list[str] = []
     for path in ROOT.rglob("*.md"):
+        if any(part in {".venv", "node_modules", "vendor"} for part in path.parts):
+            continue
         for target in MARKDOWN_LINK.findall(path.read_text(encoding="utf-8")):
             if "://" in target or target.startswith(("#", "mailto:")):
                 continue
@@ -250,6 +252,23 @@ def validate_documentation_handoff() -> None:
     ]
     if missing:
         raise AssertionError(f"missing handoff documents: {missing}")
+
+    demo_paths = [
+        ROOT / "apps/demo-streamlit/app.py",
+        ROOT / "apps/demo-streamlit/demo_app/auth.py",
+        ROOT / "apps/demo-streamlit/demo_app/state.py",
+        ROOT / "apps/demo-streamlit/demo_app/views.py",
+        ROOT / "apps/demo-streamlit/Dockerfile",
+        ROOT / "apps/demo-streamlit/tests/test_app.py",
+        ROOT / "apps/demo-streamlit/tests/test_state.py",
+        ROOT / "deploy/demo/compose.yaml",
+        ROOT / ".github/workflows/demo.yml",
+    ]
+    missing_demo = [
+        str(path.relative_to(ROOT)) for path in demo_paths if not path.exists()
+    ]
+    if missing_demo:
+        raise AssertionError(f"missing commercial demo implementation: {missing_demo}")
 
     current = required_paths[0].read_text(encoding="utf-8")
     client_gate = required_paths[1].read_text(encoding="utf-8")
@@ -296,7 +315,7 @@ def validate_documentation_handoff() -> None:
             "client-decisions-pending.md",
             "Migrations vigentes: **11**",
             "Trilha paralela de demonstração",
-            "implementação não iniciada",
+            "D0–D5 implementadas e validadas localmente",
         ],
         "client-decisions-pending.md": [
             "aguardando validação do cliente",
@@ -391,6 +410,7 @@ def validate_documentation_handoff() -> None:
         ROOT / "docs/stage-gates/demo-commercial-simulation.md"
     ).read_text(encoding="utf-8")
     demo_markers = [
+        "D0–D5 implementadas e validadas",
         "Streamlit é a interface exclusiva da simulação comercial",
         "https://pulseira.easysmart.com.br",
         "Ambiente de simulação",

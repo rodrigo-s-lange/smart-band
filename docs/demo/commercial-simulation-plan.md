@@ -1,6 +1,6 @@
 # Plano da simulação comercial Smart-Band
 
-Status: **planejada; implementação não iniciada**.
+Status: **D0–D5 implementadas e validadas; D6 em execução; D7 pendente**.
 
 Vault baseline desta definição:
 `deeddd5fa6492e62f361781fbde50480bbcb200c`.
@@ -57,15 +57,15 @@ navegadores diferentes. Um adaptador isolado da demo fornece estado
 compartilhado, relógio controlável, IDs determinísticos, reset e injeção de
 falhas. Ele não entra no domínio, ledger ou contratos de produção.
 
-## Estrutura planejada
+## Estrutura implementada
 
 ```text
 apps/demo-streamlit/
   app.py
-  pages/
-  components/
-  scenarios/
-  fixtures/
+  demo_app/
+    auth.py
+    state.py
+    views.py
   tests/
 deploy/demo/
   compose.yaml
@@ -74,22 +74,23 @@ docs/demo/
   commercial-simulation-plan.md
 ```
 
-As pastas de implementação só serão criadas após início explícito da D1.
+O adaptador usa SQLite somente para compartilhar o cenário da demonstração. Ele
+não substitui PostgreSQL, Edge API ou ledger do produto.
 
 ## Navegação
 
 ```text
 Visão Geral | Atendimento | Operação | Dispositivos |
-Alertas | Relatórios | Administração
+Alertas | Controle da Demo
 ```
 
-- **Visão Geral:** evento, vendas, consumo, atrações, dispositivos e alertas.
+- **Visão Geral:** evento, vendas, consumo, atrações, dispositivos, alertas e
+  gráficos demonstrativos.
 - **Atendimento:** participante/sessão, vínculo e carga de créditos.
 - **Operação:** fila global, atrações, solicitações e sessões.
 - **Dispositivos:** Gateways e Pulseiras, estados e simulações.
 - **Alertas:** tamper, bateria, gateway, acionamento e reconciliação.
-- **Relatórios:** vendas, consumo, horários, falhas e ocupação fictícia.
-- **Administração:** fixtures, pacotes e reset da demonstração.
+- **Controle da Demo:** fixtures, cenários de falha e reset da demonstração.
 
 A barra superior expõe evento ativo, modo local, gateways online, pulseiras em
 uso e alertas. A navegação e os rótulos não congelam a UX de produção.
@@ -271,17 +272,16 @@ Gate: o roteiro principal termina mesmo sem internet externa.
 7. registrar respostas como decisões D1–D18, sem editar regras ao vivo;
 8. salvar feedback e encerrar o acesso externo após o uso.
 
-## Pendências antes de D1/D6
+## Parâmetros aprovados para esta reunião
 
-Antes de D1:
+- reunião na terça-feira, com 30–60 minutos;
+- público misto comercial, operacional e técnico;
+- atrações Corrida, Boxe, Explorador e Tiro;
+- 1 crédito por atração e R$ 20 por crédito, exclusivamente como fixture;
+- autenticação temporária por senha;
+- Cloudflare Tunnel no i5 e contingência LAN;
+- controle manual dos cenários, sem autoplay;
+- desligamento do acesso externo após a janela da reunião.
 
-- data prevista da reunião;
-- tema neutro ou identidade visual autorizada;
-- nomes fictícios ou atrações reais autorizadas.
-
-Antes de D6:
-
-- responsável pelo DNS de `easysmart.com.br`;
-- túnel/proxy escolhido;
-- allowlist/PIN/OIDC e responsáveis pelo acesso;
-- janela de ativação e encerramento do domínio.
+Pendências de D6/D7: validar o domínio externamente, ensaiar em outra rede,
+preparar o roteiro final e registrar a contingência em vídeo.

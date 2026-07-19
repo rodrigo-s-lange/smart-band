@@ -49,7 +49,15 @@ baseline funcional. Verificar `git rev-parse HEAD` antes de trabalhar.
 - worker recuperável pelo PostgreSQL, com I/O fora da transação;
 - esgotamento atômico após três falhas, sem reserva ou lançamento de ledger;
 - transporte simulado fail-closed e eventos técnicos versionados.
-- plano D0–D7 e ADR da demonstração comercial em Streamlit, sem implementação.
+- plano D0–D7 e ADR da demonstração comercial em Streamlit;
+- demonstração comercial isolada em `apps/demo-streamlit`, com SQLite
+  compartilhado, fixture determinística, cockpit virtual e seis áreas;
+- fluxo completo simulado de cadastro, carga, solicitação, confirmação,
+  acionamento e débito exatamente uma vez;
+- cenários simulados de fallback de rádio, `not_executed`, resultado ambíguo e
+  tamper, sem alterar contratos ou regras definitivas do produto;
+- container, healthcheck, autenticação por senha e compose isolado em
+  `deploy/demo`.
 
 ## Evidência da PR 10
 
@@ -88,8 +96,8 @@ Permanecem bloqueados:
 - vibracall e padrões finais de acessibilidade;
 - sensor de remoção, resposta a alertas e extensão BLE v2;
 - gamificação/sorteios, métricas BLE de ocupação e comissão de vendas;
-- publicação externa: data, público, DNS, autenticação e ativação de
-  `https://pulseira.easysmart.com.br`.
+- publicação permanente do produto e seu SLA continuam bloqueados; o acesso
+  temporário da demo em `https://pulseira.easysmart.com.br` segue a trilha D6.
 
 Operações OpenAPI marcadas `client-decision-blocked` continuam representativas e
 não autorizam implementação definitiva.
@@ -122,11 +130,20 @@ Streamlit exclusivamente para a simulação. Escopo, cenários, D0–D7, gates e
 roteiro estão em
 [commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md).
 
-Status: documentação concluída; implementação não iniciada. O domínio é alvo,
-não serviço ativo. D1 só começa mediante pedido explícito de implementação. D6
-ainda exige data, público, responsável por DNS e método de autenticação. A demo
-não autoriza nem conclui backend, frontend operacional, contratos comerciais,
-hardware ou firmware.
+Status: **D0–D5 implementadas e validadas localmente; D6 em execução; D7
+pendente**. O domínio continua sendo alvo até a publicação ser validada de fora
+da rede. A reunião será na terça-feira, para público comercial, operacional e
+técnico, com autenticação temporária por senha. A demo não autoriza nem conclui
+backend, frontend operacional, contratos comerciais, hardware ou firmware.
+
+Evidência local da demo em 2026-07-19:
+
+- 7 testes automatizados aprovados, incluindo três consumidores do mesmo banco,
+  três resets completos e idempotência financeira;
+- smoke de todas as páginas com `streamlit.testing.v1.AppTest`;
+- fluxo S1 executado em Chrome headless do cadastro ao estado `LIBERADO`, com
+  saldo reduzido de 5 para 4;
+- healthcheck local do Streamlit aprovado.
 
 ## Trabalho seguro enquanto o cliente decide
 

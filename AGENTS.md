@@ -131,18 +131,20 @@ D13–D18 bloqueiam o componente correspondente: alertas/acessibilidade, tamper,
 gamificação/prêmios, métricas BLE, comissão e demo externa. ADR 0013 é proposta;
 não implementar v2, sensor, dashboard público ou rastreamento por inferência.
 
-A trilha D0–D7 da demo é paralela e não altera as Etapas 5–7. Fixtures devem ser
+A trilha D0–D7 da demo é paralela e não altera as Etapas 5–7. D0–D5 estão
+implementadas; D6 trata publicação e D7 ensaio. Fixtures devem ser
 fictícias, determinísticas e marcadas como simulação; não podem definir preço,
 cadastro, pagamento, tamper ou acionamento de produção. O domínio pretendido não
-está ativo por estar documentado. Implementação D1 e publicação D6 exigem os
+está ativo por estar documentado. Publicação D6 e reunião D7 exigem evidência nos
 gates do plano.
 
 ## Fronteiras de responsabilidade
 
 - `apps/edge-api`: domínio, persistência, autenticação, fila, ledger e API.
 - `apps/operator-web`: UX local; não contém regra de saldo.
-- `apps/demo-streamlit` (planejado): apresentação comercial descartável; não
-  contém regra de saldo nem contrato definitivo.
+- `apps/demo-streamlit`: apresentação comercial descartável com estado SQLite
+  exclusivamente fictício; não contém regra de saldo nem contrato definitivo de
+  produção.
 - `services/gateway-coordinator`: coordenação de sightings e rádio; não contém ledger.
 - `contracts`: fronteiras versionadas antes das implementações consumidoras.
 - `simulators`: primeira implementação funcional do protocolo.

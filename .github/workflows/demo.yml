@@ -1,0 +1,51 @@
+name: Commercial Demo
+
+on:
+  pull_request:
+    paths:
+      - "apps/demo-streamlit/**"
+      - "deploy/demo/**"
+      - ".github/workflows/demo.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/demo-streamlit/**"
+      - "deploy/demo/**"
+      - ".github/workflows/demo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test Streamlit demo
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/demo-streamlit/requirements-dev.txt
+
+      - name: Install dependencies
+        working-directory: apps/demo-streamlit
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
+
+      - name: Test
+        working-directory: apps/demo-streamlit
+        env:
+          SMARTBAND_DEMO_ALLOW_NO_AUTH: "true"
+        run: python -m pytest tests
+
+      - name: Build image
+        run: docker build apps/demo-streamlit
