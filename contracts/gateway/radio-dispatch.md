@@ -16,7 +16,7 @@ implementação pode usar structs Go internamente; nenhuma representação de re
 | `interaction_id` | UUID | imutável durante retries |
 | `transaction_id` | UUID | imutável durante retries |
 | `attempt` | inteiro 1–3 | igual à tentativa vigente no banco |
-| `radio_gateway_id` | UUID | gateway escolhido pelo servidor |
+| `radio_gateway_id` | UUID opcional | vazio somente em `waiting_for_radio`; obrigatório em `pending` |
 | `challenge_nonce` | 8 bytes | novo a cada tentativa |
 | `protocol_version` | inteiro sem sinal | versão do payload, sem interpretação pela porta |
 | `payload` | bytes | opaco; não registrar em log |
@@ -32,7 +32,8 @@ tentativa. O caller não pode regenerá-los ao repetir a chamada.
 
 - `delivered`: a pulseira alvo confirmou tecnicamente a escrita completa;
 - `failed`: a entrega não ocorreu, com `failure_kind` igual a `gateway_offline`,
-  `connect_failed`, `write_not_confirmed` ou `transport_error`;
+  `connect_failed`, `write_not_confirmed`, `transport_error` ou
+  `no_radio_gateway`;
 - `timed_out`: nenhuma confirmação técnica chegou até `deadline`.
 
 Recebimento pelo gateway, conexão GATT e início da escrita são progresso, não
@@ -59,12 +60,25 @@ conjunto ficar vazio, reutiliza o melhor gateway elegível. Assim, um único
 gateway pode receber as três tentativas; havendo alternativas recentes, elas
 são preferidas antes do reuso.
 
+Se não existir candidato elegível, o servidor cria a próxima tentativa em
+`waiting_for_radio`, com `radio_gateway_id` vazio, `dispatch_id` e nonce novos e
+`selection_deadline` de 10 segundos pelo relógio da appliance. Novo sighting
+elegível preenche o rádio, muda o status para `pending` e inicia um
+`dispatch_deadline` também de 10 segundos. Se `selection_deadline` vencer, a
+tentativa termina `failed/no_radio_gateway`, conta no limite de três e segue a
+mesma transição de retry ou esgotamento. Nunca selecionar rádio por sighting
+stale e nunca executar I/O enquanto `waiting_for_radio`.
+
 ## Persistência e retomada
 
 A próxima implementação deve persistir uma linha por tentativa com, no mínimo,
-todos os campos do comando, status `pending | delivered | failed | timed_out`,
-timestamps e desfecho. A combinação `(transaction_id, attempt)` e o
-`dispatch_id` são únicos.
+os campos aplicáveis do comando, status
+`waiting_for_radio | pending | delivered | failed | timed_out`, timestamps e
+desfecho. A combinação `(transaction_id, attempt)` e o `dispatch_id` são únicos.
+
+Somente em `waiting_for_radio`, `radio_gateway_id` e `dispatch_deadline` podem
+estar vazios. `selection_deadline` é obrigatório nesse estado e fica vazio após
+a seleção. Apenas `pending` autoriza chamada à porta.
 
 Um worker orientado pelo banco busca trabalho em lotes com
 `FOR UPDATE SKIP LOCKED` e fencing por `dispatch_id`/lease. I/O nunca mantém uma
@@ -86,7 +100,7 @@ Em `failed` ou `timed_out` antes da terceira tentativa, uma única transação:
 2. incrementa a tentativa;
 3. escolhe o rádio conforme a regra acima;
 4. gera novo `dispatch_id`, `challenge_nonce`, deadline e lease;
-5. persiste a próxima tentativa como `pending`.
+5. persiste como `pending` quando há rádio ou `waiting_for_radio` quando não há.
 
 Na terceira falha, uma única transação:
 

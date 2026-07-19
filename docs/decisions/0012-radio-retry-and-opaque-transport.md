@@ -23,6 +23,10 @@ retomada após restart precisam ser inequívocos.
   appliance nos últimos 10 segundos. Prefere candidatos ainda não usados na
   transação; se todos já foram tentados, reutiliza o melhor elegível pela ordem
   RSSI, recência e menor ID.
+- Sem candidato elegível, cria a próxima tentativa em `waiting_for_radio` por
+  10 segundos, com rádio vazio e sem I/O. Sighting novo move para `pending`; o
+  fim da janela falha como `no_radio_gateway` e consome a tentativa. Gateway
+  stale nunca é usado.
 - Offline, conexão malsucedida, escrita não confirmada e deadline excedido antes
   de `delivered` consomem uma tentativa.
 - A passagem à próxima tentativa encerra a anterior e cria novo `dispatch_id`,
@@ -55,7 +59,7 @@ pagamento, capabilities definitivas nem acionamento físico.
 ## Vault
 
 Decisão correspondente no vault, commit
-`9c61b59416f3b8219322b97fc9f84838f826b543`:
+`ce99e8a5eb53d58b033016379e6128d71522b669`:
 
 ```text
 07-decisoes/2026-07-18-smart-band-semantica-retry-radio-transporte-opaco.md

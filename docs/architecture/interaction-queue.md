@@ -60,6 +60,10 @@ três tentativas expira interação/claim e cancela a transação. A fronteira d
 entrega e a retomada por banco estão na
 [ADR 0012](../decisions/0012-radio-retry-and-opaque-transport.md).
 
+Se não houver rádio recente, a tentativa aguarda por até 10 segundos em
+`waiting_for_radio`, sem I/O e sem usar gateway stale. Vencer essa janela conta
+como falha `no_radio_gateway`.
+
 O claim, o lease inicial de 10 segundos, o `transaction_intent` em estado
 `claimed` e o evento de outbox nascem na mesma transação PostgreSQL. A ausência
 de rádio recente não altera a interação.

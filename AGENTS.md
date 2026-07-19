@@ -67,6 +67,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
   `dispatch_id`, `challenge_nonce`, tentativa e lease. O rádio é reavaliado e
   pode ser reutilizado se não houver alternativa elegível.
 - `delivered` exige confirmação técnica da escrita completa pela pulseira.
+- Sem rádio elegível, a tentativa aguarda 10 segundos em `waiting_for_radio`;
+  nunca usa sighting stale e falha como `no_radio_gateway` ao vencer a janela.
 - Após três falhas, interação e claim ficam `expired` e a transação `cancelled`.
 - Worker e fencing persistidos no PostgreSQL são autoridade; timer em memória não é.
 - Rádio inicial usa sightings do servidor dos últimos 10 segundos: maior RSSI,
