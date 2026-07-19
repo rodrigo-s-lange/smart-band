@@ -1,9 +1,9 @@
 # Plano da simulação comercial Smart-Band
 
-Status: **D0–D5 implementadas e validadas; D6 em execução; D7 pendente**.
+Status: **D0–D6 concluídas; D7 pendente**.
 
 Vault baseline desta definição:
-`deeddd5fa6492e62f361781fbde50480bbcb200c`.
+`5eb042d5332e4eab88c296322c04a34c88bb0d8f`.
 
 ## Objetivo
 
@@ -283,5 +283,5 @@ Gate: o roteiro principal termina mesmo sem internet externa.
 - controle manual dos cenários, sem autoplay;
 - desligamento do acesso externo após a janela da reunião.
 
-Pendências de D6/D7: validar o domínio externamente, ensaiar em outra rede,
-preparar o roteiro final e registrar a contingência em vídeo.
+Pendências de D7: ensaiar em rede móvel, preparar o roteiro final, executar três
+ensaios cronometrados e registrar a contingência em vídeo.

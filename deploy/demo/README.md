@@ -18,8 +18,19 @@ Para contingência LAN, configure temporariamente o endereço privado do host em
 ## Parar e remover o acesso
 
 ```bash
+sudo systemctl stop cloudflared-smartband-demo
 docker compose down
 ```
+
+Para reabrir o acesso temporário após validar o container:
+
+```bash
+sudo systemctl start cloudflared-smartband-demo
+```
+
+O serviço de túnel da demo é separado do túnel dos demais produtos. Sua
+configuração e credencial ficam fora do repositório. Parar esse serviço remove o
+acesso público sem afetar a aplicação local nem os outros hostnames.
 
 O volume é preservado. Para restaurar o cenário, prefira o reset na aplicação.
 Remover o volume apaga somente dados fictícios, mas deve ser uma ação explícita.
