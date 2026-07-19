@@ -8,7 +8,7 @@ implementação sem acesso ao histórico de conversas.
 - GitHub `rodrigo-s-lange/smart-band`: código e artefatos executáveis.
 - Baseline funcional mais recente: PR 7, merge
   `4019f7171bc8d8f91872831bba338c1d6a88b572`.
-- Vault commit validado: `9c61b59416f3b8219322b97fc9f84838f826b543`.
+- Vault commit validado: `ce99e8a5eb53d58b033016379e6128d71522b669`.
 - Handoff correspondente no vault:
   `C:\Users\Familia\vault\01-projetos\smart-band\estado-atual-e-handoff.md`.
 - Laboratório reproduzível:
@@ -84,6 +84,10 @@ Escopo:
 10. persistir tentativas e retomá-las com worker orientado pelo PostgreSQL;
 11. testar com transporte e gateways simulados, sem ESP32.
 
+Sem rádio elegível, a nova tentativa fica `waiting_for_radio` por até 10
+segundos. Um sighting recente a move para `pending`; o fim da janela consome a
+tentativa como `no_radio_gateway`. Gateway stale nunca é usado.
+
 `delivered` significa confirmação técnica da escrita completa na pulseira, não
 enfileiramento, recebimento pelo gateway, conexão GATT ou início da escrita.
 Depois da terceira falha, interação e claim terminam `expired`, a transação
@@ -117,6 +121,8 @@ Arquivos candidatos — confirmar o desenho existente antes de editar:
 - o rádio é reavaliado por sightings recentes do servidor;
 - gateways elegíveis ainda não tentados são preferidos; o melhor pode ser
   reutilizado quando não houver alternativa;
+- ausência de gateway elegível aguarda a janela persistida, nunca usa sighting
+  stale e produz `no_radio_gateway` de forma determinística;
 - resposta de tentativa anterior não avança o estado;
 - exatamente três falhas levam interação/claim a `expired` e transação a
   `cancelled`, sem reserva nem ledger;

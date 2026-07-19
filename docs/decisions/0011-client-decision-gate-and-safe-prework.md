@@ -42,7 +42,7 @@ definidos e pode ser desenvolvido sem conhecer o conteúdo comercial do payload.
 ## Vault
 
 Decisão correspondente no vault, commit
-`9c61b59416f3b8219322b97fc9f84838f826b543`:
+`ce99e8a5eb53d58b033016379e6128d71522b669`:
 
 ```text
 07-decisoes/2026-07-18-smart-band-gate-decisoes-cliente-e-trabalho-seguro.md

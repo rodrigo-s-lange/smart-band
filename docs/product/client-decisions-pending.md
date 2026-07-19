@@ -4,7 +4,7 @@ Este arquivo é uma barreira técnica autocontida para agentes que tenham acesso
 somente ao repositório. O questionário completo e o registro das respostas são
 canônicos no vault.
 
-Vault commit validado: `9c61b59416f3b8219322b97fc9f84838f826b543`.
+Vault commit validado: `ce99e8a5eb53d58b033016379e6128d71522b669`.
 
 ```text
 C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md

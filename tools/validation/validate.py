@@ -265,6 +265,9 @@ def validate_documentation_handoff() -> None:
         "radio_attempts_exhausted",
         "FOR UPDATE SKIP LOCKED",
         "transaction_intent` como `cancelled",
+        "waiting_for_radio",
+        "no_radio_gateway",
+        "Nunca selecionar rádio por sighting",
     ]
     absent_retry = [marker for marker in retry_markers if marker not in retry_contract]
     if absent_retry:
