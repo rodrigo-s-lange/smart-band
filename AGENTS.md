@@ -42,8 +42,10 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 19. `docs/decisions/0010-gateway-as-operational-identity.md`
 20. `docs/decisions/0011-client-decision-gate-and-safe-prework.md`
 21. `docs/decisions/0012-radio-retry-and-opaque-transport.md`
-22. `contracts/gateway/radio-dispatch.md`
-23. `docs/roadmap.md`
+22. `docs/decisions/0013-tamper-detection-and-child-safety.md`
+23. `contracts/proximity/tamper-status.md`
+24. `contracts/gateway/radio-dispatch.md`
+25. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -78,6 +80,10 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - Um site mantém múltiplos eventos históricos e no máximo um evento ativo.
 - Serviços externos são opcionais e não recebem dados pessoais por padrão.
 - Hardware e firmware ESP32 vêm depois de contratos, simuladores e backend.
+- O advertising v1 permanece inalterado. `tamper_status` v2, sensor de remoção e
+  alerta contínuo são propostas bloqueadas pela decisão D14 do cliente.
+- Display e vibracall devem ser tratados como canais complementares; nenhum
+  alerta essencial pode ser projetado como exclusivamente sonoro.
 
 ## Invariantes
 
@@ -97,6 +103,9 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - `operator_gateway_id`, `radio_gateway_id` e `attraction_id` são registrados separadamente.
 - Override e reconciliação registram gateway, ação, motivo e horário.
 - O sistema precisa funcionar sem internet.
+- Estado `sensor_fault` ou `unknown` nunca equivale a pulseira segura.
+- Tamper pode apoiar supervisão, mas não pode ser descrito como garantia de
+  segurança, localização ou permanência de uma criança.
 
 ## Gate atual e trabalho autorizado
 
@@ -111,6 +120,10 @@ VRPlay as decisões D1–D8 e responsáveis/prazos para D9–D12 conforme
 `CURRENT_STATE.md`. Não congelar Challenge/Decision final, contratos
 administrativos, frontend, hardware ou firmware antes de atender o gate
 correspondente.
+
+D13–D18 bloqueiam o componente correspondente: alertas/acessibilidade, tamper,
+gamificação/prêmios, métricas BLE, comissão e demo externa. ADR 0013 é proposta;
+não implementar v2, sensor, dashboard público ou rastreamento por inferência.
 
 ## Fronteiras de responsabilidade
 

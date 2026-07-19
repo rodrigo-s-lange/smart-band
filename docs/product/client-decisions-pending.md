@@ -5,7 +5,7 @@ somente ao repositório. O roteiro completo, as recomendações e o registro das
 respostas são canônicos no vault.
 
 Vault baseline documental desta sincronização:
-`554ef34d4792710ae1960e79d2f2b1021dee8aa1`.
+`8dd4d76bf1787a10350aab0cffcb37912057a4fa`.
 
 ```text
 C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md
@@ -81,6 +81,26 @@ Registrar quando motivo ou segunda aprovação são obrigatórios.
 - **D12 — Suporte e continuidade:** acesso remoto, SLA, manutenção, UPS,
   backup/restore e exportação no encerramento do contrato.
 
+## P2 — respostas antes do hardware, da demo ou do módulo opcional
+
+- **D13 — Alertas e acessibilidade:** decidir vibracall no MVP, eventos e padrões
+  táteis/visuais. Aviso importante não deve depender somente de som; display com
+  texto curto, ícones e contraste pode apoiar pessoas com deficiência auditiva.
+- **D14 — Tamper e segurança de menores:** decidir sensor de abertura/remoção,
+  destinatário, reconhecimento, resposta e tolerância a falhas. É apoio à
+  supervisão, não garantia de segurança. O v1 permanece inalterado e a proposta
+  v2 está em [tamper-status.md](../../contracts/proximity/tamper-status.md).
+- **D15 — Gamificação e prêmios:** separar missões/regras determinísticas de
+  sorteios. Prêmios aleatórios exigem regras auditáveis e validação jurídica.
+- **D16 — Ocupação por BLE:** começar por contagens agregadas dos gateways, sem
+  trajetória individual. Beacons/receptores adicionais dependem de ensaio.
+- **D17 — Comissão de venda:** definir beneficiário, base, reversões, teto e
+  validação trabalhista/fiscal. Identidade no caixa não altera a operação anônima
+  do gateway da atração.
+- **D18 — Demo e domínio:** definir objetivo e prazo. No i5, usar dados fictícios,
+  autenticação e proxy/túnel com TLS; não expor banco ou appliance diretamente em
+  `pulseira.easysmart.com.br`.
+
 ## O que não pode ser assumido
 
 - recomendações do documento do cliente não são respostas aceitas;
@@ -101,6 +121,8 @@ Enquanto o gate estiver aberto:
 - contratos administrativos de gateway e atração são representativos;
 - nenhum frontend definitivo de cadastro, caixa ou configuração é autorizado;
 - hardware e firmware continuam fora da etapa atual.
+- o protocolo v2 de tamper, o dashboard público, comissão, gamificação e mapa de
+  ocupação permanecem propostas, não funcionalidades autorizadas.
 
 ## Trabalho permitido antes das respostas
 

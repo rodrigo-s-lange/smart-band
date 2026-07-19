@@ -167,6 +167,55 @@ def validate_cmac_vectors() -> None:
         raise AssertionError("tampered Decision vector mismatch")
 
 
+def validate_tamper_proposal() -> None:
+    proposal = load_json(ROOT / "contracts/proximity/tamper-status.proposal.json")
+    current = load_json(ROOT / "contracts/proximity/test-vectors.json")
+    advertising_v1 = next(
+        vector for vector in current["vectors"] if vector["name"] == "advertising"
+    )
+    if proposal["status"] != "client-decision-blocked":
+        raise AssertionError("tamper v2 must remain client-decision-blocked")
+    if advertising_v1["wire_length_bytes"] != proposal["v1_wire_length_bytes"]:
+        raise AssertionError("tamper proposal changed the v1 advertising length")
+
+    cursor = 0
+    for field in proposal["fields"]:
+        if field["offset"] != cursor:
+            raise AssertionError(f"non-contiguous tamper field: {field['name']}")
+        cursor += field["bytes"]
+    if cursor != proposal["v2_wire_length_bytes"]:
+        raise AssertionError("tamper v2 field layout length mismatch")
+    if proposal["legacy_packet_length_bytes"] != cursor + 7:
+        raise AssertionError("tamper v2 legacy packet envelope mismatch")
+    if proposal["legacy_packet_length_bytes"] > 31:
+        raise AssertionError("tamper v2 exceeds legacy advertising limit")
+
+    expected_status = {
+        "0": "secure",
+        "1": "removal_detected",
+        "2": "sensor_fault",
+        "3": "unknown",
+    }
+    if proposal["tamper_status"] != expected_status:
+        raise AssertionError("tamper status values diverged")
+
+    vector = proposal["proposal_vector"]
+    key = decode_hex(vector["band_key_hex"], "tamper_v2.band_key")
+    message = decode_hex(vector["cmac_input_hex"], "tamper_v2.cmac_input")
+    wire = decode_hex(vector["wire_payload_hex"], "tamper_v2.wire")
+    full = cmac(key, message)
+    if full.hex() != vector["expected_full_cmac_hex"]:
+        raise AssertionError("tamper v2 full CMAC mismatch")
+    if full[:8].hex() != vector["expected_tag_hex"]:
+        raise AssertionError("tamper v2 truncated tag mismatch")
+    if len(wire) != proposal["v2_wire_length_bytes"]:
+        raise AssertionError("tamper v2 vector wire length mismatch")
+    if wire[0] != proposal["protocol_version"] or wire[22] != 1:
+        raise AssertionError("tamper v2 vector version/status mismatch")
+    if wire[9:17] != full[:8]:
+        raise AssertionError("tamper v2 wire tag mismatch")
+
+
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
@@ -189,6 +238,8 @@ def validate_documentation_handoff() -> None:
         ROOT / "docs/product/client-decisions-pending.md",
         ROOT / "docs/decisions/0011-client-decision-gate-and-safe-prework.md",
         ROOT / "docs/decisions/0012-radio-retry-and-opaque-transport.md",
+        ROOT / "docs/decisions/0013-tamper-detection-and-child-safety.md",
+        ROOT / "contracts/proximity/tamper-status.md",
         ROOT / "contracts/gateway/radio-dispatch.md",
     ]
     missing = [
@@ -223,6 +274,8 @@ def validate_documentation_handoff() -> None:
         "docs/product/client-decisions-pending.md",
         "docs/decisions/0011-client-decision-gate-and-safe-prework.md",
         "docs/decisions/0012-radio-retry-and-opaque-transport.md",
+        "docs/decisions/0013-tamper-detection-and-child-safety.md",
+        "contracts/proximity/tamper-status.md",
         "contracts/gateway/radio-dispatch.md",
     ]
     for path in mandatory:
@@ -242,6 +295,7 @@ def validate_documentation_handoff() -> None:
             "client-decision-blocked",
             "D1. Identificação e LGPD",
             "D8. Perfis e exceções administrativas",
+            "D14 — Tamper e segurança de menores",
             "Trabalho permitido antes das respostas",
             "Não há nova entrega funcional autorizada",
         ],
@@ -262,7 +316,9 @@ def validate_documentation_handoff() -> None:
     if current_vault.group(1) != gate_vault.group(1):
         raise AssertionError("handoff documents reference different vault commits")
 
-    retry_contract = required_paths[4].read_text(encoding="utf-8")
+    retry_contract = (ROOT / "contracts/gateway/radio-dispatch.md").read_text(
+        encoding="utf-8"
+    )
     retry_markers = [
         "confirmou tecnicamente a escrita completa",
         "ainda não usados pela transação",
@@ -301,12 +357,31 @@ def validate_documentation_handoff() -> None:
         if f"({path.name})" not in decisions_index:
             raise AssertionError(f"ADR index missing {path.name}")
 
+    tamper_contract = (ROOT / "contracts/proximity/tamper-status.md").read_text(
+        encoding="utf-8"
+    )
+    tamper_markers = [
+        "advertising v1 de 22 bytes permanece byte a byte inalterado",
+        "protocol_version = 2",
+        "removal_detected",
+        "sensor_fault",
+        "tamper_counter",
+        "não oferece alerta imediato de remoção",
+        "não garante localização",
+    ]
+    absent_tamper = [
+        marker for marker in tamper_markers if marker not in tamper_contract
+    ]
+    if absent_tamper:
+        raise AssertionError(f"tamper proposal contract incomplete: {absent_tamper}")
+
 
 def main() -> int:
     checks = [
         ("event schema and examples", validate_events),
         ("OpenAPI", validate_openapi_contract),
         ("AES-CMAC vectors", validate_cmac_vectors),
+        ("tamper v2 proposal", validate_tamper_proposal),
         ("Markdown links", validate_markdown_links),
         ("documentation handoff consistency", validate_documentation_handoff),
     ]

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "status": "client-decision-blocked",
+  "protocol_version": 2,
+  "v1_wire_length_bytes": 22,
+  "v2_wire_length_bytes": 23,
+  "legacy_packet_length_bytes": 30,
+  "fields": [
+    {"name": "protocol_version", "offset": 0, "bytes": 1},
+    {"name": "session_nonce", "offset": 1, "bytes": 8},
+    {"name": "tag", "offset": 9, "bytes": 8},
+    {"name": "display_code", "offset": 17, "bytes": 4},
+    {"name": "request_ttl_seconds", "offset": 21, "bytes": 1},
+    {"name": "tamper_status", "offset": 22, "bytes": 1}
+  ],
+  "tamper_status": {
+    "0": "secure",
+    "1": "removal_detected",
+    "2": "sensor_fault",
+    "3": "unknown"
+  },
+  "cmac": {
+    "algorithm": "AES-128-CMAC",
+    "domain_byte": 1,
+    "truncation": "leftmost-8-bytes"
+  },
+  "proposal_vector": {
+    "band_key_hex": "2b7e151628aed2a6abf7158809cf4f3c",
+    "cmac_input_hex": "01020102030405060708785634123c01",
+    "expected_full_cmac_hex": "47a36e107734f8a58912a46046df4cb1",
+    "expected_tag_hex": "47a36e107734f8a5",
+    "wire_payload_hex": "02010203040506070847a36e107734f8a5785634123c01"
+  }
+}
