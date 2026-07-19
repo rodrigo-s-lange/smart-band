@@ -8,7 +8,7 @@ implementação sem acesso ao histórico de conversas.
 - GitHub `rodrigo-s-lange/smart-band`: código e artefatos executáveis.
 - Baseline funcional mais recente: PR 7, merge
   `4019f7171bc8d8f91872831bba338c1d6a88b572`.
-- Vault commit validado: `ce99e8a5eb53d58b033016379e6128d71522b669`.
+- Vault commit validado: `cdd04a50f856b10a100a0473f60db8abc0d8ec90`.
 - Handoff correspondente no vault:
   `C:\Users\Familia\vault\01-projetos\smart-band\estado-atual-e-handoff.md`.
 - Laboratório reproduzível:
