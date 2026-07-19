@@ -9,7 +9,7 @@ o projeto sem acesso ao histórico de conversas.
 - Baseline funcional mais recente: **PR 10**, merge
   `b02d73f6b66c3010187101c416407a43fcdfe990`.
 - Vault baseline documental desta sincronização:
-  `8dd4d76bf1787a10350aab0cffcb37912057a4fa`.
+  `deeddd5fa6492e62f361781fbde50480bbcb200c`.
 - Questionário canônico do cliente no vault:
   `C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md`.
 - Laboratório reproduzível:
@@ -49,6 +49,7 @@ baseline funcional. Verificar `git rev-parse HEAD` antes de trabalhar.
 - worker recuperável pelo PostgreSQL, com I/O fora da transação;
 - esgotamento atômico após três falhas, sem reserva ou lançamento de ledger;
 - transporte simulado fail-closed e eventos técnicos versionados.
+- plano D0–D7 e ADR da demonstração comercial em Streamlit, sem implementação.
 
 ## Evidência da PR 10
 
@@ -87,7 +88,8 @@ Permanecem bloqueados:
 - vibracall e padrões finais de acessibilidade;
 - sensor de remoção, resposta a alertas e extensão BLE v2;
 - gamificação/sorteios, métricas BLE de ocupação e comissão de vendas;
-- demonstração externa e uso de `pulseira.easysmart.com.br`.
+- publicação externa: data, público, DNS, autenticação e ativação de
+  `https://pulseira.easysmart.com.br`.
 
 Operações OpenAPI marcadas `client-decision-blocked` continuam representativas e
 não autorizam implementação definitiva.
@@ -112,6 +114,19 @@ aceite.
 A ADR 0013 e o contrato `contracts/proximity/tamper-status.md` são propostas de
 fronteira para a reunião. O advertising v1 continua vigente; não existem sensor,
 alerta contínuo, dashboard público ou firmware autorizados por esses documentos.
+
+## Trilha paralela de demonstração
+
+A [ADR 0014](docs/decisions/0014-streamlit-commercial-simulation.md) aceita
+Streamlit exclusivamente para a simulação. Escopo, cenários, D0–D7, gates e
+roteiro estão em
+[commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md).
+
+Status: documentação concluída; implementação não iniciada. O domínio é alvo,
+não serviço ativo. D1 só começa mediante pedido explícito de implementação. D6
+ainda exige data, público, responsável por DNS e método de autenticação. A demo
+não autoriza nem conclui backend, frontend operacional, contratos comerciais,
+hardware ou firmware.
 
 ## Trabalho seguro enquanto o cliente decide
 
