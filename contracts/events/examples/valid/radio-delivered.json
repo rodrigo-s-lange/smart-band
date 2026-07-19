@@ -1,0 +1,16 @@
+{
+  "event_id": "91000000-0000-4000-8000-000000000002",
+  "event_type": "interaction.confirmation_requested",
+  "version": 1,
+  "occurred_at": "2026-07-18T20:00:05Z",
+  "correlation_id": "92000000-0000-4000-8000-000000000002",
+  "payload": {
+    "interaction_id": 101,
+    "transaction_id": "0102030405060708",
+    "dispatch_id": "93000000-0000-4000-8000-000000000002",
+    "radio_gateway_id": 2,
+    "attempt": 2,
+    "challenge_nonce": "2122232425262728",
+    "delivered_at": "2026-07-18T20:00:05Z"
+  }
+}

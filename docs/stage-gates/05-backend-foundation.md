@@ -35,7 +35,7 @@ go vet ./...
 go build ./cmd/edge-api
 ```
 
-O workflow `Backend` também prepara as 10 migrations em PostgreSQL real,
+O workflow `Backend` também prepara as 11 migrations em PostgreSQL real,
 regenera o `sqlc`, compara o resultado versionado e constrói a imagem.
 
 Evidência: workflow verde na PR 3 em
@@ -96,10 +96,24 @@ Detalhes e consequências: [ADR 0009](../decisions/0009-atomic-claim-and-radio-s
 
 Evidência: merge `4019f7171bc8d8f91872831bba338c1d6a88b572`.
 
-## Próxima fatia autorizada
+## Fatia autorizada desta revisão
 
 Motor de retry de rádio e transporte simulado de payload opaco, conforme
 [CURRENT_STATE.md](../../CURRENT_STATE.md) e a
 [ADR 0012](../decisions/0012-radio-retry-and-opaque-transport.md). O Challenge/Decision final e os
 contratos administrativos dependentes do cliente permanecem bloqueados pela
 [ADR 0011](../decisions/0011-client-decision-gate-and-safe-prework.md).
+
+## Quinta fatia materializada nesta revisão
+
+- migration 00011 persiste uma linha imutável por tentativa de rádio;
+- `dispatch_id`, tentativa, nonce, lease e deadline cercam todo resultado;
+- worker recupera trabalho pelo PostgreSQL com `SKIP LOCKED` e executa I/O fora
+  da transação;
+- `waiting_for_radio` não faz I/O, nunca usa sighting stale e expira em 10s;
+- seleção prefere rádio não tentado e permite reuso quando necessário;
+- três falhas expiram interação/claim, cancelam a transação e não tocam
+  reserva nem ledger;
+- transporte simulado trata payload como opaco e falha fechado sem roteiro;
+- testes de banco cobrem retry, fencing, timeout, resultado tardio/duplicado,
+  restart, rollback e corrida timeout versus sucesso.

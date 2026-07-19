@@ -374,6 +374,164 @@ func TestAuthenticatedSightingDeduplicatesAndPublishes(t *testing.T) {
 	}
 }
 
+func TestRadioTimeoutSuccessRaceHasOneWinner(t *testing.T) {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("DATABASE_URL is not set")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	pool, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	if _, err := pool.Exec(ctx, `DELETE FROM radio_dispatch_result_audit`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `DELETE FROM radio_dispatch_attempts`); err != nil {
+		t.Fatal(err)
+	}
+	for _, statement := range []string{
+		`DELETE FROM transaction_intents WHERE interaction_id IN (
+            SELECT interaction_id FROM interaction_requests
+             WHERE band_id = '66666666-6666-6666-6666-666666666661')`,
+		`DELETE FROM interaction_claims WHERE interaction_id IN (
+            SELECT interaction_id FROM interaction_requests
+             WHERE band_id = '66666666-6666-6666-6666-666666666661')`,
+		`DELETE FROM interaction_sightings WHERE interaction_id IN (
+            SELECT interaction_id FROM interaction_requests
+             WHERE band_id = '66666666-6666-6666-6666-666666666661')`,
+		`DELETE FROM outbox_events WHERE aggregate_id IN (
+            SELECT interaction_id FROM interaction_requests
+             WHERE band_id = '66666666-6666-6666-6666-666666666661')`,
+		`DELETE FROM interaction_requests
+          WHERE band_id = '66666666-6666-6666-6666-666666666661'
+            AND interaction_id <> 'cccccccc-cccc-cccc-cccc-ccccccccccc1'`,
+	} {
+		if _, err := pool.Exec(ctx, statement); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := pool.Exec(ctx, `
+        UPDATE interaction_requests
+           SET state = 'queued', expires_at = $1::timestamptz + interval '60 seconds'
+         WHERE interaction_id = 'cccccccc-cccc-cccc-cccc-ccccccccccc1'`, now); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+        INSERT INTO interaction_sightings (
+            interaction_id, gateway_id, tenant_id, site_id, rssi,
+            received_at, gateway_observed_at
+        ) VALUES (
+            'cccccccc-cccc-cccc-cccc-ccccccccccc1',
+            '77777777-7777-7777-7777-777777777772',
+            '11111111-1111-1111-1111-111111111111',
+            '22222222-2222-2222-2222-222222222222',
+            -40, $1, $1
+        )`, now); err != nil {
+		t.Fatal(err)
+	}
+
+	repository := New(pool)
+	actor := application.Actor{
+		Kind: "gateway", InternalID: "77777777-7777-7777-7777-777777777771", ProtocolID: 1,
+	}
+	service := application.NewService(repository, nil, application.WithClock(func() time.Time { return now }))
+	claim, err := service.ClaimInteraction(ctx, actor, application.ClaimRequest{
+		InteractionID: 101, AttractionID: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	attempt, err := service.StartRadioDispatch(ctx, claim.TransactionID, 7, []byte{0xde, 0xad})
+	if err != nil {
+		t.Fatal(err)
+	}
+	commands, err := repository.AcquireRadioDispatches(
+		ctx, "17171717-1717-4717-8717-171717171717", now, 1,
+	)
+	if err != nil || len(commands) != 1 {
+		t.Fatalf("commands=%+v err=%v", commands, err)
+	}
+	command := commands[0]
+	if command.DispatchID != attempt.DispatchID {
+		t.Fatalf("acquired wrong dispatch: %+v", command)
+	}
+
+	type outcome struct {
+		classification string
+		err            error
+	}
+	outcomes := make(chan outcome, 2)
+	var wait sync.WaitGroup
+	finish := func(value application.FinishRadioDispatchCommand) {
+		defer wait.Done()
+		result, finishErr := repository.FinishRadioDispatch(ctx, value)
+		outcomes <- outcome{classification: result.Classification, err: finishErr}
+	}
+	base := application.RadioDispatchResult{
+		DispatchID:     command.DispatchID,
+		TransactionID:  command.TransactionID,
+		Attempt:        command.Attempt,
+		ChallengeNonce: command.ChallengeNonce,
+	}
+	wait.Add(2)
+	go finish(application.FinishRadioDispatchCommand{
+		RadioDispatchResult: application.RadioDispatchResult{
+			DispatchID: base.DispatchID, TransactionID: base.TransactionID,
+			Attempt: base.Attempt, ChallengeNonce: base.ChallengeNonce,
+			Outcome: application.RadioDelivered,
+		},
+		WorkerID:           "17171717-1717-4717-8717-171717171717",
+		Now:                command.Deadline,
+		NextDispatchID:     "18181818-1818-4818-8818-181818181818",
+		NextChallengeNonce: []byte("abcdefgh"),
+	})
+	go finish(application.FinishRadioDispatchCommand{
+		RadioDispatchResult: application.RadioDispatchResult{
+			DispatchID: base.DispatchID, TransactionID: base.TransactionID,
+			Attempt: base.Attempt, ChallengeNonce: base.ChallengeNonce,
+			Outcome: application.RadioTimedOut,
+		},
+		Now:                command.Deadline,
+		NextDispatchID:     "19191919-1919-4919-8919-191919191919",
+		NextChallengeNonce: []byte("ijklmnop"),
+	})
+	wait.Wait()
+	close(outcomes)
+	accepted := 0
+	for item := range outcomes {
+		if item.err != nil {
+			t.Fatal(item.err)
+		}
+		if item.classification == "accepted" {
+			accepted++
+		}
+	}
+	if accepted != 1 {
+		t.Fatalf("accepted results=%d", accepted)
+	}
+	var acceptedAudit, attemptCount, financialRows int
+	if err := pool.QueryRow(ctx, `
+        SELECT
+          (SELECT count(*) FROM radio_dispatch_result_audit
+            WHERE dispatch_id = $1 AND classification = 'accepted'),
+          (SELECT count(*) FROM radio_dispatch_attempts
+            WHERE transaction_id = $2),
+          (SELECT count(*) FROM credit_reservations WHERE transaction_id = $2) +
+          (SELECT count(*) FROM ledger_entries WHERE transaction_id = $2)`,
+		command.DispatchID, command.TransactionID,
+	).Scan(&acceptedAudit, &attemptCount, &financialRows); err != nil {
+		t.Fatal(err)
+	}
+	if acceptedAudit != 1 || attemptCount < 1 || attemptCount > 2 || financialRows != 0 {
+		t.Fatalf("audit=%d attempts=%d financial=%d", acceptedAudit, attemptCount, financialRows)
+	}
+}
+
 func advertisingPayload(t *testing.T, key []byte, nonce [8]byte, displayCode uint32) []byte {
 	t.Helper()
 	payload := make([]byte, proximity.AdvertisingLength)

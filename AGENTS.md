@@ -105,10 +105,11 @@ não podem ser resolvidas por suposição. Isso inclui cadastro, pagamentos,
 validade, preço, duração, conteúdo final da pulseira, acionamento físico, perfis
 administrativos, campanhas e relatórios.
 
-A única próxima entrega autorizada está em `CURRENT_STATE.md`: motor de retry de
-rádio conforme `contracts/gateway/radio-dispatch.md`. Não congelar Challenge/Decision
-final, contratos administrativos, frontend, hardware ou firmware antes de
-atender o gate correspondente.
+O motor de retry de rádio de `contracts/gateway/radio-dispatch.md` é a fatia
+técnica corrente registrada em `CURRENT_STATE.md`. Depois de sua integração,
+nenhuma entrega dependente do cliente fica implicitamente autorizada. Não
+congelar Challenge/Decision final, contratos administrativos, frontend,
+hardware ou firmware antes de atender o gate correspondente.
 
 ## Fronteiras de responsabilidade
 

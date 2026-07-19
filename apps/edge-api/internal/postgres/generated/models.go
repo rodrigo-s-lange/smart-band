@@ -217,6 +217,33 @@ type Participant struct {
 	CreatedAt         pgtype.Timestamptz
 }
 
+type RadioDispatchAttempt struct {
+	DispatchID         uuid.UUID
+	TransactionID      uuid.UUID
+	Attempt            int16
+	RadioGatewayID     *uuid.UUID
+	ChallengeNonce     []byte
+	ProtocolVersion    int32
+	Payload            []byte
+	Status             string
+	FailureKind        *string
+	SelectionDeadline  pgtype.Timestamptz
+	DispatchDeadline   pgtype.Timestamptz
+	WorkerID           *uuid.UUID
+	WorkLeaseExpiresAt pgtype.Timestamptz
+	CreatedAt          pgtype.Timestamptz
+	ResolvedAt         pgtype.Timestamptz
+}
+
+type RadioDispatchResultAudit struct {
+	ResultAuditID       int64
+	DispatchID          uuid.UUID
+	ReceivedAt          pgtype.Timestamptz
+	ReportedOutcome     string
+	ReportedFailureKind *string
+	Classification      string
+}
+
 type Site struct {
 	SiteID      uuid.UUID
 	TenantID    uuid.UUID
@@ -234,21 +261,22 @@ type Tenant struct {
 }
 
 type TransactionIntent struct {
-	TransactionID     uuid.UUID
-	InteractionID     uuid.UUID
-	ClaimID           uuid.UUID
-	TenantID          uuid.UUID
-	SiteID            uuid.UUID
-	WalletID          uuid.UUID
-	AttractionID      uuid.UUID
-	OperatorGatewayID uuid.UUID
-	RadioGatewayID    uuid.UUID
-	Amount            int64
-	ChallengeNonce    []byte
-	Status            string
-	CreatedAt         pgtype.Timestamptz
-	UpdatedAt         pgtype.Timestamptz
-	ProtocolID        []byte
+	TransactionID         uuid.UUID
+	InteractionID         uuid.UUID
+	ClaimID               uuid.UUID
+	TenantID              uuid.UUID
+	SiteID                uuid.UUID
+	WalletID              uuid.UUID
+	AttractionID          uuid.UUID
+	OperatorGatewayID     uuid.UUID
+	RadioGatewayID        *uuid.UUID
+	Amount                int64
+	ChallengeNonce        []byte
+	Status                string
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	ProtocolID            []byte
+	ConfirmationExpiresAt pgtype.Timestamptz
 }
 
 type Wallet struct {
