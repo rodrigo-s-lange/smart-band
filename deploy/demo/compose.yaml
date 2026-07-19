@@ -1,0 +1,26 @@
+services:
+  smartband-demo:
+    build:
+      context: ../../apps/demo-streamlit
+    image: smartband-demo:local
+    restart: unless-stopped
+    environment:
+      SMARTBAND_DEMO_PASSWORD: ${SMARTBAND_DEMO_PASSWORD:?define SMARTBAND_DEMO_PASSWORD}
+      SMARTBAND_DEMO_DB: /app/data/demo.sqlite3
+    ports:
+      - "${SMARTBAND_DEMO_BIND_ADDRESS:-127.0.0.1}:8501:8501"
+    volumes:
+      - smartband-demo-data:/app/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=2)"
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  smartband-demo-data:

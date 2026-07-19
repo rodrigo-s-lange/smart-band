@@ -18,3 +18,5 @@ sdkconfig.old
 *.local
 __pycache__/
 *.pyc
+.venv/
+*.sqlite3

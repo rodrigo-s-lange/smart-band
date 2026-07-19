@@ -38,6 +38,7 @@ pulseiras -- BLE --> gateways -- LAN --> appliance local
 apps/
   edge-api/                 domínio, fila, ledger e coordenação
   operator-web/             operação local e modo kiosk
+  demo-streamlit/           simulação comercial isolada e fictícia
 services/
   gateway-coordinator/      sightings, claims e sessões de rádio
 contracts/
@@ -49,6 +50,7 @@ simulators/
   gateway/                  gateways e TFTs simulados
 deploy/
   appliance/                instalação local reproduzível
+  demo/                     container da simulação comercial
 firmware/
   band/                     etapa final: firmware da pulseira
   gateway/                  etapa final: firmware do gateway
@@ -108,7 +110,9 @@ fim. Não há nova fatia funcional autorizada até o registro dessas decisões.
 
 A demonstração comercial possui trilha paralela D0–D7 em
 [docs/demo/commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md).
-Streamlit é exclusivo da demo e não substitui `apps/operator-web`.
+Streamlit é exclusivo da demo e não substitui `apps/operator-web`. D0–D5 estão
+implementadas; publicação segura e ensaio são acompanhados separadamente em D6
+e D7.
 
 Qualquer pessoa autorizada pode operar um gateway. O equipamento é cadastrado,
 possui credencial própria e só libera as atrações explicitamente associadas a
