@@ -231,17 +231,19 @@ def validate_documentation_handoff() -> None:
 
     required_phrases = {
         "CURRENT_STATE.md": [
-            "Quinta fatia da Etapa 5 — motor de retry de rádio e transporte simulado",
-            "Não objetivos desta fatia",
-            "Critérios de aceite",
+            "Baseline funcional mais recente: **PR 10**",
+            "Próximo marco autorizado",
+            "Não há nova fatia funcional autorizada",
             "client-decisions-pending.md",
-            "radio-dispatch.md",
-            "radio_attempts_exhausted",
+            "Migrations vigentes: **11**",
         ],
         "client-decisions-pending.md": [
             "aguardando validação do cliente",
             "client-decision-blocked",
+            "D1. Identificação e LGPD",
+            "D8. Perfis e exceções administrativas",
             "Trabalho permitido antes das respostas",
+            "Não há nova entrega funcional autorizada",
         ],
     }
     for label, phrases in required_phrases.items():
@@ -250,11 +252,13 @@ def validate_documentation_handoff() -> None:
         if absent:
             raise AssertionError(f"{label} missing handoff markers: {absent}")
 
-    vault_pattern = re.compile(r"Vault commit validado: `([0-9a-f]{40})`")
+    vault_pattern = re.compile(
+        r"Vault baseline documental desta sincronização:\s*`([0-9a-f]{40})`"
+    )
     current_vault = vault_pattern.search(current)
     gate_vault = vault_pattern.search(client_gate)
     if not current_vault or not gate_vault:
-        raise AssertionError("validated vault commit missing from handoff documents")
+        raise AssertionError("vault documentation baseline missing from handoff documents")
     if current_vault.group(1) != gate_vault.group(1):
         raise AssertionError("handoff documents reference different vault commits")
 
@@ -274,6 +278,8 @@ def validate_documentation_handoff() -> None:
         raise AssertionError(f"radio dispatch contract incomplete: {absent_retry}")
 
     active_documents = {
+        "CURRENT_STATE.md": current,
+        "docs/product/client-decisions-pending.md": client_gate,
         "README.md": readme,
         "docs/roadmap.md": roadmap,
         "docs/stage-gates/05-backend-foundation.md": stage_gate,
@@ -282,6 +288,8 @@ def validate_documentation_handoff() -> None:
         r"\b(?:oito|nove|8|9) migrations\b",
         r"A próxima fatia da Etapa 5 despacha o Challenge",
         r"despacho GATT, confirmação e reserva são as próximas fatias",
+        r"Baseline funcional mais recente:\s*PR 7",
+        r"Somente o escopo descrito.*motor de retry de rádio",
     ]
     for label, source in active_documents.items():
         for pattern in stale_patterns:

@@ -96,15 +96,7 @@ Detalhes e consequências: [ADR 0009](../decisions/0009-atomic-claim-and-radio-s
 
 Evidência: merge `4019f7171bc8d8f91872831bba338c1d6a88b572`.
 
-## Fatia autorizada desta revisão
-
-Motor de retry de rádio e transporte simulado de payload opaco, conforme
-[CURRENT_STATE.md](../../CURRENT_STATE.md) e a
-[ADR 0012](../decisions/0012-radio-retry-and-opaque-transport.md). O Challenge/Decision final e os
-contratos administrativos dependentes do cliente permanecem bloqueados pela
-[ADR 0011](../decisions/0011-client-decision-gate-and-safe-prework.md).
-
-## Quinta fatia materializada nesta revisão
+## Quinta fatia concluída — PR 10
 
 - migration 00011 persiste uma linha imutável por tentativa de rádio;
 - `dispatch_id`, tentativa, nonce, lease e deadline cercam todo resultado;
@@ -117,3 +109,9 @@ contratos administrativos dependentes do cliente permanecem bloqueados pela
 - transporte simulado trata payload como opaco e falha fechado sem roteiro;
 - testes de banco cobrem retry, fencing, timeout, resultado tardio/duplicado,
   restart, rollback e corrida timeout versus sucesso.
+
+Evidência: merge `b02d73f6b66c3010187101c416407a43fcdfe990`, com
+Contracts, Database e Backend verdes. Nenhuma fatia funcional posterior está
+autorizada enquanto o gate da
+[ADR 0011](../decisions/0011-client-decision-gate-and-safe-prework.md) permanecer
+aberto; consultar [CURRENT_STATE.md](../../CURRENT_STATE.md).

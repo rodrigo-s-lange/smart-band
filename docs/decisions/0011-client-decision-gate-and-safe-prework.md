@@ -2,6 +2,13 @@
 
 Status: aceita — 2026-07-18
 
+## Resultado da autorização técnica
+
+O motor de retry autorizado por esta ADR foi integrado pela PR 10, merge
+`b02d73f6b66c3010187101c416407a43fcdfe990`. A ADR continua vigente como gate
+das decisões do cliente, mas não autoriza outra implementação funcional. O
+próximo marco é responder D1–D8 e atribuir responsáveis/prazos a D9–D12.
+
 ## Contexto
 
 O núcleo transacional já define autoridade, claim, rádio, reserva e
@@ -19,8 +26,9 @@ definidos e pode ser desenvolvido sem conhecer o conteúdo comercial do payload.
   gate obrigatório.
 - Nenhuma resposta pendente pode ser inferida por agente, fixture ou conveniência
   técnica.
-- A próxima entrega autorizada é o motor de retry de rádio com uma porta de
-  transporte que trate versão e payload como opacos.
+- A entrega técnica então autorizada era o motor de retry de rádio com uma porta
+  que tratasse versão e payload como opacos; seu resultado está registrado no
+  início desta ADR.
 - Retry preserva claim, `transaction_id`, atração e gateway de liberação; muda
   tentativa, `radio_gateway_id`, `challenge_nonce` e lease.
 - O formato final de Challenge/Decision e os contratos administrativos

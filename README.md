@@ -101,7 +101,7 @@ do gateway de rádio e motor persistido de retry com transporte simulado de
 payload opaco. Challenge/Decision final, cadastro,
 pagamentos, duração e acionamento aguardam o gate do cliente descrito em
 [CURRENT_STATE.md](CURRENT_STATE.md). Hardware e firmware ESP32 permanecem no
-fim.
+fim. Não há nova fatia funcional autorizada até o registro dessas decisões.
 
 Qualquer pessoa autorizada pode operar um gateway. O equipamento é cadastrado,
 possui credencial própria e só libera as atrações explicitamente associadas a
