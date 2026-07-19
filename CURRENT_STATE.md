@@ -1,6 +1,6 @@
 # Smart-Band — estado atual e handoff
 
-Atualizado em 2026-07-18. Este é o ponto de entrada operacional para continuar
+Atualizado em 2026-07-19. Este é o ponto de entrada operacional para continuar
 o projeto sem acesso ao histórico de conversas.
 
 ## Fontes e baseline
@@ -9,7 +9,7 @@ o projeto sem acesso ao histórico de conversas.
 - Baseline funcional mais recente: **PR 10**, merge
   `b02d73f6b66c3010187101c416407a43fcdfe990`.
 - Vault baseline documental desta sincronização:
-  `554ef34d4792710ae1960e79d2f2b1021dee8aa1`.
+  `8dd4d76bf1787a10350aab0cffcb37912057a4fa`.
 - Questionário canônico do cliente no vault:
   `C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md`.
 - Laboratório reproduzível:
@@ -84,6 +84,10 @@ Permanecem bloqueados:
 - regras entre campanhas, eventos e unidades;
 - relatórios comerciais, fechamento e continuidade operacional;
 - contratos administrativos definitivos de gateway e atração.
+- vibracall e padrões finais de acessibilidade;
+- sensor de remoção, resposta a alertas e extensão BLE v2;
+- gamificação/sorteios, métricas BLE de ocupação e comissão de vendas;
+- demonstração externa e uso de `pulseira.easysmart.com.br`.
 
 Operações OpenAPI marcadas `client-decision-blocked` continuam representativas e
 não autorizam implementação definitiva.
@@ -96,6 +100,7 @@ Usar a folha executiva do vault para obter:
 
 - D1–D8 respondidas ou com regra provisória explicitamente aprovada;
 - D9–D12 com responsável e prazo antes da operação assistida;
+- D13–D18 decididas antes do hardware, da demo ou do módulo opcional afetado;
 - nome de quem aprovou, data, exceções e evidência necessária;
 - tabela inicial das atrações e seus métodos de liberação/ack.
 
@@ -103,6 +108,10 @@ Não há nova fatia funcional autorizada neste momento. Challenge/Decision final
 cadastro, pagamentos, atração, frontend, acionamento, hardware e firmware não
 podem avançar até que as respostas aplicáveis virem ADR, contrato e critérios de
 aceite.
+
+A ADR 0013 e o contrato `contracts/proximity/tamper-status.md` são propostas de
+fronteira para a reunião. O advertising v1 continua vigente; não existem sensor,
+alerta contínuo, dashboard público ou firmware autorizados por esses documentos.
 
 ## Trabalho seguro enquanto o cliente decide
 

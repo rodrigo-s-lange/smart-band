@@ -4,6 +4,10 @@ Contrato lógico vigente entre pulseira, gateways e appliance local. A
 [ADR 0005](../../docs/decisions/0005-protocol-correction-and-transaction-safety.md)
 prevalece sobre trechos conflitantes das ADRs 0003/0004.
 
+O advertising descrito abaixo é o **v1 vigente**. Detecção de abertura/remoção
+está especificada como evolução v2 ainda bloqueada pela decisão do cliente em
+[tamper-status.md](tamper-status.md); não alterar o v1 por compatibilidade.
+
 ## Princípios
 
 - advertising descobre e autentica solicitações; não autoriza consumo
@@ -82,3 +86,5 @@ timeout
 - fila em tempo real por SSE
 - contador monotônico somente na Decision, persistido antes do uso
 - GATT e vetores: [binary-format.md](binary-format.md) e [test-vectors.md](test-vectors.md)
+- tamper/remoção: proposta v2 em [tamper-status.md](tamper-status.md), sem
+  autorização de implementação

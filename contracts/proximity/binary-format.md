@@ -4,6 +4,11 @@ Formato vigente após a ADR 0005. Multi-byte é little-endian. Tags são os oito
 bytes mais significativos de AES-128-CMAC. O byte de domínio é entrada
 implícita do CMAC e não integra o payload no fio.
 
+Este arquivo descreve o protocolo **v1 vigente**. A extensão v2 de
+`tamper_status` está proposta, mas não aceita nem implementada, em
+[tamper-status.md](tamper-status.md). Nenhum consumidor deve acrescentar o campo
+ao frame v1.
+
 ## Advertising — Solicitação (22 bytes)
 
 | Offset | Campo | Tipo | Bytes |
