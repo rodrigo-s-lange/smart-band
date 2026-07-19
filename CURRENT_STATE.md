@@ -1,140 +1,136 @@
 # Smart-Band — estado atual e handoff
 
-Atualizado em 2026-07-18. Este é o ponto de entrada canônico para continuar a
-implementação sem acesso ao histórico de conversas.
+Atualizado em 2026-07-18. Este é o ponto de entrada operacional para continuar
+o projeto sem acesso ao histórico de conversas.
 
 ## Fontes e baseline
 
-- GitHub `rodrigo-s-lange/smart-band`: código e artefatos executáveis.
-- Baseline funcional mais recente: PR 7, merge
-  `4019f7171bc8d8f91872831bba338c1d6a88b572`.
-- Vault commit validado: `cdd04a50f856b10a100a0473f60db8abc0d8ec90`.
-- Handoff correspondente no vault:
-  `C:\Users\Familia\vault\01-projetos\smart-band\estado-atual-e-handoff.md`.
+- Repositório oficial: `rodrigo-s-lange/smart-band`.
+- Baseline funcional mais recente: **PR 10**, merge
+  `b02d73f6b66c3010187101c416407a43fcdfe990`.
+- Vault baseline documental desta sincronização:
+  `554ef34d4792710ae1960e79d2f2b1021dee8aa1`.
+- Questionário canônico do cliente no vault:
+  `C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md`.
 - Laboratório reproduzível:
   `/home/rodrigo/projects/products/smart-band` no i5 `192.168.0.121`.
 - Migrations vigentes: **11**, de `00001` a `00011`.
 
-O commit atual do próprio checkout deve ser verificado com `git rev-parse HEAD`.
-O hash funcional acima identifica a última mudança de comportamento anterior a
-esta sincronização documental e não substitui a leitura do HEAD.
+O hash do vault acima identifica a baseline lida para esta sincronização, não
+promete que ela continuará sendo o HEAD. Sempre verificar o estado real com
+`git rev-parse HEAD` e `git status`. Isso evita uma referência circular quando o
+vault registra posteriormente a integração de uma PR do código.
 
-## Estado do projeto
+Da mesma forma, o HEAD do Git pode avançar por correções documentais sem mudar a
+baseline funcional. Verificar `git rev-parse HEAD` antes de trabalhar.
+
+## Estado das etapas
 
 - Etapas 1 a 4: concluídas.
 - Etapa 5 — backend local: em execução.
 - Etapas 6 a 9: ainda não concluídas.
-- Hardware e firmware: etapas 10 e 11, bloqueados pelo gate do roadmap.
-- Piloto operacional: etapa 12.
+- Etapas 10 e 11 — hardware e firmware: bloqueadas pelo roadmap.
+- Etapa 12 — piloto operacional: futura.
 
-Entregue e validado:
+## Entregas integradas
 
 - appliance local-first, single-tenant e single-site;
-- modelo PostgreSQL, ledger, reservas, comandos idempotentes e rollback;
-- advertising BLE autenticado, resolução de pulseira e código Crockford;
+- modelo PostgreSQL, ledger append-only, reservas e comandos idempotentes;
+- advertising BLE autenticado, resolução da pulseira e código Crockford;
 - sightings deduplicados, fila global e SSE retomável;
-- claim CAS e escolha determinística do gateway de rádio;
 - gateway cadastrado como identidade operacional, sem login humano no fluxo;
-- claim, transaction intent e outbox atômicos;
-- bloqueio de nova interação em `actuation_failed`;
-- retry de rádio definido sobre o mesmo claim e `transaction_id`;
-- tentativas de rádio persistidas antes do I/O, com payload opaco, fencing,
-  `waiting_for_radio`, seleção/reuso de gateway e retomada por worker;
-- Contracts, Database e Backend verdes na PR 7.
+- claim CAS e escolha determinística do gateway de rádio;
+- criação atômica de claim, transaction intent e outbox;
+- proteção de uma única interação ativa por pulseira, inclusive em
+  `actuation_failed` e `reconciliation_required`;
+- motor persistido de retry de rádio com payload opaco;
+- `dispatch_id`, nonce, tentativa e lease usados como fencing;
+- `waiting_for_radio`, seleção/reuso de gateway e proibição de sighting stale;
+- worker recuperável pelo PostgreSQL, com I/O fora da transação;
+- esgotamento atômico após três falhas, sem reserva ou lançamento de ledger;
+- transporte simulado fail-closed e eventos técnicos versionados.
 
-## Gate atual de decisões do cliente
+## Evidência da PR 10
 
-As decisões resumidas em
+- merge: `b02d73f6b66c3010187101c416407a43fcdfe990`;
+- 11 migrations aplicadas e revertidas em PostgreSQL real;
+- `sqlc` 1.31.1 regenerado sem divergência;
+- `go test -race ./...`, `go vet ./...` e build do `edge-api` aprovados;
+- imagem do backend construída;
+- workflows [Contracts](https://github.com/rodrigo-s-lange/smart-band/actions/runs/29669072949),
+  [Database](https://github.com/rodrigo-s-lange/smart-band/actions/runs/29669072940)
+  e [Backend](https://github.com/rodrigo-s-lange/smart-band/actions/runs/29669072936)
+  concluídos com sucesso.
+
+## Gate atual de produto
+
+Status: **aguardando validação do cliente**.
+
+As decisões estão resumidas em
 [docs/product/client-decisions-pending.md](docs/product/client-decisions-pending.md)
-aguardam validação do cliente. Não podem ser resolvidas por suposição, fixture,
-preferência técnica ou inferência de uma LLM.
+e detalhadas no questionário do vault. Não podem ser resolvidas por suposição,
+fixture, preferência técnica ou inferência de uma LLM.
 
 Permanecem bloqueados:
 
-- dados definitivos de cadastro, LGPD e tratamento de menores;
+- cadastro, dados pessoais, menores e LGPD;
 - venda, confirmação, cancelamento e conciliação de pagamentos;
 - significado, pacotes, validade, devolução e transferência de créditos;
 - preço, unidades e duração das atrações;
 - conteúdo final mostrado e autenticado pela pulseira;
+- início, término e contingência do tempo adquirido;
 - método físico de liberação e critério de ack de cada atração;
-- perfis administrativos, cortesias e ajustes financeiros;
+- perfis administrativos, cortesias, ajustes e reconciliação;
 - regras entre campanhas, eventos e unidades;
-- relatórios comerciais e fechamento de caixa;
+- relatórios comerciais, fechamento e continuidade operacional;
 - contratos administrativos definitivos de gateway e atração.
 
-## Entrega técnica desta revisão
+Operações OpenAPI marcadas `client-decision-blocked` continuam representativas e
+não autorizam implementação definitiva.
 
-### Quinta fatia da Etapa 5 — motor de retry de rádio e transporte simulado
+## Próximo marco autorizado
 
-Objetivo: materializar a orquestração anterior à entrega do Challenge sem
-congelar campos comerciais do payload GATT.
+O próximo marco é de **decisão com a VRPlay**, não de implementação funcional.
 
-Escopo:
+Usar a folha executiva do vault para obter:
 
-1. implementar a porta versionada em
-   `contracts/gateway/radio-dispatch.md`, que aceita payload opaco;
-2. despachar pelo `radio_gateway_id` vigente;
-3. em falha ou timeout anterior à entrega, manter claim, `transaction_id`,
-   atração e gateway de liberação;
-4. incrementar `attempt_count`;
-5. selecionar o rádio pela ADR 0012, preferindo candidato elegível ainda não
-   tentado e reutilizando o melhor somente se necessário;
-6. gerar novo `dispatch_id`, novo `challenge_nonce` e renovar o lease;
-7. limitar a três tentativas e então expirar;
-8. rejeitar resultado atrasado de nonce anterior;
-9. publicar eventos e logs correlacionados;
-10. persistir tentativas e retomá-las com worker orientado pelo PostgreSQL;
-11. testar com transporte e gateways simulados, sem ESP32.
+- D1–D8 respondidas ou com regra provisória explicitamente aprovada;
+- D9–D12 com responsável e prazo antes da operação assistida;
+- nome de quem aprovou, data, exceções e evidência necessária;
+- tabela inicial das atrações e seus métodos de liberação/ack.
 
-Sem rádio elegível, a nova tentativa fica `waiting_for_radio` por até 10
-segundos. Um sighting recente a move para `pending`; o fim da janela consome a
-tentativa como `no_radio_gateway`. Gateway stale nunca é usado.
+Não há nova fatia funcional autorizada neste momento. Challenge/Decision final,
+cadastro, pagamentos, atração, frontend, acionamento, hardware e firmware não
+podem avançar até que as respostas aplicáveis virem ADR, contrato e critérios de
+aceite.
 
-`delivered` significa confirmação técnica da escrita completa na pulseira, não
-enfileiramento, recebimento pelo gateway, conexão GATT ou início da escrita.
-Depois da terceira falha, interação e claim terminam `expired`, a transação
-termina `cancelled` e a outbox informa `radio_attempts_exhausted`. A semântica
-completa está na ADR 0012.
+## Trabalho seguro enquanto o cliente decide
 
-Arquivos candidatos — confirmar o desenho existente antes de editar:
+Sem novo escopo formal, são permitidos apenas:
 
-- `apps/edge-api/internal/application/`;
-- `apps/edge-api/internal/postgres/`;
-- `services/gateway-coordinator/`;
-- `simulators/gateway/`;
-- `contracts/events/`;
-- `tests/e2e/`.
+- correções de defeito ou segurança que preservem as decisões vigentes;
+- manutenção de CI, testes, documentação e ambiente reproduzível;
+- diagnóstico operacional sem alterar regra de negócio;
+- preparação da reunião, inventário das atrações e coleta de documentação dos
+  equipamentos;
+- protótipos descartáveis claramente isolados, sem virar contrato ou produção.
 
-## Não objetivos desta fatia
+Qualquer nova funcionalidade exige atualização prévia deste arquivo e, quando
+alterar fronteira ou invariante, uma ADR.
 
-- não definir preço, duração, unidades ou validade;
-- não criar fluxo de cadastro, pagamento ou fechamento;
-- não congelar um novo layout final de Challenge/Decision;
-- não implementar validação final da Decision dependente de campos bloqueados;
-- não finalizar discovery, enrollment ou capabilities de gateway;
-- não implementar LED, relé, catraca, tomada ou comando de óculos;
-- não criar frontend administrativo definitivo;
-- não iniciar hardware ou firmware.
+## Como desbloquear o desenvolvimento
 
-## Critérios de aceite
+Para cada resposta relevante:
 
-- retries preservam claim e `transaction_id`;
-- cada tentativa usa `challenge_nonce` novo;
-- o rádio é reavaliado por sightings recentes do servidor;
-- gateways elegíveis ainda não tentados são preferidos; o melhor pode ser
-  reutilizado quando não houver alternativa;
-- ausência de gateway elegível aguarda a janela persistida, nunca usa sighting
-  stale e produz `no_radio_gateway` de forma determinística;
-- resposta de tentativa anterior não avança o estado;
-- exatamente três falhas levam interação/claim a `expired` e transação a
-  `cancelled`, sem reserva nem ledger;
-- corrida entre timeout e sucesso tem um único vencedor;
-- restart retoma pelo banco e não cria nem perde avanço de tentativa;
-- eventos e logs reconstroem tentativa, gateway, nonce e desfecho;
-- simuladores cobrem gateway offline, timeout, resposta tardia e troca de rádio;
-- documentação, contratos, banco e backend permanecem verdes.
+1. registrar a decisão e o aprovador no vault;
+2. confirmar a validação explícita da VRPlay;
+3. criar ou atualizar ADR;
+4. versionar OpenAPI, eventos, banco ou BLE afetados;
+5. definir critérios de aceite e cenários de teste;
+6. registrar aqui a próxima fatia autorizada;
+7. somente então implementar consumidores.
 
-## Validação obrigatória
+## Validação do estado atual
 
 ```bash
 python tools/validation/validate.py
@@ -146,23 +142,17 @@ go build ./cmd/edge-api
 ```
 
 Se migrations ou queries forem alteradas, regenerar `sqlc` 1.31.1 e provar que
-o resultado versionado não divergiu. A validação PostgreSQL deve incluir
-concorrência, restart e rollback.
+o resultado versionado não divergiu.
 
-## Protocolo de conclusão e atualização
+## Protocolo de atualização
 
 Uma entrega só altera o estado deste arquivo depois de passar contratos, testes
-e procedimentos relevantes. Na mesma PR, atualizar:
+e procedimentos relevantes. Na mesma entrega, atualizar:
 
 - `CURRENT_STATE.md`;
-- `AGENTS.md`, quando fronteiras ou proibições mudarem;
-- `README.md` e `docs/roadmap.md`;
-- gate da etapa afetada;
+- `AGENTS.md`, quando fronteiras, bloqueios ou comportamento mudarem;
+- `README.md`, roadmap e gate da etapa;
 - ADR e documentação correspondente no vault;
 - contagem de migrations e evidência de CI, quando aplicável.
 
-Não marcar trabalho como concluído apenas porque compilou.
-
-Depois da integração desta fatia, nenhuma nova decisão comercial ou entrega
-dependente do cliente fica implicitamente autorizada. O próximo escopo deve ser
-registrado explicitamente neste arquivo antes de nova implementação.
+Não declarar trabalho concluído apenas porque compilou.

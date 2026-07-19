@@ -1,10 +1,11 @@
 # Decisões do cliente pendentes
 
-Este arquivo é uma barreira técnica autocontida para agentes que tenham acesso
-somente ao repositório. O questionário completo e o registro das respostas são
-canônicos no vault.
+Este arquivo é a barreira técnica autocontida para agentes que tenham acesso
+somente ao repositório. O roteiro completo, as recomendações e o registro das
+respostas são canônicos no vault.
 
-Vault commit validado: `cdd04a50f856b10a100a0473f60db8abc0d8ec90`.
+Vault baseline documental desta sincronização:
+`554ef34d4792710ae1960e79d2f2b1021dee8aa1`.
 
 ```text
 C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md
@@ -12,56 +13,118 @@ C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-clien
 
 Status: **aguardando validação do cliente**.
 
+## Contexto do primeiro piloto
+
+- cliente: VRPlay;
+- um espaço de aproximadamente 1.500 m² em shopping;
+- uma appliance local e um evento ativo;
+- 7 a 10 gateways;
+- 25 a 40 pulseiras;
+- qualquer pessoa autorizada pode operar um gateway, sem login individual no
+  fluxo da atração;
+- operação local independente de internet.
+
+Os números precisam ser confirmados antes do dimensionamento final e não são
+limites permanentes do produto.
+
+## P0 — respostas que bloqueiam o próximo desenvolvimento funcional
+
+### D1. Identificação e LGPD
+
+Definir uso anônimo ou cadastro, campos mínimos, tratamento de menores,
+responsável legal, consentimentos, retenção, marketing, exportação e exclusão.
+
+### D2. Venda e pagamento
+
+Definir pacotes ou quantidade livre, confirmação manual ou integrada, formas de
+pagamento, cancelamento, estorno, cortesia e documento fiscal.
+
+### D3. Semântica do crédito
+
+Definir o que representa um crédito, validade, ordem de consumo, separação entre
+pago/bônus/cortesia, devolução, transferência e recuperação de saldo.
+
+### D4. Regra comercial das atrações
+
+Definir por atração: custo fixo ou por duração, quantidade de créditos, tempo,
+restrições, gratuidade, promoções e variação por evento/campanha.
+
+### D5. Confirmação na pulseira
+
+Definir a sequência que cabe no display 128x32: nome curto, créditos, duração,
+aviso essencial, gesto de confirmar/cancelar e timeout.
+
+### D6. Liberação e ack
+
+Definir por atração: LED, relé, catraca, tomada ou protocolo do fabricante;
+estado seguro; sinal que comprova entrega; e procedimento de contingência.
+
+### D7. Tempo e falha de comunicação
+
+Definir início, pausa, extensão e término; avisos; comportamento de sessão já
+iniciada; e se novas liberações são bloqueadas sem a appliance.
+
+### D8. Perfis e exceções administrativas
+
+Definir quem pode confirmar/cancelar venda, conceder cortesia, transferir ou
+ajustar saldo, reconciliar entrega incerta e alterar atração, preço ou gateway.
+Registrar quando motivo ou segunda aprovação são obrigatórios.
+
+## P1 — respostas necessárias antes da operação assistida
+
+- **D9 — Fechamento e relatórios:** turno/dia, fundo, sangria, suprimento,
+  conciliação, divergência, exportação e reabertura.
+- **D10 — LGPD e retenção:** controlador, base legal, menores, direitos do
+  titular, backups e validação jurídica do cliente.
+- **D11 — Campanhas e reutilização:** o que varia entre eventos, validade,
+  branding, preços, saldo e reutilização das pulseiras.
+- **D12 — Suporte e continuidade:** acesso remoto, SLA, manutenção, UPS,
+  backup/restore e exportação no encerramento do contrato.
+
 ## O que não pode ser assumido
 
-1. **Cadastro e LGPD** — campos obrigatórios, uso anônimo, menores, responsável,
-   consentimentos, retenção, marketing, exportação e exclusão.
-2. **Venda e pagamento** — pacotes, quantidade livre, confirmação manual ou
-   integrada, cartão, débito, Pix, dinheiro, cancelamento, estorno e documento
-   fiscal.
-3. **Fechamento e conciliação** — turno ou dia, fundo de caixa, sangria,
-   suprimento, relatório da adquirente, extrato Pix, divergências e exportação.
-4. **Semântica do crédito** — conversão monetária, crédito pago, bônus, cortesia,
-   validade, ordem de consumo, devolução, transferência e recuperação.
-5. **Preço da atração** — custo fixo por uso, pacote por duração, quantidade de
-   unidades, promoções, tabelas por campanha e gratuidade.
-6. **Tempo** — início do contador, tolerância, pausa, extensão, término, aviso e
-   comportamento durante queda de LAN ou Wi-Fi.
-7. **Liberação física** — LED, relé, catraca, tomada, protocolo do fabricante,
-   estado seguro e sinal que comprova entrega.
-8. **Exceções e perfis** — caixa, supervisor, administrador, cortesia, ajuste,
-   override, reconciliação, motivo e eventual segunda aprovação.
-9. **Eventos e campanhas** — preços, validade, atrações, branding, reutilização
-   de saldo, pulseiras e relatórios entre contextos.
-10. **Operação e suporte** — escala, capacidade, relatórios, backup, acesso
-    remoto, SLA, atualizações, UPS e exportação ao encerrar o contrato.
+- recomendações do documento do cliente não são respostas aceitas;
+- fixtures, exemplos e valores atuais do schema não são política comercial;
+- `Attraction.default_cost` não congela preço ou duração;
+- `Gateway.role` não substitui capabilities e vínculo gateway–atração finais;
+- o Challenge não deve receber `units` ou `duration_seconds` por suposição;
+- cadastro, pagamento, relatórios e perfis não podem ser implementados como
+  definitivos sem decisão registrada.
 
-## Consequências técnicas
+## Consequências nos contratos
 
-Até as respostas virarem ADR e contrato versionado:
+Enquanto o gate estiver aberto:
 
-- `topUpCredits`, `createAttraction` e `provisionGateway` são esqueletos
-  representativos no OpenAPI, marcados `client-decision-blocked`;
-- `Attraction.default_cost` não define a política final de preço ou duração;
-- `Gateway.role` é somente uma projeção atual de inventário, não um modelo final
-  de capabilities ou autorização;
-- o Challenge vigente não deve ganhar `units` ou `duration_seconds` por
-  suposição;
-- cadastro, pagamento, relatórios e perfis administrativos não devem ser
-  implementados como definitivos;
-- fixtures e exemplos não são decisões comerciais.
+- `topUpCredits`, `createAttraction` e `provisionGateway` permanecem
+  `client-decision-blocked` no OpenAPI;
+- Challenge/Decision final permanece bloqueado;
+- contratos administrativos de gateway e atração são representativos;
+- nenhum frontend definitivo de cadastro, caixa ou configuração é autorizado;
+- hardware e firmware continuam fora da etapa atual.
 
 ## Trabalho permitido antes das respostas
 
-Somente o escopo descrito em [CURRENT_STATE.md](../../CURRENT_STATE.md): motor de
-retry de rádio, porta de transporte de payload opaco, simuladores, testes de
-concorrência/restart e observabilidade técnica correspondente.
+Não há nova entrega funcional autorizada. O trabalho seguro limita-se ao que
+[CURRENT_STATE.md](../../CURRENT_STATE.md) permite: correções de defeito ou
+segurança, manutenção de CI/testes/documentação, diagnóstico sem mudança de
+regra e preparação da reunião/inventário dos equipamentos.
 
-## Como desbloquear uma decisão
+## Como considerar uma resposta válida
+
+Cada decisão precisa registrar:
+
+- opção escolhida e exceções;
+- responsável que aprovou pela VRPlay;
+- data da aprovação;
+- pendências, documentos e equipamentos a fornecer;
+- regra provisória e prazo, quando a decisão final for adiada.
+
+## Como desbloquear uma implementação
 
 1. registrar a resposta no vault;
 2. obter validação explícita do cliente;
 3. criar ou atualizar ADR;
 4. versionar OpenAPI, eventos, banco ou BLE afetados;
 5. definir critérios de aceite;
-6. somente então implementar consumidores.
+6. registrar a próxima fatia em `CURRENT_STATE.md`;
+7. somente então implementar consumidores.
