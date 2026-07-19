@@ -315,7 +315,7 @@ def validate_documentation_handoff() -> None:
             "client-decisions-pending.md",
             "Migrations vigentes: **11**",
             "Trilha paralela de demonstração",
-            "D0–D5 implementadas e validadas localmente",
+            "D0–D6 concluídas",
         ],
         "client-decisions-pending.md": [
             "aguardando validação do cliente",
@@ -410,7 +410,7 @@ def validate_documentation_handoff() -> None:
         ROOT / "docs/stage-gates/demo-commercial-simulation.md"
     ).read_text(encoding="utf-8")
     demo_markers = [
-        "D0–D5 implementadas e validadas",
+        "D0–D6 concluídas",
         "Streamlit é a interface exclusiva da simulação comercial",
         "https://pulseira.easysmart.com.br",
         "Ambiente de simulação",

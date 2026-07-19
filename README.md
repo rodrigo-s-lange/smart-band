@@ -110,9 +110,8 @@ fim. Não há nova fatia funcional autorizada até o registro dessas decisões.
 
 A demonstração comercial possui trilha paralela D0–D7 em
 [docs/demo/commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md).
-Streamlit é exclusivo da demo e não substitui `apps/operator-web`. D0–D5 estão
-implementadas; publicação segura e ensaio são acompanhados separadamente em D6
-e D7.
+Streamlit é exclusivo da demo e não substitui `apps/operator-web`. D0–D6 estão
+concluídas; ensaio e contingência são acompanhados em D7.
 
 Qualquer pessoa autorizada pode operar um gateway. O equipamento é cadastrado,
 possui credencial própria e só libera as atrações explicitamente associadas a

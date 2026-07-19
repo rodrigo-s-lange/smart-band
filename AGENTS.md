@@ -131,8 +131,8 @@ D13–D18 bloqueiam o componente correspondente: alertas/acessibilidade, tamper,
 gamificação/prêmios, métricas BLE, comissão e demo externa. ADR 0013 é proposta;
 não implementar v2, sensor, dashboard público ou rastreamento por inferência.
 
-A trilha D0–D7 da demo é paralela e não altera as Etapas 5–7. D0–D5 estão
-implementadas; D6 trata publicação e D7 ensaio. Fixtures devem ser
+A trilha D0–D7 da demo é paralela e não altera as Etapas 5–7. D0–D6 estão
+concluídas; D7 trata ensaio e contingência. Fixtures devem ser
 fictícias, determinísticas e marcadas como simulação; não podem definir preço,
 cadastro, pagamento, tamper ou acionamento de produção. O domínio pretendido não
 está ativo por estar documentado. Publicação D6 e reunião D7 exigem evidência nos

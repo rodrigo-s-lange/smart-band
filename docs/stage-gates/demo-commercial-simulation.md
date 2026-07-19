@@ -1,6 +1,6 @@
 # Gate da demonstração comercial
 
-Status: **D0–D5 concluídas; D6 em execução; D7 pendente** — 2026-07-19.
+Status: **D0–D6 concluídas; D7 pendente** — 2026-07-19.
 
 Este gate acompanha uma trilha paralela. Marcar itens aqui não muda o estado das
 Etapas 5–7 do produto.
@@ -54,12 +54,12 @@ Etapas 5–7 do produto.
 
 ## D6 — publicação
 
-- [ ] containers, healthcheck e logs;
-- [ ] serviço ligado apenas à rede interna;
-- [ ] HTTPS e autenticação no domínio;
-- [ ] banco e API interna não expostos;
-- [ ] fallback LAN testado;
-- [ ] runbook para encerrar o acesso público.
+- [x] containers, healthcheck e logs;
+- [x] serviço ligado apenas à rede interna;
+- [x] HTTPS e autenticação no domínio;
+- [x] banco e API interna não expostos;
+- [x] fallback LAN testado;
+- [x] runbook para encerrar o acesso público.
 
 ## D7 — reunião
 
@@ -91,6 +91,20 @@ Evidência D1–D5 em 2026-07-19:
 - testes de idempotência, `not_executed`, resultado ambíguo, fallback e tamper;
 - Chrome headless: S1 completo, estado final `LIBERADO` e saldo de 5 para 4;
 - `/_stcore/health`: resposta `ok`.
+
+Evidência D6 em 2026-07-19:
+
+- PR 14 integrada com os workflows `Commercial Demo` e `Contracts` verdes;
+- imagem construída e container saudável no i5;
+- `ss` confirmou bind em `127.0.0.1:8501` após a validação;
+- túnel Cloudflare exclusivo para `pulseira.easysmart.com.br`;
+- healthcheck HTTPS externo aprovado;
+- senha incorreta recusada e senha correta aceita;
+- S1 completo executado pelo domínio público;
+- healthcheck LAN aprovado em `192.168.0.121:8501` durante a contingência e
+  bind de loopback restaurado em seguida;
+- fixture restaurada após o teste público;
+- runbook de ativação e encerramento em `deploy/demo/README.md`.
 
 Plano canônico:
 [commercial-simulation-plan.md](../demo/commercial-simulation-plan.md).

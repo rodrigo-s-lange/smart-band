@@ -8,8 +8,10 @@ o projeto sem acesso ao histórico de conversas.
 - Repositório oficial: `rodrigo-s-lange/smart-band`.
 - Baseline funcional mais recente: **PR 10**, merge
   `b02d73f6b66c3010187101c416407a43fcdfe990`.
+- `main` oficial atual após a demonstração comercial: **PR 14**, merge
+  `ed230abfd5e770b459ab545e06f557548a940d96`.
 - Vault baseline documental desta sincronização:
-  `deeddd5fa6492e62f361781fbde50480bbcb200c`.
+  `5eb042d5332e4eab88c296322c04a34c88bb0d8f`.
 - Questionário canônico do cliente no vault:
   `C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md`.
 - Laboratório reproduzível:
@@ -130,11 +132,11 @@ Streamlit exclusivamente para a simulação. Escopo, cenários, D0–D7, gates e
 roteiro estão em
 [commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md).
 
-Status: **D0–D5 implementadas e validadas localmente; D6 em execução; D7
-pendente**. O domínio continua sendo alvo até a publicação ser validada de fora
-da rede. A reunião será na terça-feira, para público comercial, operacional e
-técnico, com autenticação temporária por senha. A demo não autoriza nem conclui
-backend, frontend operacional, contratos comerciais, hardware ou firmware.
+Status: **D0–D6 concluídas; D7 pendente**. A demo está ativa temporariamente em
+`https://pulseira.easysmart.com.br`, para a reunião de terça-feira com público
+comercial, operacional e técnico. A autenticação usa senha temporária externa ao
+Git. A demo não autoriza nem conclui backend, frontend operacional, contratos
+comerciais, hardware ou firmware.
 
 Evidência local da demo em 2026-07-19:
 
@@ -144,6 +146,17 @@ Evidência local da demo em 2026-07-19:
 - fluxo S1 executado em Chrome headless do cadastro ao estado `LIBERADO`, com
   saldo reduzido de 5 para 4;
 - healthcheck local do Streamlit aprovado.
+
+Evidência de publicação:
+
+- PR 14 integrada em `ed230abfd5e770b459ab545e06f557548a940d96`, com
+  `Commercial Demo` e `Contracts` verdes;
+- imagem Docker construída no i5 e container saudável;
+- serviço ligado somente a `127.0.0.1:8501`;
+- Cloudflare Tunnel exclusivo, HTTPS e senha temporária;
+- senha inválida recusada e S1 completo executado pelo domínio público;
+- fallback LAN testado e bind interno restaurado;
+- fixture restaurada após a validação.
 
 ## Trabalho seguro enquanto o cliente decide
 
