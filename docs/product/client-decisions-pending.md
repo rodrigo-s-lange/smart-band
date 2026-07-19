@@ -5,7 +5,7 @@ somente ao repositório. O roteiro completo, as recomendações e o registro das
 respostas são canônicos no vault.
 
 Vault baseline documental desta sincronização:
-`8dd4d76bf1787a10350aab0cffcb37912057a4fa`.
+`deeddd5fa6492e62f361781fbde50480bbcb200c`.
 
 ```text
 C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md
@@ -100,6 +100,12 @@ Registrar quando motivo ou segunda aprovação são obrigatórios.
 - **D18 — Demo e domínio:** definir objetivo e prazo. No i5, usar dados fictícios,
   autenticação e proxy/túnel com TLS; não expor banco ou appliance diretamente em
   `pulseira.easysmart.com.br`.
+
+D18 possui direção interna parcial desde 2026-07-19: objetivo comercial,
+Streamlit exclusivo da simulação e URL pretendida
+`https://pulseira.easysmart.com.br`. Data, público autorizado, DNS, autenticação
+e implantação continuam pendentes. Ver
+[commercial-simulation-plan.md](../demo/commercial-simulation-plan.md).
 
 ## O que não pode ser assumido
 

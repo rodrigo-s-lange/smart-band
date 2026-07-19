@@ -239,6 +239,9 @@ def validate_documentation_handoff() -> None:
         ROOT / "docs/decisions/0011-client-decision-gate-and-safe-prework.md",
         ROOT / "docs/decisions/0012-radio-retry-and-opaque-transport.md",
         ROOT / "docs/decisions/0013-tamper-detection-and-child-safety.md",
+        ROOT / "docs/decisions/0014-streamlit-commercial-simulation.md",
+        ROOT / "docs/demo/commercial-simulation-plan.md",
+        ROOT / "docs/stage-gates/demo-commercial-simulation.md",
         ROOT / "contracts/proximity/tamper-status.md",
         ROOT / "contracts/gateway/radio-dispatch.md",
     ]
@@ -275,6 +278,9 @@ def validate_documentation_handoff() -> None:
         "docs/decisions/0011-client-decision-gate-and-safe-prework.md",
         "docs/decisions/0012-radio-retry-and-opaque-transport.md",
         "docs/decisions/0013-tamper-detection-and-child-safety.md",
+        "docs/decisions/0014-streamlit-commercial-simulation.md",
+        "docs/demo/commercial-simulation-plan.md",
+        "docs/stage-gates/demo-commercial-simulation.md",
         "contracts/proximity/tamper-status.md",
         "contracts/gateway/radio-dispatch.md",
     ]
@@ -289,6 +295,8 @@ def validate_documentation_handoff() -> None:
             "Não há nova fatia funcional autorizada",
             "client-decisions-pending.md",
             "Migrations vigentes: **11**",
+            "Trilha paralela de demonstração",
+            "implementação não iniciada",
         ],
         "client-decisions-pending.md": [
             "aguardando validação do cliente",
@@ -296,6 +304,7 @@ def validate_documentation_handoff() -> None:
             "D1. Identificação e LGPD",
             "D8. Perfis e exceções administrativas",
             "D14 — Tamper e segurança de menores",
+            "D18 possui direção interna parcial",
             "Trabalho permitido antes das respostas",
             "Não há nova entrega funcional autorizada",
         ],
@@ -374,6 +383,42 @@ def validate_documentation_handoff() -> None:
     ]
     if absent_tamper:
         raise AssertionError(f"tamper proposal contract incomplete: {absent_tamper}")
+
+    demo_plan = (ROOT / "docs/demo/commercial-simulation-plan.md").read_text(
+        encoding="utf-8"
+    )
+    demo_gate = (
+        ROOT / "docs/stage-gates/demo-commercial-simulation.md"
+    ).read_text(encoding="utf-8")
+    demo_markers = [
+        "Streamlit é a interface exclusiva da simulação comercial",
+        "https://pulseira.easysmart.com.br",
+        "Ambiente de simulação",
+        "estado do cenário não pode depender somente de",
+        "S1 — caminho feliz comercial",
+        "D0 — preparação e gate de publicação",
+        "D7 — ensaio e aceite",
+        "reset total em até 10 segundos",
+        "resolver decisões D1–D17 pelas fixtures",
+    ]
+    absent_demo = [marker for marker in demo_markers if marker not in demo_plan]
+    if absent_demo:
+        raise AssertionError(f"commercial demo plan incomplete: {absent_demo}")
+
+    gate_markers = [
+        "D0 — preparação",
+        "D1 — fundação",
+        "D2 — estado e dispositivos",
+        "D3 — caminho feliz",
+        "D4 — gestão",
+        "D5 — falhas e conceitos",
+        "D6 — publicação",
+        "D7 — reunião",
+        "não muda o estado das",
+    ]
+    absent_gate = [marker for marker in gate_markers if marker not in demo_gate]
+    if absent_gate:
+        raise AssertionError(f"commercial demo gate incomplete: {absent_gate}")
 
 
 def main() -> int:

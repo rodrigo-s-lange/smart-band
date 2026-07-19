@@ -27,6 +27,19 @@ integrada e o gate atual de decisões do cliente é definido pela ADR 0011.
 Hardware começa somente depois de confirmação, idempotência, concorrência,
 replay e recuperação estarem validados com simuladores.
 
+## Trilha paralela D — demonstração comercial
+
+Uma simulação em Streamlit pode avançar por D0–D7 para apoiar a reunião com a
+VRPlay, sem alterar o estado das Etapas 5–7. Ela usa dados fictícios, cockpit de
+pulseira/gateway/appliance e cenários determinísticos. O alvo externo é
+`https://pulseira.easysmart.com.br` por HTTPS autenticado, com fallback LAN.
+
+A trilha, seus limites e gates estão em
+[commercial-simulation-plan.md](demo/commercial-simulation-plan.md) e
+[demo-commercial-simulation.md](stage-gates/demo-commercial-simulation.md).
+Fixtures não resolvem decisões comerciais nem autorizam hardware, firmware ou
+frontend definitivo.
+
 Timeout, lease e até três tentativas de rádio pela porta opaca definida na
 ADR 0012 estão materializados com persistência, fencing, retomada por banco e
 simulador fail-closed.

@@ -43,9 +43,12 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 20. `docs/decisions/0011-client-decision-gate-and-safe-prework.md`
 21. `docs/decisions/0012-radio-retry-and-opaque-transport.md`
 22. `docs/decisions/0013-tamper-detection-and-child-safety.md`
-23. `contracts/proximity/tamper-status.md`
-24. `contracts/gateway/radio-dispatch.md`
-25. `docs/roadmap.md`
+23. `docs/decisions/0014-streamlit-commercial-simulation.md`
+24. `docs/demo/commercial-simulation-plan.md`
+25. `docs/stage-gates/demo-commercial-simulation.md`
+26. `contracts/proximity/tamper-status.md`
+27. `contracts/gateway/radio-dispatch.md`
+28. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -84,6 +87,9 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
   alerta contínuo são propostas bloqueadas pela decisão D14 do cliente.
 - Display e vibracall devem ser tratados como canais complementares; nenhum
   alerta essencial pode ser projetado como exclusivamente sonoro.
+- Streamlit é aceito somente para a demonstração comercial. Não substituir
+  `apps/operator-web`, não mover seu estado simulado ao domínio e não publicar o
+  i5, banco ou Edge API diretamente.
 
 ## Invariantes
 
@@ -125,10 +131,18 @@ D13–D18 bloqueiam o componente correspondente: alertas/acessibilidade, tamper,
 gamificação/prêmios, métricas BLE, comissão e demo externa. ADR 0013 é proposta;
 não implementar v2, sensor, dashboard público ou rastreamento por inferência.
 
+A trilha D0–D7 da demo é paralela e não altera as Etapas 5–7. Fixtures devem ser
+fictícias, determinísticas e marcadas como simulação; não podem definir preço,
+cadastro, pagamento, tamper ou acionamento de produção. O domínio pretendido não
+está ativo por estar documentado. Implementação D1 e publicação D6 exigem os
+gates do plano.
+
 ## Fronteiras de responsabilidade
 
 - `apps/edge-api`: domínio, persistência, autenticação, fila, ledger e API.
 - `apps/operator-web`: UX local; não contém regra de saldo.
+- `apps/demo-streamlit` (planejado): apresentação comercial descartável; não
+  contém regra de saldo nem contrato definitivo.
 - `services/gateway-coordinator`: coordenação de sightings e rádio; não contém ledger.
 - `contracts`: fronteiras versionadas antes das implementações consumidoras.
 - `simulators`: primeira implementação funcional do protocolo.

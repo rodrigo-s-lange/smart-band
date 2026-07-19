@@ -60,6 +60,7 @@ tests/
 docs/
   architecture/             visão do sistema e fluxos
   decisions/                ADRs
+  demo/                     escopo e roteiro da simulação comercial
   operations/               runbooks
 ```
 
@@ -91,7 +92,9 @@ docs/
 18. [docs/decisions/0011-client-decision-gate-and-safe-prework.md](docs/decisions/0011-client-decision-gate-and-safe-prework.md)
 19. [docs/decisions/0012-radio-retry-and-opaque-transport.md](docs/decisions/0012-radio-retry-and-opaque-transport.md)
 20. [contracts/gateway/radio-dispatch.md](contracts/gateway/radio-dispatch.md)
-21. [docs/roadmap.md](docs/roadmap.md)
+21. [docs/demo/commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md)
+22. [docs/decisions/0014-streamlit-commercial-simulation.md](docs/decisions/0014-streamlit-commercial-simulation.md)
+23. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 
@@ -102,6 +105,10 @@ payload opaco. Challenge/Decision final, cadastro,
 pagamentos, duração e acionamento aguardam o gate do cliente descrito em
 [CURRENT_STATE.md](CURRENT_STATE.md). Hardware e firmware ESP32 permanecem no
 fim. Não há nova fatia funcional autorizada até o registro dessas decisões.
+
+A demonstração comercial possui trilha paralela D0–D7 em
+[docs/demo/commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md).
+Streamlit é exclusivo da demo e não substitui `apps/operator-web`.
 
 Qualquer pessoa autorizada pode operar um gateway. O equipamento é cadastrado,
 possui credencial própria e só libera as atrações explicitamente associadas a
