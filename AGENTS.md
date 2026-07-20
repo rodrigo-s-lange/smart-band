@@ -44,11 +44,12 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 21. `docs/decisions/0012-radio-retry-and-opaque-transport.md`
 22. `docs/decisions/0013-tamper-detection-and-child-safety.md`
 23. `docs/decisions/0014-streamlit-commercial-simulation.md`
-24. `docs/demo/commercial-simulation-plan.md`
-25. `docs/stage-gates/demo-commercial-simulation.md`
-26. `contracts/proximity/tamper-status.md`
-27. `contracts/gateway/radio-dispatch.md`
-28. `docs/roadmap.md`
+24. `docs/decisions/0015-mandatory-gateway-attraction-close.md`
+25. `docs/demo/commercial-simulation-plan.md`
+26. `docs/stage-gates/demo-commercial-simulation.md`
+27. `contracts/proximity/tamper-status.md`
+28. `contracts/gateway/radio-dispatch.md`
+29. `docs/roadmap.md`
 
 ## Decisões vigentes
 
@@ -90,6 +91,8 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - Streamlit é aceito somente para a demonstração comercial. Não substituir
   `apps/operator-web`, não mover seu estado simulado ao domínio e não publicar o
   i5, banco ou Edge API diretamente.
+- Toda liberação positiva abre um uso; somente o encerramento explícito no
+  gateway responsável libera as pulseiras, exista ou não cronômetro.
 
 ## Invariantes
 
@@ -112,6 +115,9 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - Estado `sensor_fault` ou `unknown` nunca equivale a pulseira segura.
 - Tamper pode apoiar supervisão, mas não pode ser descrito como garantia de
   segurança, localização ou permanência de uma criança.
+- Uma pulseira com uso operacional aberto não inicia outra atividade.
+- Duração por atração é medida entre o ack positivo de liberação e o fechamento
+  aceito pela appliance; `00:00` não fecha o uso automaticamente.
 
 ## Gate atual e trabalho autorizado
 

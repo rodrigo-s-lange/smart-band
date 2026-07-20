@@ -72,6 +72,8 @@ Etapas 5–7 do produto.
 - [ ] notebook alternativo e rede móvel testados;
 - [x] vídeo de contingência — 35,32 s, 1600×900, reprodução local validada com
   o navegador em modo offline;
+- [ ] regressão da ADR 0015: impedir nova solicitação da pulseira até o
+  fechamento no gateway, inclusive após `00:00` ou pedido antecipado;
 - [ ] checklist do dia executado.
 
 ## Evidência necessária

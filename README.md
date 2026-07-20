@@ -13,6 +13,10 @@ acessos em atrações de eventos.
 6. A pulseira mostra a atração e o custo e exige confirmação consciente.
 7. O servidor reserva o crédito, envia um comando idempotente e grava o
    débito uma única vez somente após confirmar o acionamento da atração.
+8. A pulseira permanece ocupada até o gateway encerrar explicitamente o uso da
+   atração, mesmo quando não existe cronômetro.
+9. A appliance registra o intervalo entre liberação e encerramento para
+   métricas por atração.
 
 A confirmação na pulseira é simultaneamente uma regra de segurança e parte da
 experiência: a pessoa possui poder real de decisão sobre a ação.
@@ -96,7 +100,8 @@ docs/
 20. [contracts/gateway/radio-dispatch.md](contracts/gateway/radio-dispatch.md)
 21. [docs/demo/commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md)
 22. [docs/decisions/0014-streamlit-commercial-simulation.md](docs/decisions/0014-streamlit-commercial-simulation.md)
-23. [docs/roadmap.md](docs/roadmap.md)
+23. [docs/decisions/0015-mandatory-gateway-attraction-close.md](docs/decisions/0015-mandatory-gateway-attraction-close.md)
+24. [docs/roadmap.md](docs/roadmap.md)
 
 ## Estado
 

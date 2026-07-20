@@ -86,6 +86,21 @@ operational_resolution
   action                      retry_actuation | release_reservation | manual_confirmation
   reason
   resolved_at
+
+attraction_usage              decisão aceita; persistência ainda não materializada
+  usage_id                     PK
+  transaction_id              FK -> transaction_intent
+  attraction_id               FK -> attraction
+  opening_gateway_id          FK -> gateway
+  closing_gateway_id          FK -> gateway, nulo enquanto aberto
+  status                       active | closed
+  started_at                   horário autoritativo da appliance
+  closed_at                    nulo enquanto aberto
+
+attraction_usage_band
+  usage_id                     FK -> attraction_usage
+  band_id                      FK -> band
+  PRIMARY KEY (usage_id, band_id)
 ```
 
 `interaction_claim` e `transaction_intent` nascem atomicamente. Uma
@@ -148,6 +163,27 @@ Cancelamento é aceito até `credit_reserved`, antes do despacho do comando. Em
 pode liberar a reserva. Depois do ledger, correções usam ajuste financeiro
 auditado e nunca reabrem a transação original.
 
+## Ciclo operacional da atração
+
+`completed` conclui débito e acionamento, mas abre um `attraction_usage` separado.
+Cada pulseira ligada ao uso permanece ocupada até o fechamento explícito pelo
+gateway responsável, inclusive em atrações sem duração configurada.
+
+```text
+(none) --ack positivo de liberação--> active
+active --fechamento autenticado e idempotente no gateway--> closed
+```
+
+Cronômetro em `00:00`, pedido de encerramento na pulseira ou término presumido
+não fazem a transição. Eles podem colocar o gateway em estado visual de
+encerramento pendente. `started_at` e `closed_at` são carimbados pela appliance e
+formam a métrica de tempo de uso. Atividades de grupo ligam várias pulseiras ao
+mesmo uso e as liberam juntas no fechamento.
+
+A persistência acima é o modelo exigido pela ADR 0015, ainda não uma migration
+entregue. O mecanismo de contingência para gateway indisponível depende da
+decisão D7/D8 da VRPlay.
+
 ## Máquina de estados da pulseira
 
 ```text
@@ -178,6 +214,9 @@ interação nem renova a expiração original.
 | `completed` | `completed` | acionamento confirmado e débito commitado uma vez |
 | `cancelled` | `cancelled` | Cancel GATT quando houver conexão |
 | `actuation_failed`, `reconciliation_required` | `attention_required` | exige operador; nenhum débito sem prova de entrega |
+
+Após `completed`, a disponibilidade operacional da pulseira é determinada pelo
+`attraction_usage`, não pelo estado terminal da transação.
 
 ## Regras de expiração e replay
 

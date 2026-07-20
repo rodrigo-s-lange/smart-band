@@ -11,7 +11,7 @@ o projeto sem acesso ao histórico de conversas.
 - Última baseline de código da demonstração comercial: **PR 16**, merge
   `5934d4fa5a7fe8b878f5c8e25b4b6186ed896e32`.
 - Vault baseline documental desta sincronização:
-  `73b0b172449649f6e7dffe0215bbbaea3910249c`.
+  `b1210d7a6b9e89fd79a892ba7c7529d10d191a5e`.
 - Questionário canônico do cliente no vault:
   `C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md`.
 - Laboratório reproduzível:
@@ -66,6 +66,8 @@ baseline funcional. Verificar `git rev-parse HEAD` antes de trabalhar.
   30 segundos, sessão de 5 minutos e encerramento explícito;
 - término sem débito ou estorno automático e atração bloqueada até o `OK` do
   gateway.
+- encerramento obrigatório no gateway para atrações temporizadas ou não;
+  somente esse fechamento libera a pulseira e delimita a métrica de uso.
 
 ## Evidência da PR 10
 
@@ -101,6 +103,13 @@ Permanecem bloqueados:
 - regras entre campanhas, eventos e unidades;
 - relatórios comerciais, fechamento e continuidade operacional;
 - contratos administrativos definitivos de gateway e atração.
+
+A ADR 0015 já fixa que o encerramento normal ocorre sempre no gateway e mantém
+a pulseira ocupada até o fechamento. Permanecem abertas as regras de pausa,
+ação física em `00:00`, grupos e contingência para gateway indisponível. O
+modelo/API/eventos desse uso operacional ainda não estão implementados. Na demo,
+o teste negativo de nova solicitação antes do `OK` final foi acrescentado ao gate
+D7 e ainda precisa de implementação/validação.
 - vibracall e padrões finais de acessibilidade;
 - sensor de remoção, resposta a alertas e extensão BLE v2;
 - gamificação/sorteios, métricas BLE de ocupação e comissão de vendas;

@@ -3,7 +3,7 @@
 Status: **D0–D6 concluídas; D7 parcialmente concluída**.
 
 Vault baseline desta definição:
-`73b0b172449649f6e7dffe0215bbbaea3910249c`.
+`b1210d7a6b9e89fd79a892ba7c7529d10d191a5e`.
 
 ## Objetivo
 
@@ -133,6 +133,8 @@ Na fixture, solicitação e confirmação têm janelas independentes de 30 segun
 O código expirado sai de todos os TFTs e rotaciona. Não existe renovação ou novo
 débito automático. Encerramento pela pulseira não estorna o crédito e exige
 confirmação operacional no gateway antes de a atração voltar a `LIVRE`.
+Essa confirmação também libera a pulseira para nova atividade e delimita a
+métrica de duração do uso; a regra vale para atrações temporizadas ou não.
 
 ### S2 — falha de rádio
 
