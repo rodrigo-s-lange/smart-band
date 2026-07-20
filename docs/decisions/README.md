@@ -14,6 +14,7 @@
 - [0012 — Retry de rádio e transporte opaco recuperável](0012-radio-retry-and-opaque-transport.md)
 - [0013 — Tamper Detection & Child Safety (proposta)](0013-tamper-detection-and-child-safety.md)
 - [0014 — Streamlit para a simulação comercial](0014-streamlit-commercial-simulation.md)
+- [0015 — Encerramento obrigatório da atração no gateway](0015-mandatory-gateway-attraction-close.md)
 
 Mudanças de fronteira, autoridade, segurança ou experiência transacional exigem
 novo ADR e atualização correspondente no vault.

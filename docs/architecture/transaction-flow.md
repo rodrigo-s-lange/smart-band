@@ -17,6 +17,11 @@
 15. Gateway executa cada comando no máximo uma vez e persiste o ack.
 16. Ack positivo converte reserva em débito na mesma transação PostgreSQL.
 17. Pulseira e gateway recebem o resultado autenticado.
+18. O ack positivo também abre um uso operacional e mantém a pulseira ocupada.
+19. Ao terminar, com ou sem cronômetro, o gateway responsável solicita o
+    fechamento explícito do uso.
+20. A appliance fecha o uso de forma idempotente, calcula a duração e libera as
+    pulseiras vinculadas para novas atividades.
 
 ## Invariantes
 
@@ -31,3 +36,7 @@
 - gateway e pulseira não são autoridades do saldo
 - internet não participa do fluxo
 - override e reconciliação exigem gateway cadastrado, ação, motivo e horário
+- transação financeira concluída não significa uso operacional encerrado
+- `00:00` e solicitação da pulseira apenas pedem atenção; somente o fechamento
+  no gateway libera a pulseira
+- duração de uso é medida do ack positivo até o fechamento aceito pela appliance

@@ -77,5 +77,6 @@ de rádio recente não altera a interação.
 é escolhida por RSSI decrescente, recência decrescente e menor ID de protocolo
 como desempate. O relógio informado pelo gateway não participa da decisão.
 
-Ambos são auditados, mas apenas o gateway operador determina a métrica de uso da
-atração.
+Ambos são auditados. O ack positivo abre o uso da atração; o gateway responsável
+precisa encerrá-lo explicitamente. A appliance mede a duração entre abertura e
+fechamento e somente então libera as pulseiras vinculadas para outra atividade.

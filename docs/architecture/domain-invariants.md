@@ -33,6 +33,10 @@ etapas de banco, backend e simuladores.
 | I25 | Replay do advertising não renova expiração | UNIQUE `(band_id, session_nonce)` + primeiro sighting |
 | I26 | Mensagens CMAC de tipos diferentes não compartilham a mesma entrada | byte de domínio `0x01` a `0x05` |
 | I27 | Reserva não é liberada enquanto o resultado físico puder ser sucesso | cancelamento bloqueado em `actuation_pending`; exige `not_executed` ou reconciliação |
+| I28 | Toda liberação positiva abre um uso operacional | criação atômica após ack positivo |
+| I29 | Uma pulseira com uso aberto não inicia outra atividade | restrição única por pulseira ocupada |
+| I30 | Tempo, solicitação da pulseira ou silêncio não encerram o uso | fechamento explícito e idempotente no gateway |
+| I31 | Duração por atração usa início e fechamento autoritativos da appliance | `closed_at - started_at` auditável |
 
 ## Gates para a Etapa 4
 

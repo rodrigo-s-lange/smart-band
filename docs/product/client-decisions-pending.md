@@ -5,7 +5,7 @@ somente ao repositório. O roteiro completo, as recomendações e o registro das
 respostas são canônicos no vault.
 
 Vault baseline documental desta sincronização:
-`73b0b172449649f6e7dffe0215bbbaea3910249c`.
+`b1210d7a6b9e89fd79a892ba7c7529d10d191a5e`.
 
 ```text
 C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md
@@ -66,13 +66,18 @@ estado seguro; sinal que comprova entrega; aviso ao operador; e procedimento de
 contingência. O gateway usa TFT 170×320 vertical, opera uma atração ativa por
 vez e precisa distinguir espera, sucesso, offline, falha e resultado ambíguo.
 
+Direção já ratificada: toda liberação positiva abre um uso operacional. O
+gateway precisa encerrar explicitamente esse uso, mesmo quando a atração não é
+temporizada. A pulseira permanece ocupada até esse fechamento.
+
 ### D7. Tempo e falha de comunicação
 
-Definir início, pausa, extensão e término; avisos; comportamento de sessão já
-iniciada; relógio autoritativo offline; timeout para formar dupla/grupo; saída
-antecipada de uma pessoa; confirmação do operador; ação física em `00:00`; e se
-novas liberações são bloqueadas sem a appliance. A direção provisória não faz
-débito, renovação, estorno ou corte de energia automaticamente.
+Definir início, pausa, extensão e avisos; comportamento de sessão já iniciada;
+relógio autoritativo offline; timeout para formar dupla/grupo; saída antecipada;
+ação física em `00:00`; e contingência quando o gateway estiver indisponível.
+O encerramento normal pelo gateway e o bloqueio da pulseira até esse momento já
+estão ratificados. A direção provisória não faz débito, renovação, estorno ou
+corte de energia automaticamente.
 
 ### D8. Perfis e exceções administrativas
 
@@ -83,7 +88,8 @@ Registrar quando motivo ou segunda aprovação são obrigatórios.
 ## P1 — respostas necessárias antes da operação assistida
 
 - **D9 — Fechamento e relatórios:** turno/dia, fundo, sangria, suprimento,
-  conciliação, divergência, exportação e reabertura.
+  conciliação, divergência, exportação, reabertura e métricas de duração por
+  atração calculadas entre liberação e encerramento no gateway.
 - **D10 — LGPD e retenção:** controlador, base legal, menores, direitos do
   titular, backups e validação jurídica do cliente.
 - **D11 — Campanhas e reutilização:** o que varia entre eventos, validade,

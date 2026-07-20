@@ -34,7 +34,7 @@ VRPlay, sem alterar o estado das Etapas 5–7. Ela usa dados fictícios, cockpit
 pulseira/gateway/appliance e cenários determinísticos. O alvo externo é
 `https://pulseira.easysmart.com.br` por HTTPS autenticado, com fallback LAN.
 
-Estado em 2026-07-19: D0–D6 concluídas e D7 pendente.
+Estado em 2026-07-19: D0–D6 concluídas e D7 parcialmente concluída.
 
 A trilha, seus limites e gates estão em
 [commercial-simulation-plan.md](demo/commercial-simulation-plan.md) e
@@ -52,3 +52,7 @@ os critérios de aceite estão em [CURRENT_STATE.md](../CURRENT_STATE.md).
 
 Nenhuma fatia posterior dependente dessas decisões fica autorizada por esta
 entrega; o próximo escopo técnico deve ser registrado no handoff canônico.
+
+A ADR 0015 ratifica o encerramento obrigatório no gateway e a métrica de uso por
+atração. Modelo, API, eventos e migrations desse ciclo operacional ainda não
+estão implementados e devem entrar em uma fatia explicitamente autorizada.

@@ -23,7 +23,7 @@ Em até 15 minutos, a VRPlay deve compreender:
 | 02:30–04:00 | Atendimento | Cadastrar João Demo, vincular a pulseira e carregar cinco créditos fictícios. Explicar conciliação sem afirmar integração real com adquirente ou Pix. |
 | 04:00–07:00 | Pulseira e gateway | Executar dois cliques, selecionar o código no gateway, mostrar `CORRIDA / -1 OK?`, confirmar e liberar. Destacar que o código seleciona; a pessoa confirma. |
 | 07:00–08:00 | Sessão | Mostrar `LIBERADO`, saldo 4 e cronômetro de cinco minutos. Explicar que duração e preço são parâmetros da apresentação. |
-| 08:00–09:00 | Encerramento | Solicitar `ENCERRAR SESSAO?`, confirmar na pulseira e reconhecer `ENCERRADO` no gateway até retornar a `LIVRE`. |
+| 08:00–09:00 | Encerramento | Solicitar `ENCERRAR SESSAO?` e fechar no gateway. Explicar que somente essa ação libera a pulseira e fecha a métrica de uso, com ou sem cronômetro. |
 | 09:00–10:30 | Gestão | Mostrar Dispositivos, Alertas e timeline. Citar tamper, acessibilidade e ocupação BLE como decisões/propostas, não como funcionalidades contratadas. |
 | 10:30–12:00 | Fechamento | Apresentar ganhos esperados e abrir o documento de decisões do cliente. Pedir validação do fluxo antes de discutir hardware. |
 

@@ -50,7 +50,8 @@ python -m pytest tests
 - clique duplo: segundo clique entre 30 ms e 2 s;
 - código e confirmação: janelas independentes de 30 s;
 - sessão: 5 minutos por crédito, sem renovação ou débito automático;
-- término: exige confirmação do operador antes de a atração voltar a `LIVRE`.
+- término: exige confirmação no gateway antes de a atração voltar a `LIVRE` e
+  de a pulseira poder solicitar outra atividade, com ou sem cronômetro.
 
 São parâmetros da apresentação e não contratos comerciais do produto.
 
