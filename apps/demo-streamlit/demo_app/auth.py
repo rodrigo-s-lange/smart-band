@@ -20,7 +20,6 @@ def require_authentication() -> None:
         return
 
     st.title("Smart-Band")
-    st.caption("Ambiente de simulação comercial")
     with st.form("login"):
         supplied = st.text_input("Senha temporária", type="password")
         submitted = st.form_submit_button("Entrar", use_container_width=True)

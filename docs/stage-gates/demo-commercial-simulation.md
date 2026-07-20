@@ -16,7 +16,7 @@ Etapas 5–7 do produto.
 ## D1 — fundação
 
 - [x] `apps/demo-streamlit` isolado;
-- [x] navegação e selo de simulação;
+- [x] navegação e identificação concentrada no acesso/documentação;
 - [x] fixture e reset idempotente;
 - [x] páginas carregam offline com dados fictícios;
 - [x] testes de smoke aprovados.
@@ -83,7 +83,7 @@ Cada checkbox concluído deve apontar para teste, captura, log, commit ou runboo
 
 Evidência D1–D5 em 2026-07-19:
 
-- `python -m pytest tests -q`: 7 testes aprovados;
+- `python -m pytest tests -q`: 10 testes aprovados;
 - `AppTest`: carregamento do app sem exceção;
 - `test_reset_is_deterministic_and_shared`: três consumidores e reset sem
   resíduo;
@@ -91,6 +91,8 @@ Evidência D1–D5 em 2026-07-19:
 - testes de idempotência, `not_executed`, resultado ambíguo, fallback e tamper;
 - Chrome headless: S1 completo, estado final `LIBERADO` e saldo de 5 para 4;
 - `/_stcore/health`: resposta `ok`.
+- inspeção visual do OLED 128×32 e TFT 170×320 em código, confirmação e sessão;
+- testes de TTL de 30 s, rotação, sessão de 5 min, encerramento e `OK` do gateway.
 
 Evidência D6 em 2026-07-19:
 

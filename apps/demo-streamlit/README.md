@@ -43,5 +43,16 @@ python -m pytest tests
 - SQLite não substitui o PostgreSQL autoritativo do produto;
 - Streamlit não substitui `apps/operator-web`.
 
+## Displays e tempos da apresentação
+
+- pulseira: OLED azul 128×32, um clique para saldo e dois cliques para acesso;
+- gateway: TFT 170×320 vertical, uma atração ativa e até quatro códigos grandes;
+- clique duplo: segundo clique entre 30 ms e 2 s;
+- código e confirmação: janelas independentes de 30 s;
+- sessão: 5 minutos por crédito, sem renovação ou débito automático;
+- término: exige confirmação do operador antes de a atração voltar a `LIVRE`.
+
+São parâmetros da apresentação e não contratos comerciais do produto.
+
 Plano e gates:
 [commercial-simulation-plan.md](../../docs/demo/commercial-simulation-plan.md).

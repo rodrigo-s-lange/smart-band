@@ -11,7 +11,7 @@ o projeto sem acesso ao histórico de conversas.
 - `main` oficial atual após a demonstração comercial: **PR 14**, merge
   `ed230abfd5e770b459ab545e06f557548a940d96`.
 - Vault baseline documental desta sincronização:
-  `5eb042d5332e4eab88c296322c04a34c88bb0d8f`.
+  `405f2616c6a8e831a68e8e7ff2d06ac003e4bd55`.
 - Questionário canônico do cliente no vault:
   `C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md`.
 - Laboratório reproduzível:
@@ -60,6 +60,12 @@ baseline funcional. Verificar `git rev-parse HEAD` antes de trabalhar.
   tamper, sem alterar contratos ou regras definitivas do produto;
 - container, healthcheck, autenticação por senha e compose isolado em
   `deploy/demo`.
+- OLED azul 128×32 e TFT 170×320 vertical reproduzidos com mensagens curtas,
+  fonte grande e sem avisos repetitivos de simulação;
+- clique simples/duplo, TTL de 30 segundos, rotação de código, confirmação em
+  30 segundos, sessão de 5 minutos e encerramento explícito;
+- término sem débito ou estorno automático e atração bloqueada até o `OK` do
+  gateway.
 
 ## Evidência da PR 10
 
@@ -140,12 +146,16 @@ comerciais, hardware ou firmware.
 
 Evidência local da demo em 2026-07-19:
 
-- 7 testes automatizados aprovados, incluindo três consumidores do mesmo banco,
+- 10 testes automatizados aprovados, incluindo três consumidores do mesmo banco,
   três resets completos e idempotência financeira;
 - smoke de todas as páginas com `streamlit.testing.v1.AppTest`;
 - fluxo S1 executado em Chrome headless do cadastro ao estado `LIBERADO`, com
   saldo reduzido de 5 para 4;
 - healthcheck local do Streamlit aprovado.
+- fluxo visual validado em Chrome nos estados código, confirmação, liberação e
+  cronômetro;
+- timeouts, rotação, bloqueio durante sessão, encerramento antecipado e
+  confirmação do gateway cobertos por testes.
 
 Evidência de publicação:
 

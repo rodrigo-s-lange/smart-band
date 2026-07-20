@@ -111,7 +111,9 @@ fim. Não há nova fatia funcional autorizada até o registro dessas decisões.
 A demonstração comercial possui trilha paralela D0–D7 em
 [docs/demo/commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md).
 Streamlit é exclusivo da demo e não substitui `apps/operator-web`. D0–D6 estão
-concluídas; ensaio e contingência são acompanhados em D7.
+concluídas; ensaio e contingência são acompanhados em D7. A interface reproduz
+OLED 128×32 e TFT 170×320, com TTL/confirmação de 30 segundos e sessão
+demonstrativa de 5 minutos.
 
 Qualquer pessoa autorizada pode operar um gateway. O equipamento é cadastrado,
 possui credencial própria e só libera as atrações explicitamente associadas a
