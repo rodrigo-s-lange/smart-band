@@ -70,14 +70,18 @@ Direção já ratificada: toda liberação positiva abre um uso operacional. O
 gateway precisa encerrar explicitamente esse uso, mesmo quando a atração não é
 temporizada. A pulseira permanece ocupada até esse fechamento.
 
+Contingência ratificada: outro gateway autenticado do mesmo site pode selecionar
+e encerrar usos ativos quando o original estiver indisponível. Se isso não
+ocorrer, o início confirmado de uma nova atividade fecha somente a participação
+anterior daquela pulseira e marca a duração como estimada.
+
 ### D7. Tempo e falha de comunicação
 
 Definir início, pausa, extensão e avisos; comportamento de sessão já iniciada;
 relógio autoritativo offline; timeout para formar dupla/grupo; saída antecipada;
-ação física em `00:00`; e contingência quando o gateway estiver indisponível.
-O encerramento normal pelo gateway e o bloqueio da pulseira até esse momento já
-estão ratificados. A direção provisória não faz débito, renovação, estorno ou
-corte de energia automaticamente.
+ação física em `00:00`. Encerramento normal, gateway substituto e fallback por
+reentrada já estão ratificados. A direção provisória não faz débito, renovação,
+estorno ou corte de energia automaticamente.
 
 ### D8. Perfis e exceções administrativas
 
@@ -89,7 +93,7 @@ Registrar quando motivo ou segunda aprovação são obrigatórios.
 
 - **D9 — Fechamento e relatórios:** turno/dia, fundo, sangria, suprimento,
   conciliação, divergência, exportação, reabertura e métricas de duração por
-  atração calculadas entre liberação e encerramento no gateway.
+  atração, separando duração exata de duração estimada por reentrada.
 - **D10 — LGPD e retenção:** controlador, base legal, menores, direitos do
   titular, backups e validação jurídica do cliente.
 - **D11 — Campanhas e reutilização:** o que varia entre eventos, validade,

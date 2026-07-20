@@ -104,12 +104,13 @@ Permanecem bloqueados:
 - relatórios comerciais, fechamento e continuidade operacional;
 - contratos administrativos definitivos de gateway e atração.
 
-A ADR 0015 já fixa que o encerramento normal ocorre sempre no gateway e mantém
-a pulseira ocupada até o fechamento. Permanecem abertas as regras de pausa,
-ação física em `00:00`, grupos e contingência para gateway indisponível. O
-modelo/API/eventos desse uso operacional ainda não estão implementados. Na demo,
+A ADR 0015 fixa fechamento normal no gateway, fechamento por outro gateway do
+site quando o original estiver indisponível e fallback por reentrada. Reentrada
+fecha apenas a participação daquela pulseira e marca a duração como estimada;
+não encerra as demais pessoas de um grupo. Permanecem abertas pausa e ação física
+em `00:00`. Modelo/API/eventos ainda não estão implementados. Na demo,
 o teste negativo de nova solicitação antes do `OK` final foi acrescentado ao gate
-D7 e ainda precisa de implementação/validação.
+D7 e ainda precisa refletir/validar os três caminhos aceitos.
 - vibracall e padrões finais de acessibilidade;
 - sensor de remoção, resposta a alertas e extensão BLE v2;
 - gamificação/sorteios, métricas BLE de ocupação e comissão de vendas;

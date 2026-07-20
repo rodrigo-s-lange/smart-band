@@ -22,6 +22,11 @@
     fechamento explícito do uso.
 20. A appliance fecha o uso de forma idempotente, calcula a duração e libera as
     pulseiras vinculadas para novas atividades.
+21. Se o gateway original falhar, outro gateway ativo do site pode selecionar e
+    fechar o uso com motivo auditado.
+22. Se ainda permanecer aberto, o início confirmado de outra atividade fecha
+    atomicamente apenas a participação anterior daquela pulseira e marca a
+    duração como estimada.
 
 ## Invariantes
 
@@ -40,3 +45,6 @@
 - `00:00` e solicitação da pulseira apenas pedem atenção; somente o fechamento
   no gateway libera a pulseira
 - duração de uso é medida do ack positivo até o fechamento aceito pela appliance
+- gateway substituto registra `source_gateway_unavailable`; reentrada registra
+  `implicit_close_on_reentry`
+- em grupos, reentrada encerra apenas a participação da pulseira que saiu

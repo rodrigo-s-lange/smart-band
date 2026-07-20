@@ -13,8 +13,9 @@ atrações e para produzir métricas comparáveis de permanência.
 ## Decisão
 
 - Todo ack positivo de liberação abre um uso operacional da atração.
-- Toda pulseira vinculada ao uso permanece ocupada e não pode iniciar outra
-  atividade enquanto esse uso estiver aberto.
+- Toda pulseira vinculada permanece ocupada até um fechamento normal ou de
+  contingência. Uma nova atividade nunca cria duas participações ativas: ela
+  fecha atomicamente a participação anterior antes de abrir a nova.
 - O encerramento é sempre uma ação explícita no gateway responsável pela
   atração, independentemente de existir cronômetro.
 - `00:00`, término físico presumido, solicitação da pulseira ou ausência de
@@ -32,17 +33,29 @@ atrações e para produzir métricas comparáveis de permanência.
 Qualquer pessoa autorizada pode executar a ação no gateway. A auditoria continua
 identificando o equipamento, não o operador humano, conforme a ADR 0010.
 
-## Contingência ainda aberta
+## Contingência aceita
 
-Se o gateway estiver indisponível, não haverá liberação automática. A VRPlay
-deve decidir se um gateway substituto ou uma ação administrativa auditada pode
-fechar o uso, quais permissões exige e como comprovar o término real. Essa
-exceção permanece no gate D7/D8 do cliente.
+1. O gateway responsável executa o fechamento normal.
+2. Se ele estiver indisponível, qualquer gateway autenticado e ativo do mesmo
+   site pode abrir a lista de usos ativos, selecionar o uso/pulseiras corretos e
+   fechá-lo explicitamente. A auditoria registra gateway de abertura, gateway de
+   fechamento e motivo `source_gateway_unavailable`.
+3. Como último recurso, o início confirmado de outra atividade fecha
+   atomicamente a participação anterior da pulseira com
+   `implicit_close_on_reentry`. O horário do novo uso aproxima o fim anterior.
+
+Em atividades de grupo, o autoencerramento por reentrada fecha somente a
+participação daquela pulseira. O uso das demais pessoas continua ativo até o
+fechamento explícito em um gateway.
+
+Relatórios distinguem duração exata, proveniente de fechamento no gateway, de
+duração estimada, proveniente de reentrada. A indisponibilidade operacional não
+pode bloquear permanentemente a experiência da pessoa.
 
 ## Consequências
 
-O modelo definitivo precisará de um registro de uso separado da transação, uma
-restrição de no máximo um uso aberto por pulseira, fechamento idempotente e
-métricas por atração. OpenAPI, eventos, migrations e consumidores ainda devem
+O modelo definitivo precisará de um registro de uso separado da transação, no
+máximo uma participação ativa por pulseira, fechamento idempotente e métricas
+com qualidade exata/estimada. OpenAPI, eventos, migrations e consumidores devem
 ser versionados antes da implementação no produto; esta ADR não declara essa
 persistência como já entregue.

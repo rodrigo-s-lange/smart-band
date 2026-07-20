@@ -91,8 +91,11 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - Streamlit é aceito somente para a demonstração comercial. Não substituir
   `apps/operator-web`, não mover seu estado simulado ao domínio e não publicar o
   i5, banco ou Edge API diretamente.
-- Toda liberação positiva abre um uso; somente o encerramento explícito no
-  gateway responsável libera as pulseiras, exista ou não cronômetro.
+- Toda liberação positiva abre um uso; o caminho normal exige encerramento
+  explícito no gateway responsável, exista ou não cronômetro.
+- Se o gateway original falhar, outro gateway ativo do mesmo site pode fechar o
+  uso. Reentrada fecha atomicamente apenas a participação anterior da pulseira e
+  marca a duração como estimada.
 
 ## Invariantes
 
@@ -115,9 +118,12 @@ nele. Decisões arquiteturais relevantes também devem ser registradas no vault.
 - Estado `sensor_fault` ou `unknown` nunca equivale a pulseira segura.
 - Tamper pode apoiar supervisão, mas não pode ser descrito como garantia de
   segurança, localização ou permanência de uma criança.
-- Uma pulseira com uso operacional aberto não inicia outra atividade.
+- Uma pulseira nunca termina uma transição com duas participações ativas;
+  reentrada fecha a anterior antes de abrir a nova.
 - Duração por atração é medida entre o ack positivo de liberação e o fechamento
   aceito pela appliance; `00:00` não fecha o uso automaticamente.
+- Relatórios distinguem fechamento exato no gateway de fechamento estimado por
+  `implicit_close_on_reentry`.
 
 ## Gate atual e trabalho autorizado
 

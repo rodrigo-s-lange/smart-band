@@ -100,6 +100,11 @@ attraction_usage              decisão aceita; persistência ainda não material
 attraction_usage_band
   usage_id                     FK -> attraction_usage
   band_id                      FK -> band
+  status                       active | closed
+  joined_at
+  closed_at
+  closing_gateway_id          FK -> gateway, nulo em reentrada implícita
+  close_kind                  gateway | substitute_gateway | implicit_reentry
   PRIMARY KEY (usage_id, band_id)
 ```
 
@@ -166,23 +171,29 @@ auditado e nunca reabrem a transação original.
 ## Ciclo operacional da atração
 
 `completed` conclui débito e acionamento, mas abre um `attraction_usage` separado.
-Cada pulseira ligada ao uso permanece ocupada até o fechamento explícito pelo
-gateway responsável, inclusive em atrações sem duração configurada.
+Cada pulseira ligada ao uso permanece ocupada até fechamento normal,
+substituição de gateway ou reentrada, inclusive em atrações sem duração.
 
 ```text
 (none) --ack positivo de liberação--> active
 active --fechamento autenticado e idempotente no gateway--> closed
+active --fechamento por gateway substituto--> closed
+active participation --início confirmado de novo uso--> closed/implicit_reentry
 ```
 
 Cronômetro em `00:00`, pedido de encerramento na pulseira ou término presumido
 não fazem a transição. Eles podem colocar o gateway em estado visual de
 encerramento pendente. `started_at` e `closed_at` são carimbados pela appliance e
-formam a métrica de tempo de uso. Atividades de grupo ligam várias pulseiras ao
-mesmo uso e as liberam juntas no fechamento.
+formam a métrica de tempo de uso. Outro gateway ativo do mesmo site pode fechar
+o uso quando o original estiver indisponível. Se uma pulseira iniciar outra
+atividade, sua participação anterior é fechada atomicamente no início confirmado
+do novo uso e marcada `implicit_reentry`, produzindo duração estimada.
+
+Atividades de grupo ligam várias pulseiras ao mesmo uso. Fechamento explícito
+libera o grupo; reentrada encerra somente a participação da pulseira que saiu.
 
 A persistência acima é o modelo exigido pela ADR 0015, ainda não uma migration
-entregue. O mecanismo de contingência para gateway indisponível depende da
-decisão D7/D8 da VRPlay.
+entregue.
 
 ## Máquina de estados da pulseira
 

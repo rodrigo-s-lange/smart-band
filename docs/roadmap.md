@@ -56,3 +56,5 @@ entrega; o próximo escopo técnico deve ser registrado no handoff canônico.
 A ADR 0015 ratifica o encerramento obrigatório no gateway e a métrica de uso por
 atração. Modelo, API, eventos e migrations desse ciclo operacional ainda não
 estão implementados e devem entrar em uma fatia explicitamente autorizada.
+Ela também aceita fechamento por gateway substituto e reentrada como último
+recurso, preservando grupos e identificando métricas estimadas.

@@ -17,6 +17,8 @@ acessos em atrações de eventos.
    atração, mesmo quando não existe cronômetro.
 9. A appliance registra o intervalo entre liberação e encerramento para
    métricas por atração.
+10. Se o gateway falhar, outro gateway do site pode fechar o uso; uma nova
+    atividade é o fallback final e marca a duração anterior como estimada.
 
 A confirmação na pulseira é simultaneamente uma regra de segurança e parte da
 experiência: a pessoa possui poder real de decisão sobre a ação.

@@ -34,9 +34,11 @@ etapas de banco, backend e simuladores.
 | I26 | Mensagens CMAC de tipos diferentes não compartilham a mesma entrada | byte de domínio `0x01` a `0x05` |
 | I27 | Reserva não é liberada enquanto o resultado físico puder ser sucesso | cancelamento bloqueado em `actuation_pending`; exige `not_executed` ou reconciliação |
 | I28 | Toda liberação positiva abre um uso operacional | criação atômica após ack positivo |
-| I29 | Uma pulseira com uso aberto não inicia outra atividade | restrição única por pulseira ocupada |
+| I29 | Uma pulseira nunca termina uma transição com duas participações ativas | fechamento anterior e abertura nova atômicos |
 | I30 | Tempo, solicitação da pulseira ou silêncio não encerram o uso | fechamento explícito e idempotente no gateway |
 | I31 | Duração por atração usa início e fechamento autoritativos da appliance | `closed_at - started_at` auditável |
+| I32 | Reentrada fecha somente a participação da pulseira, nunca o grupo inteiro | vínculo de uso por pulseira + `implicit_close_on_reentry` |
+| I33 | Métrica estimada nunca é apresentada como exata | `close_kind` obrigatório e segmentação nos relatórios |
 
 ## Gates para a Etapa 4
 
