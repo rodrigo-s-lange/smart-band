@@ -5,7 +5,7 @@ somente ao repositório. O roteiro completo, as recomendações e o registro das
 respostas são canônicos no vault.
 
 Vault baseline documental desta sincronização:
-`5eb042d5332e4eab88c296322c04a34c88bb0d8f`.
+`405f2616c6a8e831a68e8e7ff2d06ac003e4bd55`.
 
 ```text
 C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md
@@ -47,22 +47,32 @@ pago/bônus/cortesia, devolução, transferência e recuperação de saldo.
 ### D4. Regra comercial das atrações
 
 Definir por atração: custo fixo ou por duração, quantidade de créditos, tempo,
-restrições, gratuidade, promoções e variação por evento/campanha.
+capacidade individual/dupla/grupo, quantidade mínima de pulseiras, timeout para
+formar grupo, restrições, gratuidade, promoções e variação por evento/campanha.
+Os 5 minutos por crédito da demo são fixture, não decisão aprovada.
 
 ### D5. Confirmação na pulseira
 
 Definir a sequência que cabe no display 128x32: nome curto, créditos, duração,
-aviso essencial, gesto de confirmar/cancelar e timeout.
+aviso essencial, gesto de confirmar/cancelar e timeout. A direção atual usa
+OLED azul 128×32: clique simples mostra saldo; clique duplo entre 30 ms e 2 s cria a
+solicitação; código e confirmação possuem janelas separadas de 30 s; durante a
+sessão, saldo e tempo aparecem na mesma linha; clique duplo solicita encerramento.
 
 ### D6. Liberação e ack
 
 Definir por atração: LED, relé, catraca, tomada ou protocolo do fabricante;
-estado seguro; sinal que comprova entrega; e procedimento de contingência.
+estado seguro; sinal que comprova entrega; aviso ao operador; e procedimento de
+contingência. O gateway usa TFT 170×320 vertical, opera uma atração ativa por
+vez e precisa distinguir espera, sucesso, offline, falha e resultado ambíguo.
 
 ### D7. Tempo e falha de comunicação
 
 Definir início, pausa, extensão e término; avisos; comportamento de sessão já
-iniciada; e se novas liberações são bloqueadas sem a appliance.
+iniciada; relógio autoritativo offline; timeout para formar dupla/grupo; saída
+antecipada de uma pessoa; confirmação do operador; ação física em `00:00`; e se
+novas liberações são bloqueadas sem a appliance. A direção provisória não faz
+débito, renovação, estorno ou corte de energia automaticamente.
 
 ### D8. Perfis e exceções administrativas
 

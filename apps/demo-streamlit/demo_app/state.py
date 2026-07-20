@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -15,9 +15,33 @@ ACTIVE_INTERACTION_STATES = {
     "reconciliation_required",
 }
 
+DISCOVERY_TTL_SECONDS = 30
+CONFIRMATION_TTL_SECONDS = 30
+SESSION_DURATION_SECONDS = 5 * 60
+CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+
 
 def utc_now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+def add_seconds(value: str, seconds: int) -> str:
+    return (datetime.fromisoformat(value) + timedelta(seconds=seconds)).isoformat(
+        timespec="seconds"
+    )
+
+
+def rotate_code(value: str) -> str:
+    digits = value.replace("-", "")
+    number = 0
+    for symbol in digits:
+        number = number * 32 + CROCKFORD.index(symbol)
+    number = (number + 1) % (32**6)
+    rotated = ""
+    for _ in range(6):
+        rotated = CROCKFORD[number % 32] + rotated
+        number //= 32
+    return f"{rotated[:3]}-{rotated[3:]}"
 
 
 @dataclass(frozen=True)
@@ -115,6 +139,13 @@ class DemoStore:
                     radio_gateway_id TEXT REFERENCES gateways(id),
                     radio_attempt INTEGER NOT NULL DEFAULT 1,
                     outcome TEXT,
+                    discovery_expires_at TEXT,
+                    confirmation_expires_at TEXT,
+                    session_started_at TEXT,
+                    session_ended_at TEXT,
+                    session_end_reason TEXT,
+                    session_duration_seconds INTEGER,
+                    operator_acknowledged_at TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 );
@@ -149,6 +180,20 @@ class DemoStore:
                 );
                 """
             )
+            interaction_columns = {
+                row[1] for row in connection.execute("PRAGMA table_info(interactions)")
+            }
+            for name, kind in (
+                ("discovery_expires_at", "TEXT"),
+                ("confirmation_expires_at", "TEXT"),
+                ("session_started_at", "TEXT"),
+                ("session_ended_at", "TEXT"),
+                ("session_end_reason", "TEXT"),
+                ("session_duration_seconds", "INTEGER"),
+                ("operator_acknowledged_at", "TEXT"),
+            ):
+                if name not in interaction_columns:
+                    connection.execute(f"ALTER TABLE interactions ADD COLUMN {name} {kind}")
             count = connection.execute("SELECT COUNT(*) FROM bands").fetchone()[0]
         if count == 0:
             self.reset()
@@ -186,11 +231,11 @@ class DemoStore:
         ]
         codes = [
             "XTZ-2AC", "1YX-123", "3B9-2FF", "M7K-3PX", "7QH-4AD", "P2V-8NS",
-            "K9M-2TR", "4CJ-7WX", "H6P-1ZA", "N3R-5KU", "8VD-9BF", "T4S-6GY",
-            "2KL-8QJ", "W5X-3MN", "C7A-4RP", "F1G-9TV", "R8N-2HC", "J3D-7KS",
-            "6PY-5WB", "A9T-1XM", "V2C-8QF", "L4H-6NR", "5MK-3ZD", "Q7W-9AP",
-            "B1R-4TX", "G8V-2CJ", "S3N-6KL", "D9P-5WH", "Y4A-7MG", "E2K-8RS",
-            "U6T-1BV", "Z5C-3QN",
+            "K9M-2TR", "4CJ-7WX", "H6P-1ZA", "N3R-5KV", "8VD-9BF", "T4S-6GY",
+            "2KM-8QJ", "W5X-3MN", "C7A-4RP", "F1G-9TV", "R8N-2HC", "J3D-7KS",
+            "6PY-5WB", "A9T-1XM", "V2C-8QF", "M4H-6NR", "5MK-3ZD", "Q7W-9AP",
+            "B1R-4TX", "G8V-2CJ", "S3N-6KM", "D9P-5WH", "Y4A-7MG", "E2K-8RS",
+            "V6T-1BV", "Z5C-3QN",
         ]
         bands = [
             (f"B{index:02d}", code, "available", 0, 0, 96 - index % 24, "secure", None)
@@ -221,7 +266,76 @@ class DemoStore:
                 connection,
                 "demo.reset",
                 "Demonstração restaurada",
-                "Fixture VRPlay Demo pronta: 8 gateways e 32 pulseiras fictícias.",
+                "Ambiente VRPlay pronto: 8 gateways e 32 pulseiras.",
+                timestamp,
+            )
+
+    def _expire_due(self, connection: sqlite3.Connection, timestamp: str) -> None:
+        for interaction in connection.execute(
+            """SELECT id, band_id, code FROM interactions
+               WHERE status = 'requesting' AND discovery_expires_at <= ?""",
+            (timestamp,),
+        ).fetchall():
+            connection.execute(
+                """UPDATE interactions SET status = 'expired', outcome = 'discovery_timeout',
+                   updated_at = ? WHERE id = ? AND status = 'requesting'""",
+                (timestamp, interaction["id"]),
+            )
+            connection.execute(
+                "UPDATE bands SET code = ? WHERE id = ?",
+                (rotate_code(interaction["code"]), interaction["band_id"]),
+            )
+            self._event(
+                connection,
+                "interaction.discovery_timeout",
+                "Código expirado",
+                f"{interaction['code']} saiu de todas as filas após 30 segundos.",
+                timestamp,
+            )
+
+        for interaction in connection.execute(
+            """SELECT id FROM interactions
+               WHERE status = 'awaiting_confirmation' AND confirmation_expires_at <= ?""",
+            (timestamp,),
+        ).fetchall():
+            connection.execute(
+                """UPDATE interactions SET status = 'cancelled',
+                   outcome = 'confirmation_timeout', updated_at = ?
+                   WHERE id = ? AND status = 'awaiting_confirmation'""",
+                (timestamp, interaction["id"]),
+            )
+            self._event(
+                connection,
+                "interaction.confirmation_timeout",
+                "Confirmação expirada",
+                "A pessoa não confirmou em 30 segundos; nenhum crédito foi debitado.",
+                timestamp,
+            )
+
+        for interaction in connection.execute(
+            """SELECT id, band_id, session_started_at, session_duration_seconds
+               FROM interactions WHERE status = 'completed'
+                 AND session_started_at IS NOT NULL AND session_ended_at IS NULL"""
+        ).fetchall():
+            deadline = add_seconds(
+                interaction["session_started_at"], interaction["session_duration_seconds"]
+            )
+            if deadline > timestamp:
+                continue
+            connection.execute(
+                """UPDATE interactions SET session_ended_at = ?,
+                   session_end_reason = 'timeout', updated_at = ? WHERE id = ?""",
+                (deadline, timestamp, interaction["id"]),
+            )
+            connection.execute(
+                "UPDATE bands SET status = 'linked' WHERE id = ?",
+                (interaction["band_id"],),
+            )
+            self._event(
+                connection,
+                "session.expired",
+                "Tempo encerrado",
+                "A sessão demonstrativa terminou sem débito adicional automático.",
                 timestamp,
             )
 
@@ -266,7 +380,7 @@ class DemoStore:
             self._event(
                 connection,
                 "participant.registered",
-                "Participante fictício vinculado",
+                "Participante vinculado",
                 f"{name.strip()} recebeu a pulseira {band['code']}.",
                 timestamp,
             )
@@ -309,7 +423,7 @@ class DemoStore:
             self._event(
                 connection,
                 "sale.pending",
-                "Pagamento simulado pendente",
+                "Pagamento pendente",
                 f"{credits} crédito(s) via {payment_method}; aguardando confirmação manual.",
                 timestamp,
             )
@@ -339,7 +453,7 @@ class DemoStore:
             self._event(
                 connection,
                 "sale.confirmed",
-                "Créditos simulados carregados",
+                "Créditos carregados",
                 f"Venda #{sale_id} confirmada manualmente: {sale['credits']} crédito(s).",
                 timestamp,
             )
@@ -356,7 +470,7 @@ class DemoStore:
                 self._event(
                     connection,
                     "sale.cancelled",
-                    "Venda simulada cancelada",
+                    "Venda cancelada",
                     f"Venda #{sale_id} cancelada sem carregar créditos.",
                     timestamp,
                 )
@@ -365,9 +479,18 @@ class DemoStore:
     def press_band(self, band_id: str, now: str | None = None) -> int:
         timestamp = now or utc_now()
         with self.transaction() as connection:
+            self._expire_due(connection, timestamp)
             band = connection.execute("SELECT * FROM bands WHERE id = ?", (band_id,)).fetchone()
             if band is None or band["participant_id"] is None:
                 raise ValueError("A pulseira ainda não está vinculada.")
+            session = connection.execute(
+                """SELECT id FROM interactions WHERE band_id = ? AND status = 'completed'
+                   AND session_started_at IS NOT NULL AND session_ended_at IS NULL
+                   ORDER BY id DESC LIMIT 1""",
+                (band_id,),
+            ).fetchone()
+            if session:
+                raise ValueError("A pulseira possui uma sessão em andamento.")
             if band["balance"] - band["reserved"] < 1:
                 raise ValueError("A pulseira não possui crédito disponível.")
             placeholders = ",".join("?" for _ in ACTIVE_INTERACTION_STATES)
@@ -379,9 +502,16 @@ class DemoStore:
                 return int(active["id"])
             cursor = connection.execute(
                 """INSERT INTO interactions(
-                    band_id, code, status, radio_attempt, created_at, updated_at
-                ) VALUES (?, ?, 'requesting', 1, ?, ?)""",
-                (band_id, band["code"], timestamp, timestamp),
+                    band_id, code, status, radio_attempt, discovery_expires_at,
+                    created_at, updated_at
+                ) VALUES (?, ?, 'requesting', 1, ?, ?, ?)""",
+                (
+                    band_id,
+                    band["code"],
+                    add_seconds(timestamp, DISCOVERY_TTL_SECONDS),
+                    timestamp,
+                    timestamp,
+                ),
             )
             interaction_id = int(cursor.lastrowid)
             self._event(
@@ -402,6 +532,7 @@ class DemoStore:
     ) -> bool:
         timestamp = now or utc_now()
         with self.transaction() as connection:
+            self._expire_due(connection, timestamp)
             attraction = connection.execute(
                 "SELECT name FROM attractions WHERE id = ?", (attraction_id,)
             ).fetchone()
@@ -411,15 +542,32 @@ class DemoStore:
             ).fetchone()
             if attraction is None or gateway is None:
                 raise ValueError("Atração ou gateway indisponível.")
+            occupied = connection.execute(
+                """SELECT id FROM interactions WHERE attraction_id = ?
+                   AND status = 'completed' AND session_started_at IS NOT NULL
+                   AND (session_ended_at IS NULL OR operator_acknowledged_at IS NULL)
+                   ORDER BY id DESC LIMIT 1""",
+                (attraction_id,),
+            ).fetchone()
+            if occupied:
+                raise ValueError("A atração ainda não foi liberada pelo operador.")
             radio = connection.execute(
                 "SELECT id FROM gateways WHERE online = 1 ORDER BY rssi DESC, id ASC LIMIT 1"
             ).fetchone()
             updated = connection.execute(
                 """UPDATE interactions
                    SET status = 'awaiting_confirmation', attraction_id = ?,
-                       operator_gateway_id = ?, radio_gateway_id = ?, updated_at = ?
+                       operator_gateway_id = ?, radio_gateway_id = ?,
+                       confirmation_expires_at = ?, updated_at = ?
                    WHERE id = ? AND status = 'requesting'""",
-                (attraction_id, operator_gateway_id, radio["id"], timestamp, interaction_id),
+                (
+                    attraction_id,
+                    operator_gateway_id,
+                    radio["id"],
+                    add_seconds(timestamp, CONFIRMATION_TTL_SECONDS),
+                    timestamp,
+                    interaction_id,
+                ),
             ).rowcount
             if updated:
                 self._event(
@@ -436,6 +584,7 @@ class DemoStore:
     ) -> bool:
         timestamp = now or utc_now()
         with self.transaction() as connection:
+            self._expire_due(connection, timestamp)
             interaction = connection.execute(
                 """SELECT i.*, a.name AS attraction_name, a.cost_credits
                    FROM interactions i JOIN attractions a ON a.id = i.attraction_id
@@ -514,6 +663,10 @@ class DemoStore:
                     "Atração liberada e débito concluído",
                     f"{interaction['attraction_name']} confirmou o acionamento; 1 crédito debitado.",
                 )
+                connection.execute(
+                    "UPDATE bands SET status = 'in_session' WHERE id = ?",
+                    (interaction["band_id"],),
+                )
             elif outcome == "not_executed":
                 connection.execute(
                     "UPDATE bands SET reserved = reserved - ? WHERE id = ?",
@@ -530,12 +683,78 @@ class DemoStore:
                     "Resultado de liberação incerto",
                     "Reserva mantida; exige reconciliação e não haverá segundo acionamento automático.",
                 )
-            connection.execute(
-                "UPDATE interactions SET status = ?, outcome = ?, updated_at = ? WHERE id = ?",
-                (status, outcome, timestamp, interaction_id),
-            )
+            if outcome == "succeeded":
+                connection.execute(
+                    """UPDATE interactions SET status = ?, outcome = ?,
+                       session_started_at = ?, session_duration_seconds = ?, updated_at = ?
+                       WHERE id = ?""",
+                    (
+                        status,
+                        outcome,
+                        timestamp,
+                        SESSION_DURATION_SECONDS,
+                        timestamp,
+                        interaction_id,
+                    ),
+                )
+            else:
+                connection.execute(
+                    "UPDATE interactions SET status = ?, outcome = ?, updated_at = ? WHERE id = ?",
+                    (status, outcome, timestamp, interaction_id),
+                )
             self._event(connection, f"actuation.{outcome}", title, detail, timestamp)
             return True
+
+    def end_session(self, band_id: str, now: str | None = None) -> bool:
+        timestamp = now or utc_now()
+        with self.transaction() as connection:
+            self._expire_due(connection, timestamp)
+            session = connection.execute(
+                """SELECT id FROM interactions WHERE band_id = ? AND status = 'completed'
+                   AND session_started_at IS NOT NULL AND session_ended_at IS NULL
+                   ORDER BY id DESC LIMIT 1""",
+                (band_id,),
+            ).fetchone()
+            if session is None:
+                return False
+            connection.execute(
+                """UPDATE interactions SET session_ended_at = ?,
+                   session_end_reason = 'band', updated_at = ? WHERE id = ?""",
+                (timestamp, timestamp, session["id"]),
+            )
+            connection.execute(
+                "UPDATE bands SET status = 'linked' WHERE id = ?", (band_id,)
+            )
+            self._event(
+                connection,
+                "session.ended_by_band",
+                "Sessão encerrada pela pulseira",
+                "Sem estorno automático; o gateway exige confirmação operacional.",
+                timestamp,
+            )
+            return True
+
+    def acknowledge_session_end(
+        self, interaction_id: int, now: str | None = None
+    ) -> bool:
+        timestamp = now or utc_now()
+        with self.transaction() as connection:
+            self._expire_due(connection, timestamp)
+            updated = connection.execute(
+                """UPDATE interactions SET operator_acknowledged_at = ?, updated_at = ?
+                   WHERE id = ? AND status = 'completed' AND session_ended_at IS NOT NULL
+                     AND operator_acknowledged_at IS NULL""",
+                (timestamp, timestamp, interaction_id),
+            ).rowcount
+            if updated:
+                self._event(
+                    connection,
+                    "session.operator_acknowledged",
+                    "Atração novamente livre",
+                    "O operador confirmou a conferência operacional no gateway.",
+                    timestamp,
+                )
+            return bool(updated)
 
     def simulate_radio_fallback(self, interaction_id: int, now: str | None = None) -> bool:
         timestamp = now or utc_now()
@@ -610,13 +829,13 @@ class DemoStore:
                             kind, severity, status, band_id, message, created_at, updated_at
                         ) VALUES ('tamper', 'critical', 'new', ?, ?, ?, ?)""",
                         (
-                            band_id, f"Remoção simulada detectada em {band['code']}.",
+                            band_id, f"Remoção detectada em {band['code']}.",
                             timestamp, timestamp,
                         ),
                     )
                 title, detail = (
-                    "Pulseira removida — conceito simulado",
-                    f"Alerta crítico criado para {band['code']}; não representa sensor físico.",
+                    "Pulseira removida",
+                    f"Alerta crítico criado para {band['code']}.",
                 )
             else:
                 title, detail = (
@@ -644,7 +863,10 @@ class DemoStore:
                 )
             return bool(updated)
 
-    def snapshot(self) -> dict[str, Any]:
+    def snapshot(self, now: str | None = None) -> dict[str, Any]:
+        timestamp = now or utc_now()
+        with self.transaction() as connection:
+            self._expire_due(connection, timestamp)
         with self.connect() as connection:
             bands = [dict(row) for row in connection.execute(
                 """SELECT b.*, p.name AS participant_name FROM bands b
@@ -679,6 +901,17 @@ class DemoStore:
             ledger = [dict(row) for row in connection.execute(
                 "SELECT * FROM ledger ORDER BY id DESC"
             )]
+        current = datetime.fromisoformat(timestamp)
+        for interaction in interactions:
+            if interaction["session_started_at"] and not interaction["session_ended_at"]:
+                deadline = datetime.fromisoformat(interaction["session_started_at"]) + timedelta(
+                    seconds=interaction["session_duration_seconds"]
+                )
+                interaction["session_remaining_seconds"] = max(
+                    0, int((deadline - current).total_seconds())
+                )
+            else:
+                interaction["session_remaining_seconds"] = 0
         linked = [band for band in bands if band["participant_id"] is not None]
         active_band = linked[0] if linked else bands[0]
         active_interaction = next(
@@ -686,6 +919,27 @@ class DemoStore:
                 interaction
                 for interaction in interactions
                 if interaction["status"] in ACTIVE_INTERACTION_STATES
+            ),
+            None,
+        )
+        active_session = next(
+            (
+                interaction
+                for interaction in interactions
+                if interaction["status"] == "completed"
+                and interaction["session_started_at"]
+                and not interaction["session_ended_at"]
+                and interaction["session_remaining_seconds"] > 0
+            ),
+            None,
+        )
+        pending_gateway_end = next(
+            (
+                interaction
+                for interaction in interactions
+                if interaction["status"] == "completed"
+                and interaction["session_ended_at"]
+                and not interaction["operator_acknowledged_at"]
             ),
             None,
         )
@@ -700,6 +954,8 @@ class DemoStore:
             "ledger": ledger,
             "active_band": active_band,
             "active_interaction": active_interaction,
+            "active_session": active_session,
+            "pending_gateway_end": pending_gateway_end,
         }
 
     def metrics(self) -> dict[str, int]:

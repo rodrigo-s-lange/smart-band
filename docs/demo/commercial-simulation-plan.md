@@ -3,7 +3,7 @@
 Status: **D0–D6 concluídas; D7 pendente**.
 
 Vault baseline desta definição:
-`5eb042d5332e4eab88c296322c04a34c88bb0d8f`.
+`405f2616c6a8e831a68e8e7ff2d06ac003e4bd55`.
 
 ## Objetivo
 
@@ -22,7 +22,8 @@ liberação da atração, débito e indicadores atualizados.
 - URL pública pretendida: `https://pulseira.easysmart.com.br`.
 - O i5 hospeda o laboratório; acesso LAN é a contingência.
 - Dados, pessoas, pagamentos, dispositivos e valores são fictícios.
-- Toda página mostra permanentemente `Ambiente de simulação`.
+- A natureza demonstrativa fica documentada e no controle de acesso; a interface
+  apresentada ao cliente não repete avisos em cada área ou display.
 - A publicação usa HTTPS e autenticação por proxy/túnel.
 - PostgreSQL, Edge API e portas do i5 não ficam públicos.
 - Fixture não é decisão comercial, seed de produção ou evidência de hardware.
@@ -99,8 +100,10 @@ uso e alertas. A navegação e os rótulos não congelam a UX de produção.
 
 A página inicial implementa o conceito do esboço aprovado:
 
-- pulseira virtual com display, saldo, estado, botão, vibracall e tamper;
-- gateway virtual com friendly name, atração, fila, RSSI e seleção;
+- pulseira com OLED azul 128×32, textos grandes, gestos de um/dois cliques,
+  saldo, código, confirmação e tempo;
+- gateway com TFT 170×320 vertical, atração fixa, fila, seleção, cronômetro e
+  estados operacionais por cor;
 - painel de atendimento com pessoa fictícia, vínculo, pacote e pagamento;
 - linha do tempo dos eventos e mudanças de estado.
 
@@ -116,7 +119,7 @@ precisam reproduzir essa disposição.
 3. criar venda pendente e selecionar pacote/forma de pagamento;
 4. confirmar manualmente o pagamento simulado;
 5. creditar carteira fictícia;
-6. pressionar a pulseira virtual;
+6. executar clique duplo na pulseira;
 7. gerar código visual e solicitação na fila global;
 8. selecionar código e atração no gateway;
 9. mostrar atração, custo e duração na pulseira;
@@ -124,7 +127,12 @@ precisam reproduzir essa disposição.
 11. reservar créditos;
 12. simular comando e ack positivo;
 13. converter reserva em débito uma única vez;
-14. atualizar saldo, timeline, dashboard e relatório.
+14. iniciar cronômetro de 5 minutos, atualizar saldo, timeline e dashboard.
+
+Na fixture, solicitação e confirmação têm janelas independentes de 30 segundos.
+O código expirado sai de todos os TFTs e rotaciona. Não existe renovação ou novo
+débito automático. Encerramento pela pulseira não estorna o crédito e exige
+confirmação operacional no gateway antes de a atração voltar a `LIVRE`.
 
 ### S2 — falha de rádio
 
@@ -163,6 +171,10 @@ sorteio real, beacon real ou rastreamento individual.
 - pagamentos, preços e créditos marcados como simulados;
 - relógio e gerador de IDs injetáveis;
 - reset idempotente para a mesma baseline.
+
+Os 5 minutos por crédito, 30 segundos de TTL e mensagens dos displays são
+parâmetros aprovados para a apresentação. Continuam sujeitos à validação da
+VRPlay antes de virar contrato do produto.
 
 Os números representam uma amostra dentro do caso informado de 7–10 gateways e
 25–40 pulseiras. Não constituem limite de escala ou configuração aprovada.

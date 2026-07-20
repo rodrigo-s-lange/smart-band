@@ -138,6 +138,12 @@ cadastro, pagamento, tamper ou acionamento de produção. O domínio pretendido 
 está ativo por estar documentado. Publicação D6 e reunião D7 exigem evidência nos
 gates do plano.
 
+Na apresentação vigente, representar somente os displays físicos: OLED azul
+128×32 na pulseira e TFT 170×320 vertical no gateway. Não espalhar avisos de
+simulação pela interface. TTL de 30 s, confirmação em 30 s e sessão de 5 min são
+fixtures aprovadas para a reunião, não contratos do produto. O gateway só volta
+a `LIVRE` após confirmação operacional do término.
+
 ## Fronteiras de responsabilidade
 
 - `apps/edge-api`: domínio, persistência, autenticação, fila, ledger e API.

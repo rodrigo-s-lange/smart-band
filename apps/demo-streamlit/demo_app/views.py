@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
+from html import escape
+import time
 from typing import Callable
 
 import pandas as pd
@@ -37,22 +39,32 @@ def apply_theme() -> None:
             padding:.62rem .9rem; border:1px solid #24405f; border-radius:12px;
             background:linear-gradient(90deg,#0c2038,#102a45); margin-bottom:1rem;
         }
-        .demo-badge { color:#07111f; background:#ffd166; border-radius:999px;
-            padding:.25rem .65rem; font-weight:800; letter-spacing:.04em; }
-        .device-card { border:1px solid #294968; border-radius:18px; padding:1rem;
-            background:linear-gradient(145deg,#0b1b2d,#0d243b); margin-bottom:.85rem;
-            box-shadow:0 12px 30px rgba(0,0,0,.2); }
-        .device-title { font-size:.76rem; letter-spacing:.12em; text-transform:uppercase;
-            color:#8eacc9; margin-bottom:.4rem; }
-        .oled { background:#02080d; color:#79c8ff; border:2px solid #315b7d;
-            border-radius:10px; text-align:center; padding:.9rem .35rem;
-            font-family:monospace; font-weight:800; font-size:1.65rem; letter-spacing:.08em; }
-        .oled-small { font-size:.88rem; color:#bce3ff; margin-top:.35rem; }
-        .status-row { display:flex; justify-content:space-between; gap:.5rem;
-            margin-top:.7rem; color:#c6d7e8; font-size:.86rem; }
-        .queue-code { font-family:monospace; font-weight:800; font-size:1.1rem;
-            padding:.42rem .62rem; margin:.28rem 0; border-radius:8px;
-            background:#102d49; border-left:4px solid #35a7ff; }
+        .band-shell { max-width:480px; margin:0 auto .65rem; background:#101820;
+            border:2px solid #263846; border-radius:22px; padding:1rem 1.2rem;
+            box-shadow:0 12px 30px rgba(0,0,0,.25); }
+        .oled-screen { aspect-ratio:4/1; background:#00040a; color:#56bfff;
+            border:2px solid #236b9d; border-radius:7px; display:flex;
+            flex-direction:column; align-items:center; justify-content:center;
+            font-family:Consolas,monospace; font-weight:900; line-height:1.02;
+            text-align:center; text-shadow:0 0 9px rgba(53,167,255,.75); }
+        .oled-one { font-size:clamp(1.75rem,3.3vw,2.75rem); letter-spacing:.04em; }
+        .oled-two { font-size:clamp(1.18rem,2.35vw,1.8rem); letter-spacing:.02em; }
+        .tft-shell { width:min(82%,255px); margin:.8rem auto; background:#141b22;
+            border:3px solid #344656; border-radius:17px; padding:.7rem;
+            box-shadow:0 16px 34px rgba(0,0,0,.3); }
+        .tft-screen { aspect-ratio:170/320; background:#02070d; border-radius:8px;
+            border:2px solid #25394a; padding:.8rem .62rem; display:flex;
+            flex-direction:column; overflow:hidden; font-family:Consolas,monospace; }
+        .tft-attraction { color:#fff; font-size:1.45rem; font-weight:900;
+            text-align:center; padding-bottom:.55rem; border-bottom:2px solid #27394a; }
+        .tft-status { flex:1; display:flex; align-items:center; justify-content:center;
+            text-align:center; font-size:1.72rem; font-weight:900; line-height:1.12; }
+        .tft-code { font-size:1.28rem; font-weight:900; padding:.5rem .35rem;
+            margin:.24rem 0; border-radius:6px; color:#fff; background:#0d2034; }
+        .tft-code.selected { color:#ffd54a; border:2px solid #ffd54a; }
+        .tft-timer { text-align:center; font-size:2rem; font-weight:900;
+            color:#fff; padding:.55rem 0; }
+        .green { color:#39e58c; } .amber { color:#ffd54a; } .red { color:#ff5252; }
         .concept { border-left:4px solid #ffd166; background:#302917;
             padding:.7rem .9rem; border-radius:8px; color:#ffe7a5; }
         .success-panel { border-left:4px solid #25c2a0; background:#0d302c;
@@ -76,114 +88,227 @@ def banner(store: DemoStore) -> None:
     st.markdown(
         f"""
         <div class="demo-banner">
-          <div><strong>SMART-BAND · VRPLAY DEMO</strong><br>
+          <div><strong>SMART-BAND · VRPLAY</strong><br>
           <span class="muted">Evento ativo · operação local</span></div>
           <div>{metrics['gateways_online']}/8 gateways · {metrics['bands_in_use']} pulseiras ·
           {metrics['open_alerts']} alertas</div>
-          <div class="demo-badge">AMBIENTE DE SIMULAÇÃO</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def _active_state(snapshot: dict) -> tuple[dict, dict | None]:
-    return snapshot["active_band"], snapshot["active_interaction"]
+def format_timer(seconds: int) -> str:
+    minutes, remainder = divmod(max(0, seconds), 60)
+    return f"{minutes:02d}:{remainder:02d}"
 
 
-def render_band(store: DemoStore, snapshot: dict) -> None:
-    band, interaction = _active_state(snapshot)
-    state = interaction["status"] if interaction else band["status"]
-    display = band["code"]
-    subtitle = f"Saldo {band['balance']} · Reserva {band['reserved']}"
-    if interaction and interaction["status"] == "awaiting_confirmation":
-        display = interaction["attraction_name"].upper()
-        subtitle = f"1 CRÉDITO · CONFIRME"
-    elif interaction and interaction["status"] == "confirmed":
-        display = "PROCESSANDO"
-        subtitle = "Crédito reservado"
-    elif snapshot["interactions"] and snapshot["interactions"][0]["status"] == "completed":
-        display = "LIBERADO"
-        subtitle = f"Saldo {band['balance']} crédito(s)"
-    tamper_label = "SEGURA" if band["tamper_status"] == "secure" else "REMOVIDA"
+def seconds_since(value: str | None) -> float:
+    if not value:
+        return 9999
+    return (datetime.now(UTC) - datetime.fromisoformat(value)).total_seconds()
+
+
+def oled(lines: list[str]) -> None:
+    content = "".join(f"<div>{escape(line)}</div>" for line in lines)
+    size = "oled-one" if len(lines) == 1 else "oled-two"
     st.markdown(
-        f"""
-        <div class="device-card">
-          <div class="device-title">Pulseira virtual · {band['id']}</div>
-          <div class="oled">{display}<div class="oled-small">{subtitle}</div></div>
-          <div class="status-row"><span>{STATUS_LABELS.get(state, state)}</span>
-          <span>🔋 {band['battery']}%</span></div>
-          <div class="status-row"><span>Tamper: {tamper_label}</span><span>BLE virtual</span></div>
-        </div>
-        """,
+        f'<div class="band-shell"><div class="oled-screen {size}">{content}</div></div>',
         unsafe_allow_html=True,
     )
+
+
+@st.fragment(run_every="1s")
+def render_band(store: DemoStore) -> None:
+    snapshot = store.snapshot()
+    band = snapshot["active_band"]
+    interaction = snapshot["active_interaction"]
+    session = snapshot["active_session"]
+    latest = snapshot["interactions"][0] if snapshot["interactions"] else None
+    now = time.time()
+    feedback_kind = st.session_state.get("band_feedback_kind")
+    feedback_until = st.session_state.get("band_feedback_until", 0.0)
+    if feedback_until <= now:
+        feedback_kind = None
+        st.session_state.pop("band_feedback_kind", None)
+        st.session_state.pop("band_feedback_until", None)
+
+    lines: list[str] = []
     if band["participant_id"] is None:
-        st.info("Cadastre e vincule esta pulseira no Atendimento.")
+        lines = []
+    elif feedback_kind == "end_prompt":
+        lines = ["ENCERRAR", "SESSAO? OK"]
+    elif feedback_kind == "balance":
+        lines = [
+            f"{band['balance']}    {format_timer(session['session_remaining_seconds'])}"
+            if session
+            else str(band["balance"])
+        ]
+    elif feedback_kind == "recharge":
+        lines = ["IR AO CAIXA", "VRPLAY :)"]
+    elif interaction and interaction["status"] == "requesting":
+        lines = [interaction["code"]]
     elif interaction and interaction["status"] == "awaiting_confirmation":
+        lines = [interaction["attraction_name"].upper(), f"-{interaction['cost_credits']}      OK?"]
+    elif interaction and interaction["status"] == "confirmed":
+        lines = ["AGUARDE"]
+    elif latest and latest["status"] == "completed" and latest["session_started_at"]:
+        start_age = seconds_since(latest["session_started_at"])
+        end_age = seconds_since(latest["session_ended_at"])
+        if latest["session_end_reason"] == "timeout" and end_age < 3:
+            lines = ["TEMPO", "ENCERRADO"]
+        elif latest["session_end_reason"] == "timeout" and end_age < 6:
+            lines = [str(band["balance"])]
+        elif latest["session_end_reason"] == "band" and end_age < 3:
+            lines = [str(band["balance"])]
+        elif not latest["session_ended_at"] and start_age < 3:
+            lines = ["LIBERADO"]
+        elif not latest["session_ended_at"] and start_age < 6:
+            lines = [f"{band['balance']}    {format_timer(latest['session_remaining_seconds'])}"]
+    elif latest and latest["status"] == "cancelled" and seconds_since(latest["updated_at"]) < 3:
+        lines = ["CANCELADO"]
+    elif latest and latest["status"] == "actuation_failed" and seconds_since(latest["updated_at"]) < 3:
+        lines = ["ERRO"]
+
+    oled(lines)
+
+    if band["participant_id"] is None:
+        return
+    if feedback_kind == "end_prompt":
+        confirm, back = st.columns(2)
+        if confirm.button("OK", key="band_end_ok", use_container_width=True):
+            store.end_session(band["id"])
+            st.session_state["band_feedback_kind"] = "balance"
+            st.session_state["band_feedback_until"] = time.time() + 3
+            st.rerun()
+        if back.button("Voltar", key="band_end_back", use_container_width=True):
+            st.session_state.pop("band_feedback_kind", None)
+            st.session_state.pop("band_feedback_until", None)
+            st.rerun()
+        return
+    if interaction and interaction["status"] == "awaiting_confirmation":
         confirm, cancel = st.columns(2)
-        if confirm.button("✓ Confirmar", key="band_confirm", use_container_width=True):
-            store.decide_interaction(interaction["id"], True)
+        if confirm.button("OK", key="band_confirm", use_container_width=True):
+            try:
+                store.decide_interaction(interaction["id"], True)
+            except ValueError:
+                st.session_state["band_feedback_kind"] = "recharge"
+                st.session_state["band_feedback_until"] = time.time() + 6
             st.rerun()
         if cancel.button("Cancelar", key="band_cancel", use_container_width=True):
             store.decide_interaction(interaction["id"], False)
             st.rerun()
-    elif not interaction:
-        if st.button("● PRESSIONAR PULSEIRA", key="press_band", use_container_width=True):
-            try:
-                store.press_band(band["id"])
-                st.rerun()
-            except ValueError as error:
-                st.warning(str(error))
+        return
+    one, two = st.columns(2)
+    if one.button("1 CLIQUE", key="band_single_click", use_container_width=True):
+        st.session_state["band_feedback_kind"] = "balance"
+        st.session_state["band_feedback_until"] = time.time() + 3
+        st.rerun()
+    if two.button("2 CLIQUES", key="band_double_click", use_container_width=True):
+        if session:
+            st.session_state["band_feedback_kind"] = "end_prompt"
+            st.session_state["band_feedback_until"] = time.time() + 30
+        elif band["balance"] - band["reserved"] < 1:
+            st.session_state["band_feedback_kind"] = "recharge"
+            st.session_state["band_feedback_until"] = time.time() + 6
+        else:
+            store.press_band(band["id"])
+        st.rerun()
 
 
-def render_gateway(store: DemoStore, snapshot: dict) -> None:
-    gateways = [gateway for gateway in snapshot["gateways"] if gateway["online"]]
+def tft_markup(
+    attraction: str,
+    *,
+    status: str | None = None,
+    status_color: str = "",
+    timer: str | None = None,
+    timer_color: str = "",
+    queue: list[dict] | None = None,
+    selected_id: int | None = None,
+) -> str:
+    body = ""
+    if timer:
+        body += f'<div class="tft-timer {timer_color}">{escape(timer)}</div>'
+    if status:
+        body += f'<div class="tft-status {status_color}">{escape(status).replace(chr(10), "<br>")}</div>'
+    for item in queue or []:
+        selected = " selected" if item["id"] == selected_id else ""
+        prefix = "&gt; " if selected else "&nbsp;&nbsp;"
+        body += f'<div class="tft-code{selected}">{prefix}{escape(item["code"])}</div>'
+    return (
+        '<div class="tft-shell"><div class="tft-screen">'
+        f'<div class="tft-attraction">{escape(attraction.upper())}</div>{body}'
+        "</div></div>"
+    )
+
+
+@st.fragment(run_every="1s")
+def render_gateway(store: DemoStore) -> None:
+    snapshot = store.snapshot()
+    gateway = next(item for item in snapshot["gateways"] if item["id"] == "G1")
+    attraction = gateway["attraction_name"] or "CORRIDA"
     queue = [item for item in snapshot["interactions"] if item["status"] == "requesting"]
     interaction = snapshot["active_interaction"]
-    selected_gateway = gateways[0]
-    st.markdown(
-        f"""
-        <div class="device-card">
-          <div class="device-title">Gateway virtual · {selected_gateway['friendly_name']}</div>
-          <div class="status-row"><span>Online</span><span>RSSI {selected_gateway['rssi']} dBm</span></div>
-          <div class="muted" style="margin-top:.7rem">FILA GLOBAL · NOVOS NO TOPO</div>
-          {''.join(f'<div class="queue-code">{item["code"]}</div>' for item in queue[:3]) or '<div class="muted">Nenhuma solicitação</div>'}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    if queue:
-        labels = {item["id"]: f"{item['code']} · solicitação #{item['id']}" for item in queue}
+    session = snapshot["active_session"]
+    pending_end = snapshot["pending_gateway_end"]
+    latest = snapshot["interactions"][0] if snapshot["interactions"] else None
+    selected_id = st.session_state.get("gateway_queue")
+    queue_ids = {item["id"] for item in queue}
+    if selected_id not in queue_ids:
+        selected_id = queue[0]["id"] if queue else None
+
+    if not gateway["online"]:
+        markup = tft_markup(attraction, status="OFFLINE", status_color="red")
+    elif pending_end:
+        markup = tft_markup(attraction, status="ENCERRADO", status_color="red")
+    elif interaction and interaction["status"] == "reconciliation_required":
+        markup = tft_markup(attraction, status="VERIFICAR\nATRACAO", status_color="red")
+    elif latest and latest["status"] == "actuation_failed":
+        markup = tft_markup(attraction, status="FALHA\nLIBERACAO", status_color="red")
+    elif interaction and interaction["status"] == "awaiting_confirmation":
+        markup = tft_markup(
+            attraction, status=f"{interaction['code']}\n\nPULSEIRA...", status_color="amber"
+        )
+    elif session:
+        remaining = session["session_remaining_seconds"]
+        markup = tft_markup(
+            attraction,
+            timer=format_timer(remaining),
+            timer_color="red" if remaining <= 30 else "",
+            queue=queue[:3],
+            selected_id=selected_id,
+        )
+    elif interaction and interaction["status"] == "confirmed":
+        markup = tft_markup(
+            attraction, status="AGUARDE", status_color="amber", queue=queue[:3], selected_id=selected_id
+        )
+    elif queue:
+        markup = tft_markup(attraction, queue=queue[:4], selected_id=selected_id)
+    else:
+        markup = tft_markup(attraction, status="LIVRE", status_color="green")
+    st.markdown(markup, unsafe_allow_html=True)
+
+    if pending_end:
+        if st.button("OK · ATRAÇÃO LIVRE", key="gateway_end_ok", use_container_width=True):
+            store.acknowledge_session_end(pending_end["id"])
+            st.rerun()
+        return
+    if queue and not session and not (
+        interaction and interaction["status"] in {"awaiting_confirmation", "confirmed", "reconciliation_required"}
+    ):
+        labels = {item["id"]: item["code"] for item in queue}
         interaction_id = st.selectbox(
-            "Código verbalizado", list(labels), format_func=labels.get, key="gateway_queue"
-        )
-        attraction_labels = {
-            item["id"]: f"{item['name']} · 1 crédito" for item in snapshot["attractions"]
-        }
-        attraction_id = st.selectbox(
-            "Atração", list(attraction_labels), format_func=attraction_labels.get,
-            key="gateway_attraction",
-        )
-        gateway_labels = {
-            item["id"]: item["friendly_name"] for item in gateways if item["attraction_id"] == attraction_id
-        }
-        if not gateway_labels:
-            gateway_labels = {item["id"]: item["friendly_name"] for item in gateways}
-        operator_gateway = st.selectbox(
-            "Gateway da atração", list(gateway_labels), format_func=gateway_labels.get,
-            key="operator_gateway",
+            "Código", list(labels), format_func=labels.get, key="gateway_queue"
         )
         if st.button("Selecionar código", key="claim", use_container_width=True):
-            store.claim_interaction(interaction_id, attraction_id, operator_gateway)
+            store.claim_interaction(interaction_id, gateway["attraction_id"], gateway["id"])
             st.rerun()
-    elif interaction and interaction["status"] == "confirmed":
-        st.success(f"Confirmado: {interaction['attraction_name']}. Escolha o retorno simulado:")
+    if interaction and interaction["status"] == "confirmed":
         success, failed = st.columns(2)
-        if success.button("Liberar atração", key="actuate_success", use_container_width=True):
+        if success.button("Liberar", key="actuate_success", use_container_width=True):
             store.actuate(interaction["id"], "succeeded")
             st.rerun()
-        if failed.button("Não executou", key="actuate_failed", use_container_width=True):
+        if failed.button("Falhou", key="actuate_failed", use_container_width=True):
             store.actuate(interaction["id"], "not_executed")
             st.rerun()
         if st.button("Resultado ambíguo", key="actuate_ambiguous", use_container_width=True):
@@ -203,8 +328,8 @@ def render_shell(store: DemoStore, content: Callable[[DemoStore, dict], None]) -
     snapshot = store.snapshot()
     devices, appliance = st.columns([0.34, 0.66], gap="large")
     with devices:
-        render_band(store, snapshot)
-        render_gateway(store, snapshot)
+        render_band(store)
+        render_gateway(store)
     with appliance:
         content(store, snapshot)
 
@@ -214,7 +339,7 @@ def overview_page(store: DemoStore) -> None:
         st.title("Visão Geral")
         metrics = current_store.metrics()
         columns = st.columns(4)
-        columns[0].metric("Receita simulada", format_brl(metrics["revenue_cents"]))
+        columns[0].metric("Receita", format_brl(metrics["revenue_cents"]))
         columns[1].metric("Créditos carregados", metrics["credits_loaded"])
         columns[2].metric("Créditos consumidos", metrics["credits_consumed"])
         columns[3].metric("Alertas abertos", metrics["open_alerts"])
@@ -233,7 +358,6 @@ def overview_page(store: DemoStore) -> None:
 def attendance_page(store: DemoStore) -> None:
     def content(current_store: DemoStore, snapshot: dict) -> None:
         st.title("Atendimento")
-        st.caption("Cadastro e pagamento exclusivamente fictícios")
         band = snapshot["active_band"]
         if band["participant_id"] is None:
             st.subheader("1. Cadastrar e vincular")
@@ -257,9 +381,9 @@ def attendance_page(store: DemoStore) -> None:
                     guardian_contact = st.text_input("Contato do responsável", disabled=not minor)
                 consent, marketing_column = st.columns(2)
                 with consent:
-                    st.checkbox("Aceite operacional fictício", value=True, disabled=True)
+                    st.checkbox("Aceite operacional", value=True, disabled=True)
                 with marketing_column:
-                    marketing = st.checkbox("Marketing fictício e opcional")
+                    marketing = st.checkbox("Marketing opcional")
                 submitted = st.form_submit_button("Cadastrar e vincular", use_container_width=True)
             if submitted:
                 try:
@@ -382,7 +506,7 @@ def alerts_page(store: DemoStore) -> None:
     def content(current_store: DemoStore, snapshot: dict) -> None:
         st.title("Alertas")
         st.markdown(
-            "<div class='concept'><strong>Conceito simulado:</strong> tamper não representa sensor físico implementado.</div>",
+            "<div class='concept'><strong>Tamper experimental:</strong> sensor físico ainda não implementado.</div>",
             unsafe_allow_html=True,
         )
         open_alerts = [item for item in snapshot["alerts"] if item["status"] != "resolved"]
@@ -412,7 +536,7 @@ def alerts_page(store: DemoStore) -> None:
 def control_page(store: DemoStore) -> None:
     def content(current_store: DemoStore, snapshot: dict) -> None:
         st.title("Controle da Demo")
-        st.warning("Controles internos — todas as ações afetam somente dados fictícios.")
+        st.warning("Controles internos da apresentação.")
         st.subheader("Cenário")
         if st.button("Restaurar fixture VRPlay Demo", type="primary", use_container_width=True):
             current_store.reset()
@@ -440,14 +564,6 @@ def control_page(store: DemoStore) -> None:
                 if interaction and current_store.simulate_radio_fallback(interaction["id"]):
                     st.rerun()
                 st.warning("Crie uma solicitação antes de executar o fallback.")
-        st.subheader("Legenda de maturidade")
-        st.markdown(
-            """
-            - **Vigente:** invariantes e contratos já validados no projeto.
-            - **Simulado:** comportamento controlado desta aplicação comercial.
-            - **Conceito:** hipótese de produto ainda dependente de decisão ou hardware.
-            """
-        )
         render_timeline(snapshot, 12)
 
     render_shell(store, content)
