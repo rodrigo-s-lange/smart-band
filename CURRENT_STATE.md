@@ -8,8 +8,8 @@ o projeto sem acesso ao histórico de conversas.
 - Repositório oficial: `rodrigo-s-lange/smart-band`.
 - Baseline funcional mais recente: **PR 10**, merge
   `b02d73f6b66c3010187101c416407a43fcdfe990`.
-- `main` oficial atual após a demonstração comercial: **PR 14**, merge
-  `ed230abfd5e770b459ab545e06f557548a940d96`.
+- Última baseline de código da demonstração comercial: **PR 16**, merge
+  `5934d4fa5a7fe8b878f5c8e25b4b6186ed896e32`.
 - Vault baseline documental desta sincronização:
   `405f2616c6a8e831a68e8e7ff2d06ac003e4bd55`.
 - Questionário canônico do cliente no vault:
@@ -159,12 +159,14 @@ Evidência local da demo em 2026-07-19:
 
 Evidência de publicação:
 
-- PR 14 integrada em `ed230abfd5e770b459ab545e06f557548a940d96`, com
+- PR 16 integrada em `5934d4fa5a7fe8b878f5c8e25b4b6186ed896e32`, com
   `Commercial Demo` e `Contracts` verdes;
 - imagem Docker construída no i5 e container saudável;
 - serviço ligado somente a `127.0.0.1:8501`;
 - Cloudflare Tunnel exclusivo, HTTPS e senha temporária;
 - senha inválida recusada e S1 completo executado pelo domínio público;
+- fluxo público refinado validado do cadastro ao encerramento antecipado, com
+  confirmação final do gateway e restauração da fixture;
 - fallback LAN testado e bind interno restaurado;
 - fixture restaurada após a validação.
 
