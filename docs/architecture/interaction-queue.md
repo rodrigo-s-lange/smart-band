@@ -79,4 +79,7 @@ como desempate. O relógio informado pelo gateway não participa da decisão.
 
 Ambos são auditados. O ack positivo abre o uso da atração; o gateway responsável
 precisa encerrá-lo explicitamente. A appliance mede a duração entre abertura e
-fechamento e somente então libera as pulseiras vinculadas para outra atividade.
+fechamento e somente então libera as pulseiras vinculadas. Se o gateway original
+estiver indisponível, outro gateway ativo do site pode fechar o uso. Uma nova
+atividade fecha atomicamente a participação anterior da pulseira como duração
+estimada, sem encerrar as demais pessoas de um grupo.

@@ -135,6 +135,9 @@ débito automático. Encerramento pela pulseira não estorna o crédito e exige
 confirmação operacional no gateway antes de a atração voltar a `LIVRE`.
 Essa confirmação também libera a pulseira para nova atividade e delimita a
 métrica de duração do uso; a regra vale para atrações temporizadas ou não.
+Na contingência aceita, outro gateway do site pode fechar o uso. Como último
+recurso, a nova atividade fecha somente a participação anterior da pulseira e
+marca a duração como estimada.
 
 ### S2 — falha de rádio
 

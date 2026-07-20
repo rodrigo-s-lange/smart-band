@@ -30,6 +30,10 @@ Em até 15 minutos, a VRPlay deve compreender:
 Meta interna: fluxo operacional principal em até 5 minutos. Se a conversa se
 estender, preservar o fluxo principal e cortar telas auxiliares.
 
+Se perguntarem sobre falha do gateway: outro gateway do site pode fechar o uso.
+Como último recurso, uma nova atividade fecha a participação anterior daquela
+pulseira e identifica a duração como estimada; grupos continuam ativos.
+
 ## Fala de abertura
 
 > A proposta não é apenas trocar uma ficha por uma pulseira. É ligar venda,
