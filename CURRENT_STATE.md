@@ -11,7 +11,7 @@ o projeto sem acesso ao histórico de conversas.
 - Última baseline de código da demonstração comercial: **PR 16**, merge
   `5934d4fa5a7fe8b878f5c8e25b4b6186ed896e32`.
 - Vault baseline documental desta sincronização:
-  `405f2616c6a8e831a68e8e7ff2d06ac003e4bd55`.
+  `73b0b172449649f6e7dffe0215bbbaea3910249c`.
 - Questionário canônico do cliente no vault:
   `C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md`.
 - Laboratório reproduzível:
@@ -138,7 +138,7 @@ Streamlit exclusivamente para a simulação. Escopo, cenários, D0–D7, gates e
 roteiro estão em
 [commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md).
 
-Status: **D0–D6 concluídas; D7 pendente**. A demo está ativa temporariamente em
+Status: **D0–D6 concluídas; D7 parcialmente concluída**. A demo está ativa temporariamente em
 `https://pulseira.easysmart.com.br`, para a reunião de terça-feira com público
 comercial, operacional e técnico. A autenticação usa senha temporária externa ao
 Git. A demo não autoriza nem conclui backend, frontend operacional, contratos
@@ -167,6 +167,9 @@ Evidência de publicação:
 - senha inválida recusada e S1 completo executado pelo domínio público;
 - fluxo público refinado validado do cadastro ao encerramento antecipado, com
   confirmação final do gateway e restauração da fixture;
+- roteiro comercial/técnico, três ensaios cronometrados e vídeo offline de
+  contingência validados; D7 aguarda somente provas físicas em outro notebook,
+  rede móvel/TV e execução dos checklists da reunião;
 - fallback LAN testado e bind interno restaurado;
 - fixture restaurada após a validação.
 

@@ -1,6 +1,6 @@
 # Gate da demonstração comercial
 
-Status: **D0–D6 concluídas; D7 pendente** — 2026-07-19.
+Status: **D0–D6 concluídas; D7 parcialmente concluída** — 2026-07-19.
 
 Este gate acompanha uma trilha paralela. Marcar itens aqui não muda o estado das
 Etapas 5–7 do produto.
@@ -63,11 +63,15 @@ Etapas 5–7 do produto.
 
 ## D7 — reunião
 
-- [ ] roteiro comercial até 15 minutos;
-- [ ] roteiro técnico opcional;
-- [ ] três ensaios completos;
+- [x] roteiro comercial até 15 minutos —
+  [meeting-runbook.md](../demo/meeting-runbook.md);
+- [x] roteiro técnico opcional —
+  [meeting-runbook.md](../demo/meeting-runbook.md);
+- [x] três ensaios completos — 14,39 s, 14,41 s e 14,41 s, todos com saldo 4,
+  gateway `LIVRE` e reset limpo;
 - [ ] notebook alternativo e rede móvel testados;
-- [ ] vídeo de contingência;
+- [x] vídeo de contingência — 35,32 s, 1600×900, reprodução local validada com
+  o navegador em modo offline;
 - [ ] checklist do dia executado.
 
 ## Evidência necessária
@@ -108,5 +112,20 @@ Evidência D6 em 2026-07-19:
 - fixture restaurada após o teste público;
 - runbook de ativação e encerramento em `deploy/demo/README.md`.
 
+Evidência parcial de D7 em 2026-07-19:
+
+- roteiro comercial de 12 minutos, roteiro técnico de 5 minutos, falas,
+  checklists e matriz de contingência em
+  [meeting-runbook.md](../demo/meeting-runbook.md);
+- três ensaios pelo domínio público concluídos em 14,39 s, 14,41 s e 14,41 s;
+- cada ensaio percorreu cadastro, cinco créditos, solicitação, seleção,
+  confirmação, liberação, débito único, encerramento antecipado, `OK` do gateway
+  e reset final sem resíduo;
+- vídeo `smart-band-contingencia.webm`, com 35,32 s e resolução 1600×900,
+  armazenado fora do Git para cópia ao notebook da reunião;
+- reprodução do vídeo validada em Chrome com rede desabilitada.
+
 Plano canônico:
 [commercial-simulation-plan.md](../demo/commercial-simulation-plan.md).
+Runbook da reunião:
+[meeting-runbook.md](../demo/meeting-runbook.md).

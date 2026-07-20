@@ -1,6 +1,6 @@
 # Plano da simulação comercial Smart-Band
 
-Status: **D0–D6 concluídas; D7 pendente**.
+Status: **D0–D6 concluídas; D7 parcialmente concluída**.
 
 Vault baseline desta definição:
 `405f2616c6a8e831a68e8e7ff2d06ac003e4bd55`.
@@ -295,5 +295,9 @@ Gate: o roteiro principal termina mesmo sem internet externa.
 - controle manual dos cenários, sem autoplay;
 - desligamento do acesso externo após a janela da reunião.
 
-Pendências de D7: ensaiar em rede móvel, preparar o roteiro final, executar três
-ensaios cronometrados e registrar a contingência em vídeo.
+Pendências de D7: testar outro notebook, rede móvel e TV e executar os checklists
+do dia anterior e do dia da reunião. Roteiros, três ensaios cronometrados e
+vídeo offline já foram validados.
+
+Roteiro, checklists e matriz de contingência:
+[meeting-runbook.md](meeting-runbook.md).
