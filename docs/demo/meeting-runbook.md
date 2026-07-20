@@ -112,4 +112,3 @@ fazendo diagnóstico técnico.
 Cada ensaio deve registrar data/hora, duração, resultado, saldo final, retorno a
 `LIVRE` e reset sem resíduo. Provas físicas de notebook, rede móvel e TV devem
 registrar dispositivo/rede utilizados, sem armazenar senha ou dado pessoal.
-
