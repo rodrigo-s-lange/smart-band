@@ -24,6 +24,79 @@ STATUS_LABELS = {
 }
 
 
+CLIENT_QUESTION_GROUPS = (
+    (
+        "Cadastro, privacidade e menores",
+        (
+            ("1", "Cadastro", "Quais dados são obrigatórios e o uso anônimo será permitido?"),
+            ("1.1", "Menores", "Quais dados e confirmações serão exigidos do responsável legal?"),
+            ("1.2", "LGPD", "Qual base legal, prazo de retenção e processo de exclusão/exportação serão adotados?"),
+        ),
+    ),
+    (
+        "Créditos, venda e pagamento",
+        (
+            ("2", "Carga de créditos", "A venda será por pacotes, quantidade livre ou ambos?"),
+            ("2.1", "Pagamento", "Quais meios serão aceitos e a confirmação será manual ou integrada?"),
+            ("2.2", "Validade", "Os créditos valem por visita, dia, evento ou não expiram?"),
+            ("2.3", "Exceções", "Como tratar cancelamento, estorno, cortesia, bônus e transferência de saldo?"),
+            ("2.4", "Conciliação", "Quais relatórios devem confrontar cartão, Pix e dinheiro em caixa?"),
+        ),
+    ),
+    (
+        "Atrações e regras comerciais",
+        (
+            ("3", "Preço", "Quantos créditos cada atração consome?"),
+            ("3.1", "Duração", "O consumo será fixo, por tempo ou combinado por atração?"),
+            ("3.2", "Capacidade", "Quais atrações são individuais, em dupla ou em grupo?"),
+            ("3.3", "Formação de grupo", "Qual o mínimo de pulseiras e o timeout para formar cada grupo?"),
+        ),
+    ),
+    (
+        "Gateway, liberação e encerramento",
+        (
+            ("4", "Liberação", "Como cada gateway ativa sua atração: LED, relé, catraca, tomada ou protocolo?"),
+            ("4.1", "Comprovação", "Qual sinal confirma que a atração realmente foi liberada?"),
+            ("4.2", "Estado seguro", "O que o equipamento deve fazer em falha, manutenção ou evacuação?"),
+            ("4.3", "Encerramento", "Confirmamos que toda atração deve ser encerrada no gateway, com ou sem tempo?"),
+            ("4.4", "Gateway indisponível", "Confirmamos fechamento por outro gateway e reentrada como último recurso?"),
+        ),
+    ),
+    (
+        "Tempo e experiência da pulseira",
+        (
+            ("5", "Início", "Em qual evento o tempo começa: confirmação, liberação ou ack físico?"),
+            ("5.1", "Fim do tempo", "O que acontece fisicamente e visualmente quando o contador chega a 00:00?"),
+            ("5.2", "Avisos", "Quando e como pulseira, TFT, LED e vibracall devem alertar o término?"),
+            ("5.3", "Pausa", "Pausa, manutenção ou falha do brinquedo interrompem o relógio?"),
+            ("5.4", "Grupos", "A saída de uma pulseira encerra somente sua participação ou exige outra ação?"),
+        ),
+    ),
+    (
+        "Operação, relatórios e continuidade",
+        (
+            ("6", "Permissões", "Quem pode confirmar vendas, conceder cortesia, ajustar saldo e reconciliar falhas?"),
+            ("6.1", "Métricas", "Quais indicadores de venda, uso e duração por atração são prioritários?"),
+            ("6.2", "Fechamento", "O fechamento será por turno, dia ou terminal e quem aprova divergências?"),
+            ("6.3", "Continuidade", "Quais SLA, backup, UPS, acesso remoto e procedimento offline são necessários?"),
+        ),
+    ),
+    (
+        "Diferenciais e próximos módulos",
+        (
+            ("7", "Vibracall", "O vibracall entra no MVP e em quais alertas?"),
+            ("7.1", "Acessibilidade", "Quais mensagens visuais são essenciais para pessoas com deficiência auditiva?"),
+            ("7.2", "Pulseira removida", "O sensor tamper entra no MVP e quem recebe o alerta?"),
+            ("8", "Gamificação", "Haverá missões, bônus ou sorteios de créditos?"),
+            ("8.1", "Ocupação BLE", "Quais métricas de lotação/concentração são úteis e com qual retenção?"),
+            ("8.2", "Comissão", "Haverá comissão por venda de créditos e qual será a regra?"),
+            ("9", "Campanhas", "O que precisa variar entre eventos: marca, preços, atrações, validade e relatórios?"),
+            ("9.1", "Piloto", "Qual escopo, data, responsáveis e critério de sucesso do primeiro piloto?"),
+        ),
+    ),
+)
+
+
 def apply_theme() -> None:
     st.markdown(
         """
@@ -73,6 +146,11 @@ def apply_theme() -> None:
         div[data-testid="stMetric"] { background:#0d2034; border:1px solid #203e5b;
             padding:.75rem; border-radius:12px; }
         .stButton > button { border-radius:9px; font-weight:700; }
+        .question-card { border:1px solid #24405f; background:#0b1b2d;
+            padding:.72rem .85rem; border-radius:10px; margin:.42rem 0; }
+        .question-number { color:#56bfff; font-weight:900; font-size:1.08rem; }
+        .question-title { color:#fff; font-weight:800; margin-left:.35rem; }
+        .question-text { color:#cbd8e6; margin-top:.28rem; line-height:1.35; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -531,6 +609,26 @@ def alerts_page(store: DemoStore) -> None:
         render_timeline(snapshot, 8)
 
     render_shell(store, content)
+
+
+def client_questions_page(store: DemoStore) -> None:
+    banner(store)
+    st.title("Decisões para a VRPlay")
+    st.caption("Perguntas para validar na reunião · respostas serão registradas no documento oficial do projeto")
+    left, right = st.columns(2, gap="large")
+    groups = (left, right)
+    for index, (group_title, questions) in enumerate(CLIENT_QUESTION_GROUPS):
+        with groups[index % 2]:
+            st.subheader(group_title)
+            for number, title, question in questions:
+                st.markdown(
+                    '<div class="question-card">'
+                    f'<span class="question-number">{escape(number)}</span>'
+                    f'<span class="question-title">{escape(title)}</span>'
+                    f'<div class="question-text">{escape(question)}</div>'
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
 
 
 def control_page(store: DemoStore) -> None:

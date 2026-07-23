@@ -27,6 +27,10 @@ Em até 15 minutos, a VRPlay deve compreender:
 | 09:00–10:30 | Gestão | Mostrar Dispositivos, Alertas e timeline. Citar tamper, acessibilidade e ocupação BLE como decisões/propostas, não como funcionalidades contratadas. |
 | 10:30–12:00 | Fechamento | Apresentar ganhos esperados e abrir o documento de decisões do cliente. Pedir validação do fluxo antes de discutir hardware. |
 
+Na demonstração, abrir a página **Decisões** para conduzir as 34 perguntas
+numeradas. Registrar as respostas posteriormente no documento oficial; não
+editar regras da aplicação durante a reunião.
+
 Meta interna: fluxo operacional principal em até 5 minutos. Se a conversa se
 estender, preservar o fluxo principal e cortar telas auxiliares.
 

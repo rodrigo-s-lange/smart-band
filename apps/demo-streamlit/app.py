@@ -11,6 +11,7 @@ from demo_app.views import (
     alerts_page,
     apply_theme,
     attendance_page,
+    client_questions_page,
     control_page,
     devices_page,
     operation_page,
@@ -56,6 +57,10 @@ pages = [
     st.Page(
         lambda: alerts_page(store), title="Alertas",
         icon=":material/notification_important:", url_path="alertas",
+    ),
+    st.Page(
+        lambda: client_questions_page(store), title="Decisões",
+        icon=":material/fact_check:", url_path="decisoes",
     ),
     st.Page(
         lambda: control_page(store), title="Controle da Demo", icon=":material/tune:",
