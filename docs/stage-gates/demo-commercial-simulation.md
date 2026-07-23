@@ -67,6 +67,7 @@ Etapas 5–7 do produto.
   [meeting-runbook.md](../demo/meeting-runbook.md);
 - [x] roteiro técnico opcional —
   [meeting-runbook.md](../demo/meeting-runbook.md);
+- [x] página somente leitura com 34 perguntas numeradas para a VRPlay;
 - [x] três ensaios completos — 14,39 s, 14,41 s e 14,41 s, todos com saldo 4,
   gateway `LIVRE` e reset limpo;
 - [ ] notebook alternativo e rede móvel testados;

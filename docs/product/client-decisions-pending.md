@@ -5,7 +5,7 @@ somente ao repositório. O roteiro completo, as recomendações e o registro das
 respostas são canônicos no vault.
 
 Vault baseline documental desta sincronização:
-`b1210d7a6b9e89fd79a892ba7c7529d10d191a5e`.
+`4e0a4cf012469795ef48be2259ab1b7083d5f474`.
 
 ```text
 C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md

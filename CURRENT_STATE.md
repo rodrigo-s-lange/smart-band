@@ -11,7 +11,7 @@ o projeto sem acesso ao histórico de conversas.
 - Última baseline de código da demonstração comercial: **PR 16**, merge
   `5934d4fa5a7fe8b878f5c8e25b4b6186ed896e32`.
 - Vault baseline documental desta sincronização:
-  `b1210d7a6b9e89fd79a892ba7c7529d10d191a5e`.
+  `4e0a4cf012469795ef48be2259ab1b7083d5f474`.
 - Questionário canônico do cliente no vault:
   `C:\Users\Familia\vault\01-projetos\smart-band\processo-geral-e-decisoes-do-cliente.md`.
 - Laboratório reproduzível:
@@ -180,6 +180,8 @@ Evidência de publicação:
 - roteiro comercial/técnico, três ensaios cronometrados e vídeo offline de
   contingência validados; D7 aguarda somente provas físicas em outro notebook,
   rede móvel/TV e execução dos checklists da reunião;
+- página `Decisões` com 34 perguntas numeradas para conduzir a validação com a
+  VRPlay, sem alterar fixture ou estado operacional;
 - fallback LAN testado e bind interno restaurado;
 - fixture restaurada após a validação.
 

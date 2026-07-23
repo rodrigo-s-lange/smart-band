@@ -3,7 +3,7 @@
 Status: **D0–D6 concluídas; D7 parcialmente concluída**.
 
 Vault baseline desta definição:
-`b1210d7a6b9e89fd79a892ba7c7529d10d191a5e`.
+`4e0a4cf012469795ef48be2259ab1b7083d5f474`.
 
 ## Objetivo
 
