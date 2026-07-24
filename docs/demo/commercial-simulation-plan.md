@@ -1,6 +1,7 @@
 # Plano da simulação comercial Smart-Band
 
-Status: **D0–D6 concluídas; D7 parcialmente concluída**.
+Status: **D0–D6 concluídas; D7 parcialmente concluída; publicação externa
+encerrada em 2026-07-24**.
 
 Vault baseline desta definição:
 `4e0a4cf012469795ef48be2259ab1b7083d5f474`.
@@ -19,12 +20,14 @@ liberação da atração, débito e indicadores atualizados.
 
 - Streamlit é a interface exclusiva da simulação comercial.
 - `apps/operator-web` continua sendo o frontend operacional definitivo.
-- URL pública pretendida: `https://pulseira.easysmart.com.br`.
+- URL pública usada na reunião: `https://pulseira.easysmart.com.br`; o hostname
+  está sem registro DNS após o encerramento de 2026-07-24.
 - O i5 hospeda o laboratório; acesso LAN é a contingência.
 - Dados, pessoas, pagamentos, dispositivos e valores são fictícios.
 - A natureza demonstrativa fica documentada e no controle de acesso; a interface
   apresentada ao cliente não repete avisos em cada área ou display.
-- A publicação usa HTTPS e autenticação por proxy/túnel.
+- Quando autorizada, a publicação usa HTTPS e autenticação por proxy/túnel
+  dedicado e temporário.
 - PostgreSQL, Edge API e portas do i5 não ficam públicos.
 - Fixture não é decisão comercial, seed de produção ou evidência de hardware.
 
@@ -51,6 +54,9 @@ Streamlit em container no i5, somente na rede interna
         +--> pulseira, gateway e atração virtuais
         `--> Edge API apenas nas capacidades vigentes
 ```
+
+O diagrama registra a topologia usada durante a publicação temporária, atualmente
+desativada.
 
 O Streamlit é apresentação. O estado do cenário não pode depender somente de
 `session_state`, porque caixa, gateway e pulseira podem estar abertos em
