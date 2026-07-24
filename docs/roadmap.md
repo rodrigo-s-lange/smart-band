@@ -34,7 +34,9 @@ VRPlay, sem alterar o estado das Etapas 5–7. Ela usa dados fictícios, cockpit
 pulseira/gateway/appliance e cenários determinísticos. O alvo externo é
 `https://pulseira.easysmart.com.br` por HTTPS autenticado, com fallback LAN.
 
-Estado em 2026-07-19: D0–D6 concluídas e D7 parcialmente concluída.
+Estado em 2026-07-24: D0–D6 concluídas, D7 parcialmente concluída e publicação
+externa encerrada. O hostname, tunnel e runtime da demo não estão ativos; os
+artefatos reproduzíveis e o volume fictício foram preservados.
 
 A trilha, seus limites e gates estão em
 [commercial-simulation-plan.md](demo/commercial-simulation-plan.md) e

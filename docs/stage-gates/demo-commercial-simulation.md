@@ -1,6 +1,7 @@
 # Gate da demonstração comercial
 
-Status: **D0–D6 concluídas; D7 parcialmente concluída** — 2026-07-19.
+Status: **D0–D6 concluídas; D7 parcialmente concluída; publicação externa
+encerrada** — 2026-07-24.
 
 Este gate acompanha uma trilha paralela. Marcar itens aqui não muda o estado das
 Etapas 5–7 do produto.
@@ -114,6 +115,15 @@ Evidência D6 em 2026-07-19:
   bind de loopback restaurado em seguida;
 - fixture restaurada após o teste público;
 - runbook de ativação e encerramento em `deploy/demo/README.md`.
+
+Evidência de encerramento em 2026-07-24:
+
+- container e rede do compose removidos; volume fictício preservado;
+- serviço systemd dedicado desabilitado e removido;
+- tunnel `smartband-demo`, sua credencial local e configuração excluídos;
+- registro DNS de `pulseira.easysmart.com.br` excluído;
+- API Cloudflare confirmou zero registros para o hostname;
+- tunnel independente `iiot-mqtt` permaneceu ativo.
 
 Evidência parcial de D7 em 2026-07-19:
 

@@ -1,6 +1,6 @@
 # Smart-Band — estado atual e handoff
 
-Atualizado em 2026-07-19. Este é o ponto de entrada operacional para continuar
+Atualizado em 2026-07-24. Este é o ponto de entrada operacional para continuar
 o projeto sem acesso ao histórico de conversas.
 
 ## Fontes e baseline
@@ -115,7 +115,8 @@ D7 e ainda precisa refletir/validar os três caminhos aceitos.
 - sensor de remoção, resposta a alertas e extensão BLE v2;
 - gamificação/sorteios, métricas BLE de ocupação e comissão de vendas;
 - publicação permanente do produto e seu SLA continuam bloqueados; o acesso
-  temporário da demo em `https://pulseira.easysmart.com.br` segue a trilha D6.
+  temporário da demo em `https://pulseira.easysmart.com.br` foi retirado em
+  2026-07-24 após a reunião.
 
 Operações OpenAPI marcadas `client-decision-blocked` continuam representativas e
 não autorizam implementação definitiva.
@@ -148,11 +149,13 @@ Streamlit exclusivamente para a simulação. Escopo, cenários, D0–D7, gates e
 roteiro estão em
 [commercial-simulation-plan.md](docs/demo/commercial-simulation-plan.md).
 
-Status: **D0–D6 concluídas; D7 parcialmente concluída**. A demo está ativa temporariamente em
-`https://pulseira.easysmart.com.br`, para a reunião de terça-feira com público
-comercial, operacional e técnico. A autenticação usa senha temporária externa ao
-Git. A demo não autoriza nem conclui backend, frontend operacional, contratos
-comerciais, hardware ou firmware.
+Status: **D0–D6 concluídas; D7 parcialmente concluída; publicação externa
+encerrada**. A demo não está ativa em `https://pulseira.easysmart.com.br`.
+Container, serviço, tunnel dedicado, credencial local do tunnel e registro DNS
+foram retirados em 2026-07-24. O volume SQLite fictício foi preservado para uma
+eventual nova apresentação deliberadamente autorizada. A demo não autoriza nem
+conclui backend, frontend operacional, contratos comerciais, hardware ou
+firmware.
 
 Evidência local da demo em 2026-07-19:
 
@@ -184,6 +187,17 @@ Evidência de publicação:
   VRPlay, sem alterar fixture ou estado operacional;
 - fallback LAN testado e bind interno restaurado;
 - fixture restaurada após a validação.
+
+Evidência de encerramento em 2026-07-24:
+
+- container e rede do compose removidos, sem processo ouvindo em
+  `127.0.0.1:8501`;
+- serviço `cloudflared-smartband-demo` desabilitado e removido;
+- tunnel `smartband-demo` excluído sem afetar o tunnel `iiot-mqtt`;
+- registro DNS de `pulseira.easysmart.com.br` excluído e consulta da API
+  Cloudflare retornando zero registros;
+- volume `demo_smartband-demo-data` preservado; código e dados fictícios não
+  foram apagados.
 
 ## Trabalho seguro enquanto o cliente decide
 

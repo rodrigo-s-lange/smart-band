@@ -1,6 +1,8 @@
 # Runbook da reunião comercial
 
-Status: **pronto para ensaio** — 2026-07-19.
+Status: **publicação externa encerrada** — 2026-07-24. O roteiro permanece
+reutilizável, mas exige nova autorização e novo provisionamento antes de outra
+reunião.
 
 Este runbook conclui a parte documental da D7. Ele orienta a apresentação da
 simulação Smart-Band sem transformar fixtures em decisões comerciais.
@@ -65,6 +67,9 @@ Não apresentar a simulação Streamlit como frontend definitivo nem afirmar que
 fixtures de preço, duração, pagamento, tamper ou acionamento já foram aprovadas.
 
 ## Preparação do cenário
+
+O domínio e o tunnel citados abaixo estão desativados. Não executar este roteiro
+sem reprovisionar o acesso conforme `deploy/demo/README.md` e repetir o gate D6.
 
 1. abrir `https://pulseira.easysmart.com.br` e autenticar;
 2. abrir **Controle da Demo** e restaurar a fixture;

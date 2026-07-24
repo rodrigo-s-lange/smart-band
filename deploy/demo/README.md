@@ -22,12 +22,6 @@ sudo systemctl stop cloudflared-smartband-demo
 docker compose down
 ```
 
-Para reabrir o acesso temporário após validar o container:
-
-```bash
-sudo systemctl start cloudflared-smartband-demo
-```
-
 O serviço de túnel da demo é separado do túnel dos demais produtos. Sua
 configuração e credencial ficam fora do repositório. Parar esse serviço remove o
 acesso público sem afetar a aplicação local nem os outros hostnames.
@@ -46,3 +40,15 @@ O domínio pretendido é `https://pulseira.easysmart.com.br`. O túnel/proxy dev
 - permitir desligamento imediato após a reunião.
 
 Credenciais e configuração do provedor permanecem fora do Git.
+
+## Estado operacional
+
+O acesso externo criado para a reunião foi encerrado em 2026-07-24. Foram
+removidos o container, o serviço systemd, o tunnel dedicado, sua credencial local
+e o registro DNS de `pulseira.easysmart.com.br`. O volume SQLite fictício foi
+preservado.
+
+Uma nova publicação não pode presumir que o serviço anterior ainda existe.
+Requer autorização explícita, novo tunnel/credencial, novo registro DNS,
+autenticação temporária e repetição integral das validações D6. Não reutilizar
+credenciais antigas nem alterar tunnels de outros produtos.
